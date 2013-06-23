@@ -8,10 +8,8 @@ import(
 func main() {
 
   kernal := c64.RomFromFile("rom/kernal.rom")
-  fmt.Println(kernal)
 
-  addressBus := &c64.Bus{Ram: &c64.Ram{}}
-  addressBus.Write16(0xFFFC, 0xDEAD) // Start address, normally on ROM.
+  addressBus := &c64.Bus{Ram: &c64.Ram{}, Kernal: kernal}
   fmt.Println(addressBus)
 
   cpu := &c64.Cpu{Bus: addressBus}
