@@ -7,10 +7,7 @@ import(
 func main() {
 
   addressBus := &Bus{Ram: &Ram{}}
-
-  // Start address, normally on ROM.
-  addressBus.Write(0xFFFC, 0xAD)
-  addressBus.Write(0xFFFD, 0xDE)
+  addressBus.Write16(0xFFFC, 0xDEAD) // Start address, normally on ROM.
   fmt.Println(addressBus)
 
   cpu := &Cpu{Bus: addressBus}
@@ -43,6 +40,10 @@ func (b *Bus) Read16(a address) address {
 func (b *Bus) Write(a address, value byte) {
   fmt.Printf("Bus[0x%04X] <-- 0x%02X\n", a, value)
   b.Ram[a] = value
+}
+func (b *Bus) Write16(a address, value address) {
+  b.Write(a, byte(value))
+  b.Write(a + 1, byte(value >> 8))
 }
 
 
