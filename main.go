@@ -16,4 +16,6 @@ func main() {
   cpu.Reset()
   fmt.Println(cpu)
 
+  cpu.Step()
+
 }

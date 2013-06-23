@@ -23,6 +23,14 @@ func (c *Cpu) Reset() {
   c.sr = 0x00
 }
 
+func (c *Cpu) Step() {
+  op := c.Bus.Read(c.pc)
+  instruction := findInstruction(op)
+  fmt.Println(instruction)
+  instruction.Execute(c)
+  fmt.Println(c)
+}
+
 func (c *Cpu) String() string {
   return fmt.Sprintf(
     "CPU pc:0x%04X ac:0x%02X x:0x%02X y:0x%02X sp:0x%02X sr:0x%02X",
