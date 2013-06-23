@@ -1,0 +1,18 @@
+Commodore 64 ROMs
+=================
+
+Downloaded from http://www.unusedino.de/ec64/technical2.html
+Credited in turn to ftp://ftp.funet.fi/pub/cbm
+
+basic.rom
+---------
+Commodore 64 BASIC V2. The first and only revision.
+
+kernal.rom
+----------
+Commodore 64 KERNAL ROM Revision 3. The last revision, also used in
+the C128's C64 mode.
+
+character.rom
+-------------
+The character generator ROM.
