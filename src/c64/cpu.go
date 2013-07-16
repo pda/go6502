@@ -2,7 +2,34 @@ package c64
 
 import(
   "fmt"
+  "strings"
 )
+
+// status register bits
+const(
+  sCarry = iota
+  sZero
+  sInterrupt
+  sDecimal
+  sBreak
+  _
+  sOverflow
+  sNegative
+)
+
+func srName(bit uint8) (s string) {
+  switch bit {
+  case 0: s = "carry"
+  case 1: s = "zero"
+  case 2: s = "interrupt"
+  case 3: s = "decimal"
+  case 4: s = "break"
+  case 5: s = "_"
+  case 6: s = "overflow"
+  case 7: s = "negative"
+  }
+  return
+}
 
 type Cpu struct {
   pc address
@@ -58,8 +85,10 @@ func (c *Cpu) readOperand(in *Instruction) *Iop {
 
 func (c *Cpu) String() string {
   return fmt.Sprintf(
-    "CPU pc:0x%04X ac:0x%02X x:0x%02X y:0x%02X sp:0x%02X sr:0x%02X",
-    c.pc, c.ac, c.x, c.y, c.sp, c.sr)
+    "CPU pc:0x%04X ac:0x%02X x:0x%02X y:0x%02X sp:0x%02X sr:%s",
+    c.pc, c.ac, c.x, c.y, c.sp,
+    c.statusString(),
+  )
 }
 
 func (c *Cpu) StackHead(offset int8) address {
@@ -82,8 +111,36 @@ func (c *Cpu) memoryAddress(iop *Iop) address {
   }
 }
 
-func warnStatus() {
-  fmt.Println("!! status register not implemented")
+func (c *Cpu) getStatus(bit uint8) bool {
+  return c.sr & (1 << bit) > 0
+}
+
+func (c *Cpu) setStatus(bit uint8, state bool) {
+  fmt.Printf("sr %s = %v\n", srName(bit), state)
+  if state {
+    c.sr |= 1 << bit
+  } else {
+    c.sr &^= 1 << bit
+  }
+}
+
+func (c *Cpu) updateStatus(value uint8) {
+  c.setStatus(sZero, value == 0)
+  c.setStatus(sNegative, (value >> 7) == 1)
+}
+
+func (c *Cpu) statusString() string {
+  // this is horrible, I think. Should be much simpler?
+  var chars = "nv_bdizc"
+  var out [8]string
+  for i := 0; i < 8; i++ {
+    if c.getStatus(uint8(7 - i)) {
+      out[i] = string(chars[i])
+    } else {
+      out[i] = "-"
+    }
+  }
+  return strings.Join(out[0:], "")
 }
 
 func (c *Cpu) Execute(iop *Iop) {
@@ -109,35 +166,34 @@ func (c *Cpu) Execute(iop *Iop) {
 // branch on equal (zero set)
 // (branch on z = 1)
 func (c *Cpu) BEQ(iop *Iop) {
-  c.pc += address(iop.op8)
-  warnStatus()
+  if c.getStatus(sZero) {
+    c.pc += address(iop.op8)
+  }
 }
 
 // branch on not-equal (zero clear)
 func (c *Cpu) BNE(iop *Iop) {
-  // branch(op) unless status.zero?
-  c.pc += address(iop.op8)
-  warnStatus()
+  if !c.getStatus(sZero) {
+    c.pc += address(iop.op8)
+  }
 }
 
 // clear decimal
 func (c *Cpu) CLD(iop *Iop) {
-  warnStatus()
+  c.setStatus(sDecimal, false)
 }
 
 // compare (with accumulator)
 func (c *Cpu) CMP(iop *Iop) {
   value := c.resolveOperand(iop)
-  // set carry to c.ac >= value
-  // set status for ac - value
-  fmt.Println("unused", value)
-  warnStatus()
+  c.setStatus(sCarry, c.ac >= value)
+  c.updateStatus(c.ac - value)
 }
 
 // decrement x
 func (c *Cpu) DEX(iop *Iop) {
   c.x--
-  warnStatus()
+  c.updateStatus(c.x)
 }
 
 // jump
@@ -155,13 +211,13 @@ func (c *Cpu) JSR(iop *Iop) {
 // load accumulator
 func (c *Cpu) LDA(iop *Iop) {
   c.ac = c.resolveOperand(iop)
-  warnStatus()
+  c.updateStatus(c.ac)
 }
 
 // load X
 func (c *Cpu) LDX(iop *Iop) {
   c.x = c.resolveOperand(iop)
-  warnStatus()
+  c.updateStatus(c.x)
 }
 
 // return from subroutine
@@ -173,7 +229,7 @@ func (c *Cpu) RTS(iop *Iop) {
 
 // set interrupt disable
 func (c *Cpu) SEI(iop *Iop) {
-  warnStatus()
+  c.setStatus(sInterrupt, false)
 }
 
 // store from accumulator
@@ -189,5 +245,5 @@ func (c *Cpu) STX(iop *Iop) {
 // transfer X to stack pointer
 func (c *Cpu) TXS(iop *Iop) {
   c.sp = c.x
-  warnStatus()
+  c.updateStatus(c.sp)
 }
