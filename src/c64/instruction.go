@@ -30,24 +30,6 @@ type Instruction struct {
   flags int
 }
 
-func (in *Instruction) Execute(c *Cpu) {
-  var operand uint8
-  if in.bytes == 2 {
-    operand = c.Bus.Read(c.pc + 1)
-  } else {
-    panic("...")
-  }
-  // for i := 1; i < in.bytes; i++ {
-  //   c.Bus.Read(c.pc + address(i))
-  // }
-  c.pc += address(in.bytes)
-  if in.opcode == 0xA2 {
-    c.x = operand
-  } else {
-    panic("what now?")
-  }
-}
-
 func findInstruction(opcode byte) *Instruction {
   var i Instruction;
   switch opcode {

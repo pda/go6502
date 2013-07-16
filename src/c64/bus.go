@@ -20,7 +20,7 @@ func (b *Bus) backendFor(a address) (mem Memory) {
 func (b *Bus) Read(a address) byte {
   mem := b.backendFor(a)
   value := mem.Read(a)
-  fmt.Printf("Bus[0x%04X] %v --> 0x%02X\n", a, mem, value)
+  fmt.Printf("R Bus[0x%04X] %v --> 0x%02X\n", a, mem, value)
   return value
 }
 
@@ -37,7 +37,7 @@ func (b *Bus) String() string {
 
 func (b *Bus) Write(a address, value byte) {
   mem := b.backendFor(a)
-  fmt.Printf("Bus[0x%04X] <-- 0x%02X\n", a, value)
+  fmt.Printf("W Bus[0x%04X] <-- 0x%02X\n", a, value)
   mem.Write(a, value)
 }
 
