@@ -190,6 +190,7 @@ func (c *Cpu) Execute(iop *Iop) {
   case BEQ: c.BEQ(iop)
   case BMI: c.BMI(iop)
   case BNE: c.BNE(iop)
+  case BPL: c.BPL(iop)
   case CLC: c.CLC(iop)
   case CLD: c.CLD(iop)
   case CMP: c.CMP(iop)
@@ -250,6 +251,13 @@ func (c *Cpu) BMI(iop *Iop) {
 // branch on not-equal (zero clear)
 func (c *Cpu) BNE(iop *Iop) {
   if !c.getStatus(sZero) {
+    c.branch(iop)
+  }
+}
+
+// branch on not-negative
+func (c *Cpu) BPL(iop *Iop) {
+  if !c.getStatus(sNegative) {
     c.branch(iop)
   }
 }
