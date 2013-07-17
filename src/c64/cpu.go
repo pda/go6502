@@ -184,14 +184,18 @@ func (c *Cpu) branch(iop *Iop) {
 }
 
 func (c *Cpu) Execute(iop *Iop) {
+  // TODO: switch by const/enum, not string.
   switch iop.in.name {
   case "AND": c.AND(iop)
+  case "BCS": c.BCS(iop)
   case "BEQ": c.BEQ(iop)
   case "BMI": c.BMI(iop)
   case "BNE": c.BNE(iop)
+  case "CLC": c.CLC(iop)
   case "CLD": c.CLD(iop)
   case "CMP": c.CMP(iop)
   case "DEX": c.DEX(iop)
+  case "DEY": c.DEY(iop)
   case "INC": c.INC(iop)
   case "INX": c.INX(iop)
   case "INY": c.INY(iop)
@@ -211,6 +215,7 @@ func (c *Cpu) Execute(iop *Iop) {
   case "TAY": c.TAY(iop)
   case "TXA": c.TXA(iop)
   case "TXS": c.TXS(iop)
+  case "TYA": c.TYA(iop)
   default: panic(fmt.Sprintf("unhandled instruction: %v", iop.in.name))
   }
 }
@@ -219,6 +224,13 @@ func (c *Cpu) Execute(iop *Iop) {
 func (c *Cpu) AND(iop *Iop) {
   c.ac &= c.resolveOperand(iop)
   c.updateStatus(c.ac)
+}
+
+// branch on carry (when carry set)
+func (c *Cpu) BCS(iop *Iop) {
+  if c.getStatus(sCarry) {
+    c.branch(iop)
+  }
 }
 
 // branch on equal (zero set)
@@ -241,6 +253,11 @@ func (c *Cpu) BNE(iop *Iop) {
   if !c.getStatus(sZero) {
     c.branch(iop)
   }
+}
+
+// clear carry
+func (c *Cpu) CLC(iop *Iop) {
+  c.setStatus(sCarry, false)
 }
 
 // clear decimal
@@ -386,4 +403,10 @@ func (c *Cpu) TXA(iop *Iop) {
 func (c *Cpu) TXS(iop *Iop) {
   c.sp = c.x
   c.updateStatus(c.sp)
+}
+
+// Transfer Y to Accumulator
+func (c *Cpu) TYA(iop *Iop) {
+  c.ac = c.y
+  c.updateStatus(c.ac)
 }
