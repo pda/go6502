@@ -21,6 +21,7 @@ const(
   zeropageY
 )
 
+// TODO: include const/enum version of name, for fast switching.
 type Instruction struct {
   name string
   opcode byte
