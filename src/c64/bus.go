@@ -5,12 +5,38 @@ import(
 )
 
 type Bus struct {
+  DataPort *DataPort
   Ram *Ram
   Kernal *Rom
 }
 
+// CPU I/O data port.
+// The Output Register is located at Address 0x0001.
+// The Data Direction Register is at Address 0x0000.
+type DataPort struct {
+  data [2]byte
+}
+
+func (d *DataPort) Read(a address) byte {
+  value := d.data[a]
+  fmt.Printf("R DataPort[0x%04X] --> 0x%02X\n", a, value)
+  return value
+}
+
+func (d *DataPort) String() string {
+  return "DataPort"
+}
+
+func (d *DataPort) Write(a address, value byte) {
+  fmt.Printf("W DataPort[0x%04X] <-- 0x%02X\n", a, value)
+  d.data[a] = value
+}
+
 func (b *Bus) backendFor(a address) (mem Memory) {
-  if a >= 0xE000 && a <= 0xFFFF {
+  if a <= 0x0001 {
+    return b.DataPort
+  } else if a >= 0xE000 && a <= 0xFFFF {
+    // TODO: cache instance
     return OffsetMemory{offset: 0xE000, memory: b.Kernal}
   } else {
     return b.Ram
