@@ -18,7 +18,11 @@ func main() {
     fmt.Printf("Loaded %s: %d bytes\n", kernalPath, kernal.Size)
   }
 
-  addressBus := &go6502.Bus{Ram: &go6502.Ram{}, Kernal: kernal}
+  ram := &go6502.Ram{}
+
+  addressBus, _ := go6502.CreateBus()
+  addressBus.Attach(ram, "ram", 0x0000)
+  addressBus.Attach(kernal, "kernal", 0xE000)
   fmt.Println(addressBus)
 
   cpu := &go6502.Cpu{Bus: addressBus}

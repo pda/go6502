@@ -4,23 +4,45 @@ import(
   "fmt"
 )
 
-type Bus struct {
-  Ram *Ram
-  Kernal *Rom
+type busEntry struct {
+  mem Memory
+  name string
+  start address
+  end address
 }
 
-func (b *Bus) backendFor(a address) (mem Memory) {
-  if a >= 0xE000 && a <= 0xFFFF {
-    return OffsetMemory{offset: 0xE000, memory: b.Kernal}
-  } else {
-    return b.Ram
+type Bus struct {
+  entries []busEntry
+}
+
+func CreateBus() (*Bus, error) {
+  return &Bus{entries: make([]busEntry, 0)}, nil
+}
+
+func (b *Bus) Attach(mem Memory, name string, offset address) (error) {
+  om := OffsetMemory{offset: offset, Memory: mem}
+  end := offset + address(mem.Size() - 1)
+  entry := busEntry{mem: om, name: name, start: offset, end: end}
+  b.entries = append(b.entries, entry)
+  return nil
+}
+
+func (b *Bus) backendFor(a address) (Memory, error) {
+  for _, be := range b.entries {
+    if a >= be.start && a <= be.end {
+      return be.mem, nil
+    }
   }
+  return nil, fmt.Errorf("No backend for address 0x%04X", a)
 }
 
 func (b *Bus) Read(a address) byte {
-  mem := b.backendFor(a)
+  mem, err := b.backendFor(a)
+  if err != nil {
+    panic(err)
+  }
   value := mem.Read(a)
-  fmt.Printf("R Bus[0x%04X] %v --> 0x%02X\n", a, mem, value)
+  fmt.Printf("R: Bus[0x%04X] -> %v --> 0x%02X\n", a, mem, value)
   return value
 }
 
@@ -31,13 +53,12 @@ func (b *Bus) Read16(a address) address {
 }
 
 func (b *Bus) String() string {
-  return fmt.Sprintf("Bus Ram:%v Kernal:%v",
-    b.Ram, b.Kernal)
+  return fmt.Sprintf("Address bus (TODO: describe)")
 }
 
 func (b *Bus) Write(a address, value byte) {
-  mem := b.backendFor(a)
-  fmt.Printf("W Bus[0x%04X] <-- 0x%02X\n", a, value)
+  mem, _ := b.backendFor(a)
+  fmt.Printf("W: %v <-- Bus[0x%04X] <-- 0x%02X\n", mem, a, value)
   mem.Write(a, value)
 }
 
