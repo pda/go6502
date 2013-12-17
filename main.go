@@ -34,4 +34,7 @@ func main() {
     cpu.Step()
   }
 
+  fmt.Println("Dumping RAM into core file")
+  ram.Dump("core")
+
 }

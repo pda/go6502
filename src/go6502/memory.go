@@ -2,6 +2,7 @@ package go6502
 
 import(
   "fmt"
+  "io/ioutil"
 )
 
 // Memory
@@ -48,4 +49,9 @@ func (mem *Ram) Write(a address, value byte) {
 
 func (mem *Ram) Size() int {
   return 0x8000 // 32K
+}
+
+func (mem *Ram) Dump(path string) {
+  err := ioutil.WriteFile(path, mem[:], 0640)
+  if err != nil { panic(err) }
 }
