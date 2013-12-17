@@ -193,6 +193,7 @@ func (c *Cpu) Execute(iop *Iop) {
   case BPL: c.BPL(iop)
   case CLC: c.CLC(iop)
   case CLD: c.CLD(iop)
+  case CLI: c.CLI(iop)
   case CMP: c.CMP(iop)
   case DEX: c.DEX(iop)
   case DEY: c.DEY(iop)
@@ -270,6 +271,11 @@ func (c *Cpu) CLC(iop *Iop) {
 // clear decimal
 func (c *Cpu) CLD(iop *Iop) {
   c.setStatus(sDecimal, false)
+}
+
+// clear interrupt mask (enable maskable interrupts)
+func (c *Cpu) CLI(iop *Iop) {
+  c.setStatus(sInterrupt, true)
 }
 
 // compare (with accumulator)
@@ -367,7 +373,7 @@ func (c *Cpu) RTS(iop *Iop) {
   c.pc += 1
 }
 
-// set interrupt disable
+// set interrupt mask (disable maskable interrupts)
 func (c *Cpu) SEI(iop *Iop) {
   c.setStatus(sInterrupt, false)
 }
