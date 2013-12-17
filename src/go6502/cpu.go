@@ -205,6 +205,7 @@ func (c *Cpu) Execute(iop *Iop) {
   case LDA: c.LDA(iop)
   case LDX: c.LDX(iop)
   case LDY: c.LDY(iop)
+  case NOP: c.NOP(iop)
   case ORA: c.ORA(iop)
   case ROL: c.ROL(iop)
   case RTS: c.RTS(iop)
@@ -345,6 +346,10 @@ func (c *Cpu) LDY(iop *Iop) {
 func (c *Cpu) LDX(iop *Iop) {
   c.x = c.resolveOperand(iop)
   c.updateStatus(c.x)
+}
+
+// no operation
+func (c *Cpu) NOP(iop *Iop) {
 }
 
 // bitwise OR memory with accumulator
