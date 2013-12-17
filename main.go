@@ -7,7 +7,10 @@ import(
 
 func main() {
 
-  kernal := go6502.RomFromFile("rom/kernal.rom")
+  kernal, err := go6502.RomFromFile("rom/kernal.rom")
+  if err != nil {
+    panic(err)
+  }
 
   addressBus := &go6502.Bus{Ram: &go6502.Ram{}, Kernal: kernal}
   fmt.Println(addressBus)

@@ -16,9 +16,12 @@ func (rom *Rom) Read(a address) byte {
   return rom.data[a]
 }
 
-func RomFromFile(path string) *Rom {
-  data, _ := ioutil.ReadFile(path)
-  return &Rom{name: path, size: len(data), data: data}
+func RomFromFile(path string) (*Rom, error) {
+  data, err := ioutil.ReadFile(path)
+  if err != nil {
+    return nil, err
+  }
+  return &Rom{name: path, size: len(data), data: data}, nil
 }
 
 func (r *Rom) String() string {
