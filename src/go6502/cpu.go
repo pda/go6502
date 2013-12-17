@@ -134,6 +134,8 @@ func (c *Cpu) memoryAddress(iop *Iop) address {
   case indirectY: return c.Bus.Read16(address(iop.op8) + address(c.y))
 
   case zeropage: return address(iop.op8)
+  case zeropageX: return address(iop.op8 + c.x)
+  case zeropageY: return address(iop.op8 + c.y)
   default: panic("unhandled addressing")
   }
 }
