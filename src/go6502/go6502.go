@@ -1,4 +1,4 @@
-package c64
+package go6502
 
 import(
 )

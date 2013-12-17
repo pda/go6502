@@ -2,17 +2,17 @@ package main
 
 import(
   "fmt"
-  "c64"
+  "go6502"
 )
 
 func main() {
 
-  kernal := c64.RomFromFile("rom/kernal.rom")
+  kernal := go6502.RomFromFile("rom/kernal.rom")
 
-  addressBus := &c64.Bus{Ram: &c64.Ram{}, Kernal: kernal}
+  addressBus := &go6502.Bus{Ram: &go6502.Ram{}, Kernal: kernal}
   fmt.Println(addressBus)
 
-  cpu := &c64.Cpu{Bus: addressBus}
+  cpu := &go6502.Cpu{Bus: addressBus}
   cpu.Reset()
   fmt.Println(cpu)
 
