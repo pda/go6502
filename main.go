@@ -19,7 +19,7 @@ func main() {
   cpu.Reset()
   fmt.Println(cpu)
 
-  for i := 0;; i++ {
+  for i := 0; i < 32; i++ {
     fmt.Println("\n--- Step", i)
     cpu.Step()
   }
