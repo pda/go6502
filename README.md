@@ -5,6 +5,9 @@ A [MOS 6502][6502] emulator in [go][golang].
 
 I have no idea what I'm doing.
 
+    # This might do things:
+    GOPATH=`pwd` go run main.go
+
 
 Overview
 --------
