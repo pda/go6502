@@ -1,2 +1,5 @@
 # Core dump file.
 /core
+
+# ROM images (programs/data)
+/rom/*
