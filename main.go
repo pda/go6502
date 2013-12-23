@@ -20,8 +20,11 @@ func main() {
 
   ram := &go6502.Ram{}
 
+  via := &go6502.Via6522{}
+
   addressBus, _ := go6502.CreateBus()
   addressBus.Attach(ram, "ram", 0x0000)
+  addressBus.Attach(via, "VIA", 0xD000)
   addressBus.Attach(kernal, "kernal", 0xE000)
   fmt.Println(addressBus)
 
