@@ -3,6 +3,8 @@ package main
 import(
   "fmt"
   "go6502"
+  "os"
+  "os/signal"
 )
 
 const(
@@ -32,12 +34,23 @@ func main() {
   cpu.Reset()
   fmt.Println(cpu)
 
-  for i := 0; i < 32; i++ {
-    fmt.Println("\n--- Step", i)
-    cpu.Step()
-  }
+  // Dispatch CPU in a goroutine.
+  go func () {
+    i := 0
+    for {
+      fmt.Println("\n--- Step", i)
+      cpu.Step()
+      i++
+    }
+  }()
+
+  sigChan := make(chan os.Signal, 1)
+  signal.Notify(sigChan, os.Interrupt)
+  sig := <-sigChan
+  fmt.Println("\nGot signal:", sig)
 
   fmt.Println("Dumping RAM into core file")
   ram.Dump("core")
 
+  os.Exit(1)
 }
