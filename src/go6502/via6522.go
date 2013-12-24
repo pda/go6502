@@ -33,6 +33,9 @@ import (
 // 0x01: ORA/IRA; write: Output Register A, read: Input Register "A".
 // 0x02: DDRB; Data Direction Register B
 // 0x03: DDRA; Data Direction Register A
+// 0x0C: PCR; Peripheral Control Register.
+//            0: CA1 control, 1..3: CA2 control
+//            4: CB1 control, 5..7: CB2 control.
 //
 // External interface relevant to peripheral ports:
 // PORTA: 8-bit independently bidirectional data to peripheral.
@@ -41,6 +44,13 @@ import (
 // RS: 4-bit register select.
 // CA: 2-bit control lines for PORTA.
 // CB: 2-bit control lines for PORTB.
+
+// Write handshake control (PORT A as example, PORT B is same for writes):
+//   CA2 (output) indicates data has been written to ORA and is ready.
+//   CA1 (input) indicates data has been taken.
+// Default modes assuming PCR == 0x00:
+//   CA2: Input-negative active edge (one of eight options).
+//   CA1: negative active edge (one of two options).
 
 const (
 	VIA_ORB = 0x0
