@@ -60,6 +60,10 @@ const (
 
 	VIA_DDRB = 0x2
 	VIA_DDRA = 0x3
+
+	// bit-offset into PCR for port A & B
+	VIA_PCR_OFFSET_A = 0
+	VIA_PCR_OFFSET_B = 4
 )
 
 /**
@@ -67,12 +71,25 @@ const (
  */
 
 type Via6522 struct {
-	ora  byte // output register port A
-	orb  byte // output register port B
-	ira  byte // input register port A
-	irb  byte // input register port B
-	ddra byte // data direction port A
-	ddrb byte // data direction port B
+	// Note: It may be a mistake to consider ORx and IRx separate registers.
+	//       If so... fix it?
+	ora    byte // output register port A
+	orb    byte // output register port B
+	ira    byte // input register port A
+	irb    byte // input register port B
+	ddra   byte // data direction port A
+	ddrb   byte // data direction port B
+	pcr    byte // peripheral control register
+}
+
+// CA1 or CB1 1-bit mode for the given port offset (VIA_PCR_OFFSET_x)
+func (via *Via6522) control1Mode(portOffset uint8) byte {
+	return (via.pcr >> portOffset) & 1
+}
+
+// CA2 or CB2 3-bit mode for the given port offset (VIA_PCR_OFFSET_x)
+func (via *Via6522) control2Mode(portOffset uint8) byte {
+	return (via.pcr >> (portOffset + 1)) & 0x7
 }
 
 func (via *Via6522) dumpDataDirectionRegisters() {
@@ -81,6 +98,17 @@ func (via *Via6522) dumpDataDirectionRegisters() {
 
 func (via *Via6522) dumpDataRegisters() {
 	fmt.Printf("VIA ORA:0x%02X ORB:0x%02X IRA:0x%02X IRB:0x%02X\n", via.ora, via.orb, via.ira, via.irb)
+}
+
+func (via *Via6522) handleDataWrite(portOffset uint8) {
+	mode := via.control2Mode(portOffset)
+	switch mode {
+	default:
+		panic(fmt.Sprintf("VIA: Unhanded PCR mode 0x%X for write (PCR offset %d)", mode, portOffset))
+	case 0x5:
+		// pulse output
+		fmt.Printf("%c", via.ora) // TODO: something useful
+	}
 }
 
 // Read the register specified by the given 4-bit address (0x00..0x0F).
@@ -98,6 +126,8 @@ func (via *Via6522) Read(a address) byte {
 		return via.ddra
 	case 0x3:
 		return via.ddra
+	case 0xC:
+		return via.pcr
 	}
 }
 
@@ -111,6 +141,7 @@ func (via *Via6522) Reset() {
 	via.irb = 0
 	via.ddra = 0
 	via.ddrb = 0
+	via.pcr = 0
 }
 
 func (via *Via6522) Size() int {
@@ -128,9 +159,11 @@ func (via *Via6522) Write(a address, data byte) {
 		panic(fmt.Sprintf("write to 0x%X not handled by Via6522", a))
 	case 0x0:
 		via.orb = data
+		via.handleDataWrite(VIA_PCR_OFFSET_B)
 		via.dumpDataRegisters()
 	case 0x1:
 		via.ora = data
+		via.handleDataWrite(VIA_PCR_OFFSET_A)
 		via.dumpDataRegisters()
 	case 0x2:
 		via.ddrb = data
@@ -138,5 +171,7 @@ func (via *Via6522) Write(a address, data byte) {
 	case 0x3:
 		via.ddra = data
 		via.dumpDataDirectionRegisters()
+	case 0xC:
+		via.pcr = data
 	}
 }
