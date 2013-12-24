@@ -23,6 +23,7 @@ func main() {
   ram := &go6502.Ram{}
 
   via := &go6502.Via6522{}
+  via.Reset()
 
   addressBus, _ := go6502.CreateBus()
   addressBus.Attach(ram, "ram", 0x0000)

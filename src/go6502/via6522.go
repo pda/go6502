@@ -101,6 +101,18 @@ func (via *Via6522) Read(a address) byte {
 	}
 }
 
+// From the datasheet:
+// Reset clears all internal registers
+// (except T1 and T2 counters and latches, and the SR.)
+func (via *Via6522) Reset() {
+	via.ora = 0
+	via.orb = 0
+	via.ira = 0
+	via.irb = 0
+	via.ddra = 0
+	via.ddrb = 0
+}
+
 func (via *Via6522) Size() int {
 	return 16 // 4-bit RS exposes 16 byte address space.
 }
