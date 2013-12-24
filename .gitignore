@@ -3,3 +3,9 @@
 
 # ROM images (programs/data)
 /rom/*
+
+# Default output of `go build`
+/go6502
+
+# Log files.
+*.log
