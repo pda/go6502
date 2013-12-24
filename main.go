@@ -3,6 +3,7 @@ package main
 import(
   "fmt"
   "go6502"
+  "log"
   "os"
   "os/signal"
 )
@@ -13,33 +14,40 @@ const(
 
 func main() {
 
+  logFile, err := os.Create("go6502.log")
+  if (err != nil) {
+    panic(err)
+  }
+  logger := log.New(logFile, "", log.Ltime | log.Lmicroseconds | log.Lshortfile)
+  logger.Println("Logger initialized")
+
   kernal, err := go6502.RomFromFile(kernalPath)
   if err != nil {
     panic(err)
   } else {
-    fmt.Printf("Loaded %s: %d bytes\n", kernalPath, kernal.Size)
+    logger.Printf("Loaded %s: %d bytes\n", kernalPath, kernal.Size)
   }
 
   ram := &go6502.Ram{}
 
-  via := &go6502.Via6522{}
+  via := go6502.NewVia6522(logger)
   via.Reset()
 
-  addressBus, _ := go6502.CreateBus()
+  addressBus, _ := go6502.CreateBus(logger)
   addressBus.Attach(ram, "ram", 0x0000)
   addressBus.Attach(via, "VIA", 0xC000)
   addressBus.Attach(kernal, "kernal", 0xE000)
-  fmt.Println(addressBus)
+  logger.Println(addressBus)
 
   cpu := &go6502.Cpu{Bus: addressBus}
   cpu.Reset()
-  fmt.Println(cpu)
+  logger.Println(cpu)
 
   // Dispatch CPU in a goroutine.
   go func () {
     i := 0
     for {
-      fmt.Println("\n--- Step", i)
+      logger.Println("\n--- Step", i)
       cpu.Step()
       i++
     }

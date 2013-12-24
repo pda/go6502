@@ -2,6 +2,7 @@ package go6502
 
 import (
 	"fmt"
+	"log"
 )
 
 // A partial emulation of MOS Technology 6522, or the modern WDC65C22
@@ -80,6 +81,11 @@ type Via6522 struct {
 	ddra   byte // data direction port A
 	ddrb   byte // data direction port B
 	pcr    byte // peripheral control register
+	logger *log.Logger
+}
+
+func NewVia6522(l *log.Logger) *Via6522 {
+	return &Via6522{logger: l}
 }
 
 // CA1 or CB1 1-bit mode for the given port offset (VIA_PCR_OFFSET_x)
@@ -93,11 +99,11 @@ func (via *Via6522) control2Mode(portOffset uint8) byte {
 }
 
 func (via *Via6522) dumpDataDirectionRegisters() {
-	fmt.Printf("VIA DDRA:%08b DDRB:%08b\n", via.ddra, via.ddrb)
+	via.logger.Printf("VIA DDRA:%08b DDRB:%08b\n", via.ddra, via.ddrb)
 }
 
 func (via *Via6522) dumpDataRegisters() {
-	fmt.Printf("VIA ORA:0x%02X ORB:0x%02X IRA:0x%02X IRB:0x%02X\n", via.ora, via.orb, via.ira, via.irb)
+	via.logger.Printf("VIA ORA:0x%02X ORB:0x%02X IRA:0x%02X IRB:0x%02X\n", via.ora, via.orb, via.ira, via.irb)
 }
 
 func (via *Via6522) handleDataWrite(portOffset uint8) {

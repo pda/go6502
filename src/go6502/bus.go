@@ -2,6 +2,7 @@ package go6502
 
 import(
   "fmt"
+  "log"
 )
 
 type busEntry struct {
@@ -13,10 +14,11 @@ type busEntry struct {
 
 type Bus struct {
   entries []busEntry
+  logger *log.Logger
 }
 
-func CreateBus() (*Bus, error) {
-  return &Bus{entries: make([]busEntry, 0)}, nil
+func CreateBus(logger *log.Logger) (*Bus, error) {
+  return &Bus{entries: make([]busEntry, 0), logger: logger}, nil
 }
 
 func (b *Bus) Attach(mem Memory, name string, offset address) (error) {
@@ -42,7 +44,7 @@ func (b *Bus) Read(a address) byte {
     panic(err)
   }
   value := mem.Read(a)
-  fmt.Printf("R: Bus[0x%04X] -> %v --> 0x%02X\n", a, mem, value)
+  b.logger.Printf("R: Bus[0x%04X] -> %v --> 0x%02X\n", a, mem, value)
   return value
 }
 
@@ -58,7 +60,7 @@ func (b *Bus) String() string {
 
 func (b *Bus) Write(a address, value byte) {
   mem, _ := b.backendFor(a)
-  fmt.Printf("W: %v <-- Bus[0x%04X] <-- 0x%02X\n", mem, a, value)
+  b.logger.Printf("W: %v <-- Bus[0x%04X] <-- 0x%02X\n", mem, a, value)
   mem.Write(a, value)
 }
 

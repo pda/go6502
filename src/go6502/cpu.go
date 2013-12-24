@@ -5,6 +5,8 @@ import(
   "strings"
 )
 
+// TODO: RWB pin output (read/write control)
+
 // status register bits
 const(
   sCarry = iota
@@ -65,9 +67,9 @@ func (c *Cpu) Step() {
   c.pc++
   in := findInstruction(op)
   iop := c.readOperand(in)
-  fmt.Println(iop)
+  c.Bus.logger.Println(iop)
   c.Execute(iop)
-  fmt.Println(c)
+  c.Bus.logger.Println(c)
 }
 
 func (c *Cpu) readOperand(in *Instruction) *Iop {
@@ -149,7 +151,7 @@ func (c *Cpu) getStatusInt(bit uint8) uint8 {
 }
 
 func (c *Cpu) setStatus(bit uint8, state bool) {
-  fmt.Printf("sr %s = %v\n", srName(bit), state)
+  c.Bus.logger.Printf("sr %s = %v\n", srName(bit), state)
   if state {
     c.sr |= 1 << bit
   } else {
