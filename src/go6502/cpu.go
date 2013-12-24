@@ -197,6 +197,7 @@ func (c *Cpu) Execute(iop *Iop) {
   case CLD: c.CLD(iop)
   case CLI: c.CLI(iop)
   case CMP: c.CMP(iop)
+  case CPX: c.CPX(iop)
   case DEX: c.DEX(iop)
   case DEY: c.DEY(iop)
   case INC: c.INC(iop)
@@ -286,6 +287,13 @@ func (c *Cpu) CMP(iop *Iop) {
   value := c.resolveOperand(iop)
   c.setStatus(sCarry, c.ac >= value)
   c.updateStatus(c.ac - value)
+}
+
+// compare X
+func (c *Cpu) CPX(iop *Iop) {
+  value := c.resolveOperand(iop)
+  c.setStatus(sCarry, c.x >= value)
+  c.updateStatus(c.x - value)
 }
 
 // decrement x
