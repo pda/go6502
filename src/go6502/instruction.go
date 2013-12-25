@@ -96,6 +96,7 @@ func findInstruction(opcode byte) *Instruction {
   // TODO: singleton instructions; they're immutable.
   var i Instruction;
   switch opcode {
+  default: panic(fmt.Sprintf("Unknown opcode: 0x%02X", opcode))
   case 0x69: i = Instruction{ADC, opcode, immediate, 2, 2, 0}
   case 0x65: i = Instruction{ADC, opcode, zeropage, 2, 3, 0}
   case 0x75: i = Instruction{ADC, opcode, zeropageX, 2, 4, 0}
