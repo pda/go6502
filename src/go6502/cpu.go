@@ -3,6 +3,7 @@ package go6502
 import(
   "fmt"
   "strings"
+  "os"
 )
 
 // TODO: RWB pin output (read/write control)
@@ -223,6 +224,7 @@ func (c *Cpu) Execute(iop *Iop) {
   case TXA: c.TXA(iop)
   case TXS: c.TXS(iop)
   case TYA: c.TYA(iop)
+  case _END: c._END(iop)
   default: panic(fmt.Sprintf("unhandled instruction: %v", iop.in.name()))
   }
 }
@@ -439,4 +441,10 @@ func (c *Cpu) TXS(iop *Iop) {
 func (c *Cpu) TYA(iop *Iop) {
   c.ac = c.y
   c.updateStatus(c.ac)
+}
+
+// Custom go6502 instruction.
+// Exit, with contents of X register as exit status.
+func (c *Cpu) _END(iop *Iop) {
+  os.Exit(int(c.x))
 }

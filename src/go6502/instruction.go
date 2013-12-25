@@ -81,6 +81,7 @@ const(
   TXA
   TXS
   TYA
+  _END
 )
 
 type Instruction struct {
@@ -248,6 +249,7 @@ func findInstruction(opcode byte) *Instruction {
   case 0x8A: i = Instruction{TXA, opcode, implied, 1, 2, 0}
   case 0x9A: i = Instruction{TXS, opcode, implied, 1, 2, 0}
   case 0x98: i = Instruction{TYA, opcode, implied, 1, 2, 0}
+  case 0xFF: i = Instruction{_END, opcode, implied, 1, 1, 0}
   }
   return &i;
 }
@@ -259,6 +261,7 @@ func (i *Instruction) String() string {
 
 func (i *Instruction) name() (s string) {
   switch i.id {
+  case _END: s = "_END"
   case ADC: s = "ADC"
   case AND: s = "AND"
   case ASL: s = "ASL"
