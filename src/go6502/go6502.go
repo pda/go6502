@@ -1,8 +1,7 @@
 package go6502
 
-import(
-)
+import ()
 
 // Address
 
-type address uint16;
+type address uint16
