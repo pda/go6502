@@ -6,8 +6,6 @@ import(
   "os"
 )
 
-// TODO: RWB pin output (read/write control)
-
 // status register bits
 const(
   sCarry = iota
