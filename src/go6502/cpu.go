@@ -232,6 +232,8 @@ func (c *Cpu) Execute(iop *Iop) {
 		c.CMP(iop)
 	case CPX:
 		c.CPX(iop)
+	case CPY:
+		c.CPY(iop)
 	case DEX:
 		c.DEX(iop)
 	case DEY:
@@ -354,6 +356,13 @@ func (c *Cpu) CPX(iop *Iop) {
 	value := c.resolveOperand(iop)
 	c.setStatus(sCarry, c.x >= value)
 	c.updateStatus(c.x - value)
+}
+
+// compare Y
+func (c *Cpu) CPY(iop *Iop) {
+	value := c.resolveOperand(iop)
+	c.setStatus(sCarry, c.y >= value)
+	c.updateStatus(c.y - value)
 }
 
 // decrement x
