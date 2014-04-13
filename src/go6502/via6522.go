@@ -115,7 +115,12 @@ func (via *Via6522) handleDataWrite(portOffset uint8) {
 		panic(fmt.Sprintf("VIA: Unhanded PCR mode 0x%X for write (PCR offset %d)", mode, portOffset))
 	case 0x5:
 		// pulse output mode; print to screen.
-		printAsciiByte(via.ora)
+		ascii := false
+		if ascii {
+			printAsciiByte(via.ora)
+		} else {
+			fmt.Printf("VIA port A output: %08b (0x%02X)\n", via.ora, via.ora)
+		}
 	}
 }
 
