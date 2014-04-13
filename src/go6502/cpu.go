@@ -238,6 +238,8 @@ func (c *Cpu) Execute(iop *Iop) {
 		c.DEX(iop)
 	case DEY:
 		c.DEY(iop)
+	case EOR:
+		c.EOR(iop)
 	case INC:
 		c.INC(iop)
 	case INX:
@@ -375,6 +377,13 @@ func (c *Cpu) DEX(iop *Iop) {
 func (c *Cpu) DEY(iop *Iop) {
 	c.y--
 	c.updateStatus(c.y)
+}
+
+// Exclusive OR (accumulator)
+func (c *Cpu) EOR(iop *Iop) {
+	value := c.resolveOperand(iop)
+	c.ac |= value
+	c.updateStatus(c.ac)
 }
 
 // increment value in memory
