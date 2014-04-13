@@ -3,6 +3,8 @@ package go6502
 import (
 	"fmt"
 	"log"
+	"strconv"
+	"unicode"
 )
 
 // A partial emulation of MOS Technology 6522, or the modern WDC65C22
@@ -112,8 +114,19 @@ func (via *Via6522) handleDataWrite(portOffset uint8) {
 	default:
 		panic(fmt.Sprintf("VIA: Unhanded PCR mode 0x%X for write (PCR offset %d)", mode, portOffset))
 	case 0x5:
-		// pulse output
-		fmt.Printf("%c", via.ora) // TODO: something useful
+		// pulse output mode; print to screen.
+		printAsciiByte(via.ora)
+	}
+}
+
+// Print a byte as ASCII, using escape sequences where necessary.
+func printAsciiByte(b uint8) {
+	r := rune(b)
+	if unicode.IsPrint(r) || unicode.IsSpace(r) {
+		fmt.Print(string(r))
+	} else {
+		charStr := strconv.QuoteRuneToASCII(r)
+		fmt.Print(charStr[1 : len(charStr)-1])
 	}
 }
 
