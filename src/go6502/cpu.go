@@ -256,6 +256,8 @@ func (c *Cpu) Execute(iop *Iop) {
 		c.LDX(iop)
 	case LDY:
 		c.LDY(iop)
+	case LSR:
+		c.LSR(iop)
 	case NOP:
 		c.NOP(iop)
 	case ORA:
@@ -434,6 +436,13 @@ func (c *Cpu) LDY(iop *Iop) {
 func (c *Cpu) LDX(iop *Iop) {
 	c.x = c.resolveOperand(iop)
 	c.updateStatus(c.x)
+}
+
+// logical shift right.
+func (c *Cpu) LSR(iop *Iop) {
+	c.setStatus(sCarry, c.ac & 1 == 1)
+	c.ac >>= 1
+	c.updateStatus(c.ac)
 }
 
 // no operation
