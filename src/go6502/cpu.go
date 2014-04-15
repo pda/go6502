@@ -79,9 +79,9 @@ func (c *Cpu) Step() {
 		c.debugger.Step()
 	}
 	op := c.Bus.Read(c.pc)
-	c.pc++
 	in := findInstruction(op)
 	iop := c.readOperand(in)
+	c.pc += address(in.bytes)
 	c.Bus.logger.Println(iop)
 	c.Execute(iop)
 	c.Bus.logger.Println(c)
@@ -93,13 +93,12 @@ func (c *Cpu) readOperand(in *Instruction) *Iop {
 	switch in.bytes {
 	case 1: // no operand
 	case 2:
-		iop.op8 = c.Bus.Read(c.pc)
+		iop.op8 = c.Bus.Read(c.pc + 1)
 	case 3:
-		iop.op16 = c.Bus.Read16(c.pc)
+		iop.op16 = c.Bus.Read16(c.pc + 1)
 	default:
 		panic(fmt.Sprintf("unhandled instruction length: %d", in.bytes))
 	}
-	c.pc += address(in.bytes - 1)
 	return iop
 }
 
