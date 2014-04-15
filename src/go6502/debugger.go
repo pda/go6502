@@ -33,7 +33,7 @@ func NewDebugger(cpu *Cpu) *Debugger {
 	return d
 }
 
-func (d *Debugger) Step() {
+func (d *Debugger) BeforeExecute(iop *Iop) {
 
 	if d.run {
 		return

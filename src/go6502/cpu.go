@@ -75,12 +75,12 @@ func (c *Cpu) Reset() {
 }
 
 func (c *Cpu) Step() {
-	if c.debugger != nil {
-		c.debugger.Step()
-	}
 	op := c.Bus.Read(c.pc)
 	in := findInstruction(op)
 	iop := c.readOperand(in)
+	if c.debugger != nil {
+		c.debugger.BeforeExecute(iop)
+	}
 	c.pc += address(in.bytes)
 	c.Bus.logger.Println(iop)
 	c.Execute(iop)
