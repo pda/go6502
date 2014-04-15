@@ -3,10 +3,13 @@ package go6502
 import (
 	"fmt"
 	"github.com/peterh/liner"
+	"os"
 )
 
 const (
-	DEBUG_CMD_STEP = iota
+	DEBUG_CMD_NONE = iota
+	DEBUG_CMD_STEP
+	DEBUG_CMD_EXIT
 )
 
 type Debugger struct {
@@ -25,38 +28,58 @@ func (d *Debugger) Step() {
 	fmt.Println(d.cpu)
 
 	var (
-		input   string
-		command int
+		cmd int
+		err error
 	)
 
-	input = d.readInput()
-	if input == "" {
-		input = d.lastInput
+	for cmd == 0 && err == nil {
+		cmd, err = d.getCommand()
 	}
 
-	switch input {
-	case "step", "st", "s":
-		command = DEBUG_CMD_STEP
-	default:
-		panic("que?")
-	}
-
-	d.lastInput = input
-
-	switch command {
+	switch cmd {
 	case DEBUG_CMD_STEP:
+		return
+	case DEBUG_CMD_EXIT:
+		os.Exit(0)
 	default:
 		panic("Invalid command")
 	}
 }
 
-func (d *Debugger) readInput() string {
+func (d *Debugger) getCommand() (int, error) {
+	input, err := d.readInput()
+	if err != nil {
+		return DEBUG_CMD_NONE, err
+	}
+	if input == "" {
+		input = d.lastInput
+	}
+
+	var cmd int
+	switch input {
+	case "":
+		cmd = DEBUG_CMD_NONE
+	case "step", "st", "s":
+		cmd = DEBUG_CMD_STEP
+	case "exit", "quit":
+		cmd = DEBUG_CMD_EXIT
+	default:
+		fmt.Println("Invalid command.")
+		cmd = DEBUG_CMD_NONE
+	}
+
+	d.lastInput = input
+
+	return cmd, nil
+}
+
+func (d *Debugger) readInput() (string, error) {
 	input, err := d.liner.Prompt(d.prompt())
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	d.liner.AppendHistory(input)
-	return input
+	return input, nil
 }
 
 func (d *Debugger) prompt() string {
