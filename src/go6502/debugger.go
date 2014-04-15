@@ -8,14 +8,16 @@ import (
 
 const (
 	DEBUG_CMD_NONE = iota
-	DEBUG_CMD_STEP
 	DEBUG_CMD_EXIT
+	DEBUG_CMD_RUN
+	DEBUG_CMD_STEP
 )
 
 type Debugger struct {
 	cpu       *Cpu
 	liner     *liner.State
 	lastInput string
+	run       bool
 }
 
 func NewDebugger(cpu *Cpu) *Debugger {
@@ -24,6 +26,10 @@ func NewDebugger(cpu *Cpu) *Debugger {
 }
 
 func (d *Debugger) Step() {
+
+	if d.run {
+		return
+	}
 
 	fmt.Println(d.cpu)
 
@@ -37,10 +43,11 @@ func (d *Debugger) Step() {
 	}
 
 	switch cmd {
-	case DEBUG_CMD_STEP:
-		return
 	case DEBUG_CMD_EXIT:
 		os.Exit(0)
+	case DEBUG_CMD_RUN:
+		d.run = true
+	case DEBUG_CMD_STEP:
 	default:
 		panic("Invalid command")
 	}
@@ -59,10 +66,12 @@ func (d *Debugger) getCommand() (int, error) {
 	switch input {
 	case "":
 		cmd = DEBUG_CMD_NONE
-	case "step", "st", "s":
-		cmd = DEBUG_CMD_STEP
 	case "exit", "quit":
 		cmd = DEBUG_CMD_EXIT
+	case "run", "r":
+		cmd = DEBUG_CMD_RUN
+	case "step", "st", "s":
+		cmd = DEBUG_CMD_STEP
 	default:
 		fmt.Println("Invalid command.")
 		cmd = DEBUG_CMD_NONE
