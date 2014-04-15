@@ -9,17 +9,19 @@ import (
 
 const (
 	DEBUG_CMD_NONE = iota
-	DEBUG_CMD_INVALID
+	DEBUG_CMD_BREAK_INSTRUCTION
 	DEBUG_CMD_EXIT
+	DEBUG_CMD_INVALID
 	DEBUG_CMD_RUN
 	DEBUG_CMD_STEP
 )
 
 type Debugger struct {
-	cpu         *Cpu
-	liner       *liner.State
-	lastCommand *DebuggerCommand
-	run         bool
+	cpu              *Cpu
+	liner            *liner.State
+	lastCommand      *DebuggerCommand
+	run              bool
+	breakInstruction string
 }
 
 type DebuggerCommand struct {
@@ -34,6 +36,11 @@ func NewDebugger(cpu *Cpu) *Debugger {
 }
 
 func (d *Debugger) BeforeExecute(iop *Iop) {
+	inName := iop.in.name()
+	if inName == d.breakInstruction {
+		fmt.Printf("Breakpoint for instruction %s\n", inName)
+		d.run = false
+	}
 
 	if d.run {
 		return
@@ -51,13 +58,16 @@ func (d *Debugger) BeforeExecute(iop *Iop) {
 	}
 
 	switch cmd.id {
+	case DEBUG_CMD_BREAK_INSTRUCTION:
+		d.breakInstruction = cmd.arguments[0]
 	case DEBUG_CMD_EXIT:
 		os.Exit(0)
+	case DEBUG_CMD_NONE:
+		// pass
 	case DEBUG_CMD_RUN:
 		d.run = true
 	case DEBUG_CMD_STEP:
 		// pass
-	case DEBUG_CMD_NONE:
 	default:
 		panic("Invalid command")
 	}
@@ -94,6 +104,8 @@ func (d *Debugger) getCommand() (*DebuggerCommand, error) {
 		id = DEBUG_CMD_RUN
 	case "step", "st", "s":
 		id = DEBUG_CMD_STEP
+	case "break-instruction", "bi":
+		id = DEBUG_CMD_BREAK_INSTRUCTION
 	default:
 		fmt.Println("Invalid command.")
 		id = DEBUG_CMD_INVALID
