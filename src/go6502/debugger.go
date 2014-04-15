@@ -4,20 +4,28 @@ import (
 	"fmt"
 	"github.com/peterh/liner"
 	"os"
+	"strings"
 )
 
 const (
 	DEBUG_CMD_NONE = iota
+	DEBUG_CMD_INVALID
 	DEBUG_CMD_EXIT
 	DEBUG_CMD_RUN
 	DEBUG_CMD_STEP
 )
 
 type Debugger struct {
-	cpu       *Cpu
-	liner     *liner.State
-	lastInput string
-	run       bool
+	cpu         *Cpu
+	liner       *liner.State
+	lastCommand *DebuggerCommand
+	run         bool
+}
+
+type DebuggerCommand struct {
+	id        int
+	input     string
+	arguments []string
 }
 
 func NewDebugger(cpu *Cpu) *Debugger {
@@ -34,50 +42,69 @@ func (d *Debugger) Step() {
 	fmt.Println(d.cpu)
 
 	var (
-		cmd int
+		cmd *DebuggerCommand
 		err error
 	)
 
-	for cmd == 0 && err == nil {
+	for cmd == nil && err == nil {
 		cmd, err = d.getCommand()
 	}
 
-	switch cmd {
+	switch cmd.id {
 	case DEBUG_CMD_EXIT:
 		os.Exit(0)
 	case DEBUG_CMD_RUN:
 		d.run = true
 	case DEBUG_CMD_STEP:
+		// pass
+	case DEBUG_CMD_NONE:
 	default:
 		panic("Invalid command")
 	}
 }
 
-func (d *Debugger) getCommand() (int, error) {
+func (d *Debugger) getCommand() (*DebuggerCommand, error) {
+	var (
+		id        int
+		cmdString string
+		arguments []string
+		cmd       *DebuggerCommand
+	)
+
 	input, err := d.readInput()
 	if err != nil {
-		return DEBUG_CMD_NONE, err
-	}
-	if input == "" {
-		input = d.lastInput
+		return nil, err
 	}
 
-	var cmd int
-	switch input {
+	fields := strings.Fields(input)
+
+	if len(fields) >= 1 {
+		cmdString = fields[0]
+	}
+	if len(fields) >= 2 {
+		arguments = fields[1:]
+	}
+
+	switch cmdString {
 	case "":
-		cmd = DEBUG_CMD_NONE
+		id = DEBUG_CMD_NONE
 	case "exit", "quit":
-		cmd = DEBUG_CMD_EXIT
+		id = DEBUG_CMD_EXIT
 	case "run", "r":
-		cmd = DEBUG_CMD_RUN
+		id = DEBUG_CMD_RUN
 	case "step", "st", "s":
-		cmd = DEBUG_CMD_STEP
+		id = DEBUG_CMD_STEP
 	default:
 		fmt.Println("Invalid command.")
-		cmd = DEBUG_CMD_NONE
+		id = DEBUG_CMD_INVALID
 	}
 
-	d.lastInput = input
+	if id == DEBUG_CMD_NONE {
+		cmd = d.lastCommand
+	} else {
+		cmd = &DebuggerCommand{id, input, arguments}
+		d.lastCommand = cmd
+	}
 
 	return cmd, nil
 }
