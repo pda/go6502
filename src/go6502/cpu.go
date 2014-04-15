@@ -41,13 +41,14 @@ func srName(bit uint8) (s string) {
 }
 
 type Cpu struct {
-	pc  address
-	ac  byte
-	x   byte
-	y   byte
-	sp  byte
-	sr  byte
-	Bus *Bus
+	pc       address
+	ac       byte
+	x        byte
+	y        byte
+	sp       byte
+	sr       byte
+	Bus      *Bus
+	debugger *Debugger
 }
 
 type Iop struct {
@@ -60,6 +61,10 @@ func (iop *Iop) String() string {
 	return fmt.Sprintf("%v op8:0x%02X op16:0x%04X", iop.in, iop.op8, iop.op16)
 }
 
+func (c *Cpu) AttachDebugger(d *Debugger) {
+	c.debugger = d
+}
+
 func (c *Cpu) Reset() {
 	c.pc = c.Bus.Read16(0xFFFC)
 	c.ac = 0x00
@@ -70,6 +75,9 @@ func (c *Cpu) Reset() {
 }
 
 func (c *Cpu) Step() {
+	if c.debugger != nil {
+		c.debugger.Step()
+	}
 	op := c.Bus.Read(c.pc)
 	c.pc++
 	in := findInstruction(op)
@@ -443,7 +451,7 @@ func (c *Cpu) LDX(iop *Iop) {
 
 // logical shift right.
 func (c *Cpu) LSR(iop *Iop) {
-	c.setStatus(sCarry, c.ac & 1 == 1)
+	c.setStatus(sCarry, c.ac&1 == 1)
 	c.ac >>= 1
 	c.updateStatus(c.ac)
 }
@@ -460,7 +468,7 @@ func (c *Cpu) ORA(iop *Iop) {
 
 // push accumulator
 func (c *Cpu) PHA(iop *Iop) {
-	c.Bus.Write(0x0100 + address(c.sp), c.ac)
+	c.Bus.Write(0x0100+address(c.sp), c.ac)
 	c.sp--
 }
 

@@ -42,6 +42,10 @@ func main() {
 	logger.Println(addressBus)
 
 	cpu := &go6502.Cpu{Bus: addressBus}
+	if options.Debug {
+		debugger := go6502.NewDebugger(cpu)
+		cpu.AttachDebugger(debugger)
+	}
 	cpu.Reset()
 	logger.Println(cpu)
 

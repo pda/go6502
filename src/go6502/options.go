@@ -9,10 +9,14 @@ type Options struct {
 	viaDumpBinary bool
 	viaDumpAscii  bool
 	LogFile       string
+	Debug         bool
 }
 
 func ParseOptions() *Options {
 	opt := &Options{}
+
+	// Debug
+	flag.BoolVar(&opt.Debug, "debug", false, "Run debugger")
 
 	// Logging
 	flag.StringVar(&opt.LogFile, "log-file", os.DevNull, "Emulator debug log")
