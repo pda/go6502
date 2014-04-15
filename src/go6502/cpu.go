@@ -172,7 +172,6 @@ func (c *Cpu) getStatusInt(bit uint8) uint8 {
 }
 
 func (c *Cpu) setStatus(bit uint8, state bool) {
-	c.Bus.logger.Printf("sr %s = %v\n", srName(bit), state)
 	if state {
 		c.sr |= 1 << bit
 	} else {
