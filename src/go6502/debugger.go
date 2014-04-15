@@ -163,7 +163,7 @@ func (d *Debugger) getCommand() (*DebuggerCommand, error) {
 	fields := strings.Fields(input)
 
 	if len(fields) >= 1 {
-		cmdString = fields[0]
+		cmdString = strings.ToLower(fields[0])
 	}
 	if len(fields) >= 2 {
 		arguments = fields[1:]
