@@ -16,6 +16,7 @@ const (
 	DEBUG_CMD_EXIT
 	DEBUG_CMD_HELP
 	DEBUG_CMD_INVALID
+	DEBUG_CMD_READ
 	DEBUG_CMD_RUN
 	DEBUG_CMD_STEP
 )
@@ -101,6 +102,8 @@ func (d *Debugger) BeforeExecute(iop *Iop) {
 		d.commandHelp(cmd)
 	case DEBUG_CMD_NONE:
 		// pass
+	case DEBUG_CMD_READ:
+		d.commandRead(cmd)
 	case DEBUG_CMD_RUN:
 		d.run = true
 	case DEBUG_CMD_STEP:
@@ -108,6 +111,16 @@ func (d *Debugger) BeforeExecute(iop *Iop) {
 	default:
 		panic("Invalid command")
 	}
+}
+
+func (d *Debugger) commandRead(cmd *DebuggerCommand) {
+	addr64, err := strconv.ParseUint(cmd.arguments[0], 0, 16)
+	if err != nil {
+		panic(err)
+	}
+	addr := address(addr64)
+	v := d.cpu.Bus.Read(addr)
+	fmt.Printf("$%04X = $%02X 0b%08b %d %q\n", addr, v, v, v, v)
 }
 
 func (d *Debugger) commandHelp(cmd *DebuggerCommand) {
@@ -119,6 +132,7 @@ func (d *Debugger) commandHelp(cmd *DebuggerCommand) {
 	fmt.Println("break-register <x|y|a> <value> (alias: br) e.g. br x 128")
 	fmt.Println("exit (alias: quit, q) Shut down the emulator.")
 	fmt.Println("help (alias: h, ?) This help.")
+	fmt.Println("read <address> - Read and display 8-bit integer at address.")
 	fmt.Println("run (alias: r) Run continuously until breakpoint.")
 	fmt.Println("step (alias: s) Run only the current instruction.")
 	fmt.Println("(blank) Repeat the previous command.")
@@ -200,6 +214,8 @@ func (d *Debugger) getCommand() (*DebuggerCommand, error) {
 		id = DEBUG_CMD_EXIT
 	case "help", "h", "?":
 		id = DEBUG_CMD_HELP
+	case "read":
+		id = DEBUG_CMD_READ
 	case "run", "r":
 		id = DEBUG_CMD_RUN
 	case "step", "st", "s":
