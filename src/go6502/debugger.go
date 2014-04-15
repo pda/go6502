@@ -10,6 +10,7 @@ import (
 
 const (
 	DEBUG_CMD_NONE = iota
+	DEBUG_CMD_BREAK_ADDRESS
 	DEBUG_CMD_BREAK_INSTRUCTION
 	DEBUG_CMD_BREAK_REGISTER
 	DEBUG_CMD_EXIT
@@ -19,17 +20,19 @@ const (
 )
 
 type Debugger struct {
-	cpu              *Cpu
-	liner            *liner.State
-	lastCommand      *DebuggerCommand
-	run              bool
-	breakInstruction string
-	breakRegA        bool
-	breakRegAValue   byte
-	breakRegX        bool
-	breakRegXValue   byte
-	breakRegY        bool
-	breakRegYValue   byte
+	cpu               *Cpu
+	liner             *liner.State
+	lastCommand       *DebuggerCommand
+	run               bool
+	breakAddress      bool
+	breakAddressValue address
+	breakInstruction  string
+	breakRegA         bool
+	breakRegAValue    byte
+	breakRegX         bool
+	breakRegXValue    byte
+	breakRegY         bool
+	breakRegYValue    byte
 }
 
 type DebuggerCommand struct {
@@ -59,6 +62,11 @@ func (d *Debugger) BeforeExecute(iop *Iop) {
 		d.run = false
 	}
 
+	if d.breakAddress && d.cpu.pc == d.breakAddressValue {
+		fmt.Printf("Breakpoint for PC address = $%04X\n", d.breakAddressValue)
+		d.run = false
+	}
+
 	d.checkRegBreakpoint("A", d.breakRegA, d.breakRegAValue, d.cpu.ac)
 	d.checkRegBreakpoint("X", d.breakRegX, d.breakRegXValue, d.cpu.x)
 	d.checkRegBreakpoint("Y", d.breakRegY, d.breakRegYValue, d.cpu.y)
@@ -79,6 +87,8 @@ func (d *Debugger) BeforeExecute(iop *Iop) {
 	}
 
 	switch cmd.id {
+	case DEBUG_CMD_BREAK_ADDRESS:
+		d.commandBreakAddress(cmd)
 	case DEBUG_CMD_BREAK_INSTRUCTION:
 		d.breakInstruction = cmd.arguments[0]
 	case DEBUG_CMD_BREAK_REGISTER:
@@ -94,6 +104,16 @@ func (d *Debugger) BeforeExecute(iop *Iop) {
 	default:
 		panic("Invalid command")
 	}
+}
+
+func (d *Debugger) commandBreakAddress(cmd *DebuggerCommand) {
+	value64, err := strconv.ParseUint(cmd.arguments[0], 0, 16)
+	if err != nil {
+		panic(err)
+	}
+	addr := address(value64)
+	d.breakAddress = true
+	d.breakAddressValue = addr
 }
 
 func (d *Debugger) commandBreakRegister(cmd *DebuggerCommand) {
@@ -151,6 +171,8 @@ func (d *Debugger) getCommand() (*DebuggerCommand, error) {
 	switch cmdString {
 	case "":
 		id = DEBUG_CMD_NONE
+	case "break-address", "break-addr", "ba":
+		id = DEBUG_CMD_BREAK_ADDRESS
 	case "break-instruction", "bi":
 		id = DEBUG_CMD_BREAK_INSTRUCTION
 	case "break-register", "break-reg", "br":
