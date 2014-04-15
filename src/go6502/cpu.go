@@ -262,6 +262,10 @@ func (c *Cpu) Execute(iop *Iop) {
 		c.NOP(iop)
 	case ORA:
 		c.ORA(iop)
+	case PHA:
+		c.PHA(iop)
+	case PLA:
+		c.PLA(iop)
 	case ROL:
 		c.ROL(iop)
 	case RTS:
@@ -453,6 +457,18 @@ func (c *Cpu) NOP(iop *Iop) {
 func (c *Cpu) ORA(iop *Iop) {
 	c.ac |= c.resolveOperand(iop)
 	c.updateStatus(c.ac)
+}
+
+// push accumulator
+func (c *Cpu) PHA(iop *Iop) {
+	c.Bus.Write(0x0100 + address(c.sp), c.ac)
+	c.sp--
+}
+
+// pull accumulator
+func (c *Cpu) PLA(iop *Iop) {
+	c.sp++
+	c.ac = c.Bus.Read(0x0100 + address(c.sp))
 }
 
 // bitwise rotate left
