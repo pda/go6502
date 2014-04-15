@@ -14,6 +14,7 @@ const (
 	DEBUG_CMD_BREAK_INSTRUCTION
 	DEBUG_CMD_BREAK_REGISTER
 	DEBUG_CMD_EXIT
+	DEBUG_CMD_HELP
 	DEBUG_CMD_INVALID
 	DEBUG_CMD_RUN
 	DEBUG_CMD_STEP
@@ -96,6 +97,8 @@ func (d *Debugger) BeforeExecute(iop *Iop) {
 		d.commandBreakRegister(cmd)
 	case DEBUG_CMD_EXIT:
 		os.Exit(0)
+	case DEBUG_CMD_HELP:
+		d.commandHelp(cmd)
 	case DEBUG_CMD_NONE:
 		// pass
 	case DEBUG_CMD_RUN:
@@ -105,6 +108,21 @@ func (d *Debugger) BeforeExecute(iop *Iop) {
 	default:
 		panic("Invalid command")
 	}
+}
+
+func (d *Debugger) commandHelp(cmd *DebuggerCommand) {
+	fmt.Println("")
+	fmt.Println("pda6502 debuger")
+	fmt.Println("---------------")
+	fmt.Println("break-address <addr> (alias: ba) e.g. ba 0x1000")
+	fmt.Println("break-instruction <mnemonic> (alias: bi) e.g. bi NOP")
+	fmt.Println("break-register <x|y|a> <value> (alias: br) e.g. br x 128")
+	fmt.Println("exit (alias: quit, q) Shut down the emulator.")
+	fmt.Println("help (alias: h, ?) This help.")
+	fmt.Println("run (alias: r) Run continuously until breakpoint.")
+	fmt.Println("step (alias: s) Run only the current instruction.")
+	fmt.Println("(blank) Repeat the previous command.")
+	fmt.Println("")
 }
 
 func (d *Debugger) commandBreakAddress(cmd *DebuggerCommand) {
@@ -123,7 +141,7 @@ func (d *Debugger) commandBreakRegister(cmd *DebuggerCommand) {
 
 	var ptr *byte
 	switch regStr {
-	case "A", "a":
+	case "A", "a", "AC", "ac":
 		d.breakRegA = true
 		ptr = &d.breakRegAValue
 	case "X", "x":
@@ -180,6 +198,8 @@ func (d *Debugger) getCommand() (*DebuggerCommand, error) {
 		id = DEBUG_CMD_BREAK_REGISTER
 	case "exit", "quit", "q":
 		id = DEBUG_CMD_EXIT
+	case "help", "h", "?":
+		id = DEBUG_CMD_HELP
 	case "run", "r":
 		id = DEBUG_CMD_RUN
 	case "step", "st", "s":
