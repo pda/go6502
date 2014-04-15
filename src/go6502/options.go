@@ -12,15 +12,15 @@ type Options struct {
 }
 
 func ParseOptions() *Options {
-	options := &Options{}
+	opt := &Options{}
 
 	// Logging
-	flag.StringVar(&options.LogFile, "log-file", os.DevNull, "Emulator debug log")
+	flag.StringVar(&opt.LogFile, "log-file", os.DevNull, "Emulator debug log")
 
 	// VIA
-	flag.BoolVar(&options.viaDumpBinary, "via-dump-binary", false, "VIA6522 dumps binary output")
-	flag.BoolVar(&options.viaDumpAscii, "via-dump-ascii", false, "VIA6522 dumps ASCII output")
+	flag.BoolVar(&opt.viaDumpBinary, "via-dump-binary", false, "VIA6522 dumps binary output")
+	flag.BoolVar(&opt.viaDumpAscii, "via-dump-ascii", false, "VIA6522 dumps ASCII output")
 
 	flag.Parse()
-	return options
+	return opt
 }
