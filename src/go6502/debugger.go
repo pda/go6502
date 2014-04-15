@@ -76,6 +76,7 @@ func (d *Debugger) BeforeExecute(iop *Iop) {
 	}
 
 	fmt.Println(d.cpu)
+	fmt.Println(iop)
 
 	var (
 		cmd *DebuggerCommand
