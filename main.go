@@ -16,7 +16,7 @@ func main() {
 
 	options := go6502.ParseOptions()
 
-	logFile, err := os.Create("go6502.log")
+	logFile, err := os.Create(options.LogFile)
 	if err != nil {
 		panic(err)
 	}
