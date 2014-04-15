@@ -178,7 +178,7 @@ func (d *Debugger) getCommand() (*DebuggerCommand, error) {
 		id = DEBUG_CMD_BREAK_INSTRUCTION
 	case "break-register", "break-reg", "br":
 		id = DEBUG_CMD_BREAK_REGISTER
-	case "exit", "quit":
+	case "exit", "quit", "q":
 		id = DEBUG_CMD_EXIT
 	case "run", "r":
 		id = DEBUG_CMD_RUN
