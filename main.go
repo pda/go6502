@@ -15,7 +15,6 @@ const (
 func main() {
 
 	options := go6502.ParseOptions()
-	_ = options
 
 	logFile, err := os.Create("go6502.log")
 	if err != nil {
@@ -33,7 +32,7 @@ func main() {
 
 	ram := &go6502.Ram{}
 
-	via := go6502.NewVia6522(logger)
+	via := go6502.NewVia6522(logger, options)
 	via.Reset()
 
 	addressBus, _ := go6502.CreateBus(logger)

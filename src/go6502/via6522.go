@@ -76,18 +76,19 @@ const (
 type Via6522 struct {
 	// Note: It may be a mistake to consider ORx and IRx separate registers.
 	//       If so... fix it?
-	ora    byte // output register port A
-	orb    byte // output register port B
-	ira    byte // input register port A
-	irb    byte // input register port B
-	ddra   byte // data direction port A
-	ddrb   byte // data direction port B
-	pcr    byte // peripheral control register
-	logger *log.Logger
+	ora     byte // output register port A
+	orb     byte // output register port B
+	ira     byte // input register port A
+	irb     byte // input register port B
+	ddra    byte // data direction port A
+	ddrb    byte // data direction port B
+	pcr     byte // peripheral control register
+	logger  *log.Logger
+	options *Options
 }
 
-func NewVia6522(l *log.Logger) *Via6522 {
-	return &Via6522{logger: l}
+func NewVia6522(l *log.Logger, o *Options) *Via6522 {
+	return &Via6522{logger: l, options: o}
 }
 
 // CA1 or CB1 1-bit mode for the given port offset (VIA_PCR_OFFSET_x)
@@ -114,12 +115,11 @@ func (via *Via6522) handleDataWrite(portOffset uint8) {
 	default:
 		panic(fmt.Sprintf("VIA: Unhanded PCR mode 0x%X for write (PCR offset %d)", mode, portOffset))
 	case 0x5:
-		// pulse output mode; print to screen.
-		ascii := false
-		if ascii {
-			printAsciiByte(via.ora)
-		} else {
+		if via.options.viaDumpBinary {
 			fmt.Printf("VIA port A output: %08b (0x%02X)\n", via.ora, via.ora)
+		}
+		if via.options.viaDumpAscii {
+			printAsciiByte(via.ora)
 		}
 	}
 }
