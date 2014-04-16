@@ -85,6 +85,10 @@ func (d *Debugger) BeforeExecute(iop *Iop) {
 	fmt.Println(d.cpu)
 	fmt.Println(iop)
 
+	d.commandLoop(iop)
+}
+
+func (d *Debugger) commandLoop(iop *Iop) {
 	var (
 		cmd *DebuggerCommand
 		err error
