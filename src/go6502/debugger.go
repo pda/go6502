@@ -56,8 +56,7 @@ func (d *Debugger) checkRegBreakpoint(regStr string, on bool, expect byte, actua
 	}
 }
 
-func (d *Debugger) BeforeExecute(iop *Iop) {
-
+func (d *Debugger) doBreakpoints(iop *Iop) {
 	inName := iop.in.name()
 
 	if inName == d.breakInstruction {
@@ -73,6 +72,11 @@ func (d *Debugger) BeforeExecute(iop *Iop) {
 	d.checkRegBreakpoint("A", d.breakRegA, d.breakRegAValue, d.cpu.ac)
 	d.checkRegBreakpoint("X", d.breakRegX, d.breakRegXValue, d.cpu.x)
 	d.checkRegBreakpoint("Y", d.breakRegY, d.breakRegYValue, d.cpu.y)
+}
+
+func (d *Debugger) BeforeExecute(iop *Iop) {
+
+	d.doBreakpoints(iop)
 
 	if d.run {
 		return
