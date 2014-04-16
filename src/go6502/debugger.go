@@ -93,6 +93,9 @@ func (d *Debugger) BeforeExecute(iop *Iop) {
 	for cmd == nil && err == nil {
 		cmd, err = d.getCommand()
 	}
+	if err != nil {
+		panic(err)
+	}
 
 	switch cmd.id {
 	case DEBUG_CMD_BREAK_ADDRESS:
@@ -115,8 +118,10 @@ func (d *Debugger) BeforeExecute(iop *Iop) {
 		d.run = true
 	case DEBUG_CMD_STEP:
 		// pass
+	case DEBUG_CMD_INVALID:
+		fmt.Println("Invalid command.")
 	default:
-		panic("Invalid command")
+		panic("Unknown command code.")
 	}
 }
 
@@ -244,11 +249,10 @@ func (d *Debugger) getCommand() (*DebuggerCommand, error) {
 	case "step", "st", "s":
 		id = DEBUG_CMD_STEP
 	default:
-		fmt.Println("Invalid command.")
 		id = DEBUG_CMD_INVALID
 	}
 
-	if id == DEBUG_CMD_NONE {
+	if id == DEBUG_CMD_NONE && d.lastCommand != nil {
 		cmd = d.lastCommand
 	} else {
 		cmd = &DebuggerCommand{id, input, arguments}
