@@ -85,10 +85,13 @@ func (d *Debugger) BeforeExecute(iop *Iop) {
 	fmt.Println(d.cpu)
 	fmt.Println(iop)
 
-	d.commandLoop(iop)
+	for !d.commandLoop(iop) {
+		// next
+	}
 }
 
-func (d *Debugger) commandLoop(iop *Iop) {
+// Returns true when control is to be released.
+func (d *Debugger) commandLoop(iop *Iop) (release bool) {
 	var (
 		cmd *DebuggerCommand
 		err error
@@ -120,13 +123,16 @@ func (d *Debugger) commandLoop(iop *Iop) {
 		d.commandRead16(cmd)
 	case DEBUG_CMD_RUN:
 		d.run = true
+		release = true
 	case DEBUG_CMD_STEP:
-		// pass
+		release = true
 	case DEBUG_CMD_INVALID:
 		fmt.Println("Invalid command.")
 	default:
 		panic("Unknown command code.")
 	}
+
+	return
 }
 
 func (d *Debugger) commandRead(cmd *DebuggerCommand) {
