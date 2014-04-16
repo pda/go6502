@@ -108,7 +108,7 @@ func (d *Debugger) commandLoop(iop *Iop) (release bool) {
 	case DEBUG_CMD_BREAK_ADDRESS:
 		d.commandBreakAddress(cmd)
 	case DEBUG_CMD_BREAK_INSTRUCTION:
-		d.breakInstruction = cmd.arguments[0]
+		d.breakInstruction = strings.ToUpper(cmd.arguments[0])
 	case DEBUG_CMD_BREAK_REGISTER:
 		d.commandBreakRegister(cmd)
 	case DEBUG_CMD_EXIT:
