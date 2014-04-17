@@ -48,6 +48,10 @@ func NewDebugger(cpu *Cpu) *Debugger {
 	return d
 }
 
+func (d *Debugger) Close() {
+	d.liner.Close()
+}
+
 func (d *Debugger) checkRegBreakpoint(regStr string, on bool, expect byte, actual byte) {
 	if on && actual == expect {
 		fmt.Printf("Breakpoint for %s = $%02X (%d)\n", regStr, expect, expect)

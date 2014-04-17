@@ -50,6 +50,7 @@ func mainReturningStatus() int {
 	cpu := &go6502.Cpu{Bus: addressBus, ExitChan: exitChan}
 	if options.Debug {
 		debugger := go6502.NewDebugger(cpu)
+		defer debugger.Close()
 		cpu.AttachDebugger(debugger)
 	}
 	cpu.Reset()
