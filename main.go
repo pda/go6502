@@ -45,7 +45,9 @@ func mainReturningStatus() int {
 	addressBus.Attach(kernal, "kernal", 0xE000)
 	logger.Println(addressBus)
 
-	cpu := &go6502.Cpu{Bus: addressBus}
+	exitChan := make(chan int, 0)
+
+	cpu := &go6502.Cpu{Bus: addressBus, ExitChan: exitChan}
 	if options.Debug {
 		debugger := go6502.NewDebugger(cpu)
 		cpu.AttachDebugger(debugger)
@@ -63,13 +65,26 @@ func mainReturningStatus() int {
 		}
 	}()
 
+	var (
+		sig        os.Signal
+		exitStatus int
+	)
+
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
-	sig := <-sigChan
-	fmt.Println("\nGot signal:", sig)
 
-	fmt.Println("Dumping RAM into core file")
-	ram.Dump("core")
+	select {
+	case exitStatus = <-exitChan:
+		// pass
+	case sig = <-sigChan:
+		fmt.Println("\nGot signal:", sig)
+		exitStatus = 1
+	}
 
-	return 1
+	if exitStatus != 0 {
+		fmt.Println("Dumping RAM into core file")
+		ram.Dump("core")
+	}
+
+	return exitStatus
 }

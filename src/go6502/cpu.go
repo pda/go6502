@@ -2,7 +2,6 @@ package go6502
 
 import (
 	"fmt"
-	"os"
 	"strings"
 )
 
@@ -49,6 +48,7 @@ type Cpu struct {
 	sr       byte
 	Bus      *Bus
 	debugger *Debugger
+	ExitChan chan int
 }
 
 type Iop struct {
@@ -552,5 +552,5 @@ func (c *Cpu) TYA(iop *Iop) {
 // Custom go6502 instruction.
 // Exit, with contents of X register as exit status.
 func (c *Cpu) _END(iop *Iop) {
-	os.Exit(int(c.x))
+	c.ExitChan <- int(c.x)
 }

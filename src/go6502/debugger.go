@@ -3,7 +3,6 @@ package go6502
 import (
 	"fmt"
 	"github.com/peterh/liner"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -112,7 +111,7 @@ func (d *Debugger) commandLoop(iop *Iop) (release bool) {
 	case DEBUG_CMD_BREAK_REGISTER:
 		d.commandBreakRegister(cmd)
 	case DEBUG_CMD_EXIT:
-		os.Exit(0)
+		d.cpu.ExitChan <- 0
 	case DEBUG_CMD_HELP:
 		d.commandHelp(cmd)
 	case DEBUG_CMD_NONE:
