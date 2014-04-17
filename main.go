@@ -13,6 +13,10 @@ const (
 )
 
 func main() {
+	os.Exit(mainReturningStatus())
+}
+
+func mainReturningStatus() int {
 
 	options := go6502.ParseOptions()
 
@@ -67,5 +71,5 @@ func main() {
 	fmt.Println("Dumping RAM into core file")
 	ram.Dump("core")
 
-	os.Exit(1)
+	return 1
 }
