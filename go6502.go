@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"go6502"
+	"github.com/pda/go6502/go6502"
 	"log"
 	"os"
 	"os/signal"
