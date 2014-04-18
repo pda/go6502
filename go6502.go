@@ -52,6 +52,7 @@ func mainReturningStatus() int {
 	if options.Debug {
 		debugger := go6502.NewDebugger(cpu)
 		defer debugger.Close()
+		debugger.QueueCommands(options.DebugCmds)
 		cpu.AttachDebugger(debugger)
 	}
 	cpu.Reset()

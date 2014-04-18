@@ -2,7 +2,9 @@ package go6502
 
 import (
 	"flag"
+	"fmt"
 	"os"
+	"strings"
 )
 
 type Options struct {
@@ -10,6 +12,7 @@ type Options struct {
 	viaDumpAscii  bool
 	LogFile       string
 	Debug         bool
+	DebugCmds     commandList
 }
 
 func ParseOptions() *Options {
@@ -17,6 +20,7 @@ func ParseOptions() *Options {
 
 	// Debug
 	flag.BoolVar(&opt.Debug, "debug", false, "Run debugger")
+	flag.Var(&opt.DebugCmds, "debug-commands", "Debugger commands to run, semicolon separated.")
 
 	// Logging
 	flag.StringVar(&opt.LogFile, "log-file", os.DevNull, "Emulator debug log")
@@ -27,4 +31,19 @@ func ParseOptions() *Options {
 
 	flag.Parse()
 	return opt
+}
+
+type commandList []string
+
+func (cl *commandList) Set(value string) error {
+	list := strings.Split(value, ";")
+	for i, value := range list {
+		list[i] = strings.TrimSpace(value)
+	}
+	*cl = list
+	return nil
+}
+
+func (cl *commandList) String() string {
+	return fmt.Sprint(*cl)
 }

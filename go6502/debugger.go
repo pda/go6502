@@ -35,6 +35,7 @@ const (
 )
 
 type Debugger struct {
+	inputQueue        []string
 	cpu               *Cpu
 	liner             *liner.State
 	lastCommand       *DebuggerCommand
@@ -63,6 +64,10 @@ func NewDebugger(cpu *Cpu) *Debugger {
 
 func (d *Debugger) Close() {
 	d.liner.Close()
+}
+
+func (d *Debugger) QueueCommands(cmds []string) {
+	d.inputQueue = append(d.inputQueue, cmds...)
 }
 
 func (d *Debugger) checkRegBreakpoint(regStr string, on bool, expect byte, actual byte) {
@@ -237,11 +242,19 @@ func (d *Debugger) getCommand() (*DebuggerCommand, error) {
 		cmdString string
 		arguments []string
 		cmd       *DebuggerCommand
+		input     string
+		err       error
 	)
 
-	input, err := d.readInput()
-	if err != nil {
-		return nil, err
+	if len(d.inputQueue) > 0 {
+		input = d.inputQueue[0]
+		d.inputQueue = d.inputQueue[1:]
+		fmt.Printf("%s%s\n", d.prompt(), input)
+	} else {
+		input, err = d.readInput()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	fields := strings.Fields(input)
