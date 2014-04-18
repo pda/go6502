@@ -144,22 +144,12 @@ func (c *Cpu) memoryAddress(iop *Iop) address {
 		}
 		return c.Bus.Read16(location)
 
-	// Indirect indexed addressing.
-	// In indirect indexed addressing (referred to as [Indirect, Y]), the second
-	// byte of the instruction points to a memory location in page zero. The
-	// contents of this memory location is added to the contents of the Y index
-	// register, the result being the low oeder eight bits of the effective
-	// address. The carry from this addition is added to the contents of the next
-	// page zero memory location, the result being the high order eight bits of
-	// the effective address.
-	//
-	// TODO: fix this implementation.
 	// Indirect Indexed (Y)
 	// Operand is the zero-page location of a little-endian 16-bit address.
 	// The address is loaded, and then the Y register is added to it.
 	// The resulting loaded_address + Y becomes the effective operand.
 	case indirectY:
-		return c.Bus.Read16(address(iop.op8) + address(c.y))
+		return c.Bus.Read16(address(iop.op8)) + address(c.y)
 
 	case zeropage:
 		return address(iop.op8)
