@@ -4,7 +4,6 @@ package go6502
  * Debugger / Monitor
  *
  * TODO:
- * -  Treat $0000 as 0x0000 for numeric input.
  * -  `step n` e.g. `step 100` to step 100 instructions.
  * -  Read and write CLI history file.
  * -  Ability to label addresses, persist+load.
@@ -157,7 +156,7 @@ func (d *Debugger) commandLoop(iop *Iop) (release bool) {
 }
 
 func (d *Debugger) commandRead(cmd *DebuggerCommand) {
-	addr64, err := strconv.ParseUint(cmd.arguments[0], 0, 16)
+	addr64, err := d.parseUint(cmd.arguments[0], 16)
 	if err != nil {
 		panic(err)
 	}
@@ -167,7 +166,7 @@ func (d *Debugger) commandRead(cmd *DebuggerCommand) {
 }
 
 func (d *Debugger) commandRead16(cmd *DebuggerCommand) {
-	addr64, err := strconv.ParseUint(cmd.arguments[0], 0, 16)
+	addr64, err := d.parseUint(cmd.arguments[0], 16)
 	if err != nil {
 		panic(err)
 	}
@@ -197,7 +196,7 @@ func (d *Debugger) commandHelp(cmd *DebuggerCommand) {
 }
 
 func (d *Debugger) commandBreakAddress(cmd *DebuggerCommand) {
-	value64, err := strconv.ParseUint(cmd.arguments[0], 0, 16)
+	value64, err := d.parseUint(cmd.arguments[0], 16)
 	if err != nil {
 		panic(err)
 	}
@@ -225,7 +224,7 @@ func (d *Debugger) commandBreakRegister(cmd *DebuggerCommand) {
 		panic(fmt.Errorf("Invalid register for break-register"))
 	}
 
-	value64, err := strconv.ParseUint(valueStr, 0, 8)
+	value64, err := d.parseUint(valueStr, 8)
 	if err != nil {
 		panic(err)
 	}
@@ -312,4 +311,9 @@ func (d *Debugger) readInput() (string, error) {
 
 func (d *Debugger) prompt() string {
 	return fmt.Sprintf("$%04X> ", d.cpu.pc)
+}
+
+func (d *Debugger) parseUint(s string, bits int) (uint64, error) {
+	s = strings.Replace(s, "$", "0x", 1)
+	return strconv.ParseUint(s, 0, bits)
 }
