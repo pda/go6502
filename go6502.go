@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/pda/go6502/go6502"
 	"log"
 	"os"
 	"os/signal"
+
+	"github.com/pda/go6502/go6502"
 )
 
 const (

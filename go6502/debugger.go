@@ -14,9 +14,10 @@ package go6502
 
 import (
 	"fmt"
-	"github.com/peterh/liner"
 	"strconv"
 	"strings"
+
+	"github.com/peterh/liner"
 )
 
 const (
