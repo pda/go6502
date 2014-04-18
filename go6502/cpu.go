@@ -386,7 +386,7 @@ func (c *Cpu) DEY(iop *Iop) {
 // Exclusive OR (accumulator)
 func (c *Cpu) EOR(iop *Iop) {
 	value := c.resolveOperand(iop)
-	c.ac |= value
+	c.ac ^= value
 	c.updateStatus(c.ac)
 }
 
