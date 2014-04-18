@@ -193,6 +193,8 @@ func (d *Debugger) commandHelp(cmd *DebuggerCommand) {
 	fmt.Println("step (alias: s) Run only the current instruction.")
 	fmt.Println("(blank) Repeat the previous command.")
 	fmt.Println("")
+	fmt.Println("Hex input formats: 0x1234 $1234")
+	fmt.Println("Commands expecting uint16 treat . as current address (PC).")
 }
 
 func (d *Debugger) commandBreakAddress(cmd *DebuggerCommand) {
@@ -314,6 +316,9 @@ func (d *Debugger) prompt() string {
 }
 
 func (d *Debugger) parseUint(s string, bits int) (uint64, error) {
+	if s == "." && bits == 16 {
+		return uint64(d.cpu.pc), nil
+	}
 	s = strings.Replace(s, "$", "0x", 1)
 	return strconv.ParseUint(s, 0, bits)
 }
