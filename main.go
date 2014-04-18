@@ -83,6 +83,7 @@ func mainReturningStatus() int {
 	}
 
 	if exitStatus != 0 {
+		fmt.Println(cpu)
 		fmt.Println("Dumping RAM into core file")
 		ram.Dump("core")
 	}
