@@ -132,19 +132,17 @@ func (c *Cpu) memoryAddress(iop *Iop) address {
 	case absoluteY:
 		return iop.op16 + address(c.y)
 
-	// Indexed indirect addressing.
-	// In indexed indirect addressing (referred to as [Indirect, X]), the second
-	// byte of the instruction is added to the contents of the X index register,
-	// discarding the carry.  The result of this addition points to a memory
-	// location on page zero whose contents is the low order eight bits of the
-	// effective address.  The next memory location in page zero contains the
-	// high order eight bits of the effective address.  Both memory locations
-	// specitying the high and low order bytes of the effective address must be
-	// in page zero.
-	//
-	// TODO: fix this implementation.
+	// Indexed Indirect (X)
+	// Operand is the zero-page location of a little-endian 16-bit base address.
+	// The X register is added (wrapping; discarding overflow) before loading.
+	// The resulting address loaded from (base+X) becomes the effective operand.
+	// (base + X) must be in zero-page.
 	case indirectX:
-		return c.Bus.Read16(address(iop.op8) + address(c.x))
+		location := address(iop.op8 + c.x)
+		if location == 0xFF {
+			panic("Indexed indirect high-byte not on zero page.")
+		}
+		return c.Bus.Read16(location)
 
 	// Indirect indexed addressing.
 	// In indirect indexed addressing (referred to as [Indirect, Y]), the second
@@ -156,6 +154,10 @@ func (c *Cpu) memoryAddress(iop *Iop) address {
 	// the effective address.
 	//
 	// TODO: fix this implementation.
+	// Indirect Indexed (Y)
+	// Operand is the zero-page location of a little-endian 16-bit address.
+	// The address is loaded, and then the Y register is added to it.
+	// The resulting loaded_address + Y becomes the effective operand.
 	case indirectY:
 		return c.Bus.Read16(address(iop.op8) + address(c.y))
 
