@@ -1,5 +1,17 @@
 package go6502
 
+/**
+ * Debugger / Monitor
+ *
+ * TODO:
+ * -  Treat $0000 as 0x0000 for numeric input.
+ * -  `step n` e.g. `step 100` to step 100 instructions.
+ * -  Read and write CLI history file.
+ * -  Ability to label addresses, persist+load.
+ * -  Tab completion.
+ * -  Command argument validation.
+ */
+
 import (
 	"fmt"
 	"github.com/peterh/liner"
