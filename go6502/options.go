@@ -8,11 +8,12 @@ import (
 )
 
 type Options struct {
-	viaDumpBinary bool
-	viaDumpAscii  bool
-	LogFile       string
-	Debug         bool
-	DebugCmds     commandList
+	viaDumpBinary       bool
+	viaDumpAscii        bool
+	ViaSpiDebuggerPortA bool
+	LogFile             string
+	Debug               bool
+	DebugCmds           commandList
 }
 
 func ParseOptions() *Options {
@@ -28,6 +29,7 @@ func ParseOptions() *Options {
 	// VIA
 	flag.BoolVar(&opt.viaDumpBinary, "via-dump-binary", false, "VIA6522 dumps binary output")
 	flag.BoolVar(&opt.viaDumpAscii, "via-dump-ascii", false, "VIA6522 dumps ASCII output")
+	flag.BoolVar(&opt.ViaSpiDebuggerPortA, "via-spi-debugger-port-a", false, "VIA6522 outputs SPI debugging for port A")
 
 	flag.Parse()
 	return opt

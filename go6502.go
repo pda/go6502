@@ -38,6 +38,10 @@ func mainReturningStatus() int {
 	ram := &go6502.Ram{}
 
 	via := go6502.NewVia6522(logger, options)
+	if options.ViaSpiDebuggerPortA {
+		via.AttachToPortA(go6502.NewSpiDebugger())
+	}
+
 	via.Reset()
 
 	addressBus, _ := go6502.CreateBus(logger)

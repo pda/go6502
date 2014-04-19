@@ -76,19 +76,32 @@ const (
 type Via6522 struct {
 	// Note: It may be a mistake to consider ORx and IRx separate registers.
 	//       If so... fix it?
-	ora     byte // output register port A
-	orb     byte // output register port B
-	ira     byte // input register port A
-	irb     byte // input register port B
-	ddra    byte // data direction port A
-	ddrb    byte // data direction port B
-	pcr     byte // peripheral control register
-	logger  *log.Logger
-	options *Options
+	ora         byte // output register port A
+	orb         byte // output register port B
+	ira         byte // input register port A
+	irb         byte // input register port B
+	ddra        byte // data direction port A
+	ddrb        byte // data direction port B
+	pcr         byte // peripheral control register
+	logger      *log.Logger
+	options     *Options
+	peripherals map[uint8]ParallelPeripheral
+}
+
+type ParallelPeripheral interface {
+	Notify(byte)
 }
 
 func NewVia6522(l *log.Logger, o *Options) *Via6522 {
-	return &Via6522{logger: l, options: o}
+	via := &Via6522{}
+	via.logger = l
+	via.options = o
+	via.peripherals = make(map[uint8]ParallelPeripheral)
+	return via
+}
+
+func (via *Via6522) AttachToPortA(p ParallelPeripheral) {
+	via.peripherals[VIA_PCR_OFFSET_A] = p
 }
 
 // CA1 or CB1 1-bit mode for the given port offset (VIA_PCR_OFFSET_x)
@@ -120,6 +133,10 @@ func (via *Via6522) handleDataWrite(portOffset uint8) {
 		}
 		if via.options.viaDumpAscii {
 			printAsciiByte(via.ora)
+		}
+
+		if p := via.peripherals[portOffset]; p != nil {
+			p.Notify(via.ora)
 		}
 	}
 }
