@@ -136,22 +136,37 @@ func printAsciiByte(b uint8) {
 }
 
 // Read the register specified by the given 4-bit address (0x00..0x0F).
+// TODO: Unlike IRA, reading IRB actully returns bits from ORA for pins
+//       that are programmed as output.
 func (via *Via6522) Read(a address) byte {
 	switch a {
 	default:
 		panic(fmt.Sprintf("read from 0x%X not handled by Via6522", a))
 	case 0x0:
 		via.dumpDataRegisters()
-		return via.irb
+		return via.readMixedInputOutput(via.irb, via.orb, via.ddrb)
 	case 0x1:
 		via.dumpDataRegisters()
-		return via.ira
+		return via.readMixedInputOutput(via.ira, via.ora, via.ddra)
 	case 0x2:
 		return via.ddra
 	case 0x3:
 		return via.ddra
 	case 0xC:
 		return via.pcr
+	}
+}
+
+// This represents the correct behavior for reading IRB,
+// and maybe an approximation of the correct behavior for IRA.
+func (via *Via6522) readMixedInputOutput(in byte, out byte, ddr byte) byte {
+	if ddr == 0xFF {
+		return out
+	} else if ddr == 0x00 {
+		return in
+	} else {
+		// TODO: splice in and out bits based on DDR.
+		panic("Unhandled mixed input/output reading VIA port")
 	}
 }
 
@@ -178,6 +193,7 @@ func (via *Via6522) String() string {
 
 // Write to register specified by the given 4-bit address (0x00..0x0F).
 func (via *Via6522) Write(a address, data byte) {
+	// TODO: mask with DDR here, or later.
 	switch a {
 	default:
 		panic(fmt.Sprintf("write to 0x%X not handled by Via6522", a))
