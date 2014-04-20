@@ -122,22 +122,18 @@ func (via *Via6522) dumpDataRegisters() {
 	via.logger.Printf("VIA ORA:0x%02X ORB:0x%02X IRA:0x%02X IRB:0x%02X\n", via.ora, via.orb, via.ira, via.irb)
 }
 
-func (via *Via6522) handleDataWrite(portOffset uint8) {
+func (via *Via6522) handleDataWrite(portOffset uint8, data byte) {
 	mode := via.control2Mode(portOffset)
-	switch mode {
-	default:
-		panic(fmt.Sprintf("VIA: Unhanded PCR mode 0x%X for write (PCR offset %d)", mode, portOffset))
-	case 0x5:
-		if via.options.viaDumpBinary {
-			fmt.Printf("VIA port A output: %08b (0x%02X)\n", via.ora, via.ora)
-		}
-		if via.options.viaDumpAscii {
-			printAsciiByte(via.ora)
-		}
+	_ = mode
 
-		if p := via.peripherals[portOffset]; p != nil {
-			p.Notify(via.ora)
-		}
+	if via.options.viaDumpBinary {
+		fmt.Printf("VIA output: %08b (0x%02X)\n", data, data)
+	}
+	if via.options.viaDumpAscii {
+		printAsciiByte(data)
+	}
+	if p := via.peripherals[portOffset]; p != nil {
+		p.Notify(data)
 	}
 }
 
@@ -216,11 +212,11 @@ func (via *Via6522) Write(a address, data byte) {
 		panic(fmt.Sprintf("write to 0x%X not handled by Via6522", a))
 	case 0x0:
 		via.orb = data
-		via.handleDataWrite(VIA_PCR_OFFSET_B)
+		via.handleDataWrite(VIA_PCR_OFFSET_B, data)
 		via.dumpDataRegisters()
 	case 0x1:
 		via.ora = data
-		via.handleDataWrite(VIA_PCR_OFFSET_A)
+		via.handleDataWrite(VIA_PCR_OFFSET_A, data)
 		via.dumpDataRegisters()
 	case 0x2:
 		via.ddrb = data
