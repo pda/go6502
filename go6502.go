@@ -38,8 +38,10 @@ func mainReturningStatus() int {
 	ram := &go6502.Ram{}
 
 	via := go6502.NewVia6522(logger, options)
-	if options.ViaSpiDebuggerPortA {
-		via.AttachToPortA(go6502.NewSpiDebugger())
+	if options.ViaSsd1306 {
+		ssd1306 := go6502.NewSsd1306()
+		defer ssd1306.Close()
+		via.AttachToPortB(ssd1306)
 	}
 
 	via.Reset()

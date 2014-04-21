@@ -104,6 +104,10 @@ func (via *Via6522) AttachToPortA(p ParallelPeripheral) {
 	via.peripherals[VIA_PCR_OFFSET_A] = p
 }
 
+func (via *Via6522) AttachToPortB(p ParallelPeripheral) {
+	via.peripherals[VIA_PCR_OFFSET_B] = p
+}
+
 // CA1 or CB1 1-bit mode for the given port offset (VIA_PCR_OFFSET_x)
 func (via *Via6522) control1Mode(portOffset uint8) byte {
 	return (via.pcr >> portOffset) & 1
