@@ -82,9 +82,7 @@ func (c *Cpu) Step() {
 		c.debugger.BeforeExecute(iop)
 	}
 	c.pc += address(in.bytes)
-	c.Bus.logger.Println(iop)
 	c.Execute(iop)
-	c.Bus.logger.Println(c)
 }
 
 func (c *Cpu) readOperand(in *Instruction) *Iop {

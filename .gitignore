@@ -4,9 +4,6 @@
 # ROM images (programs/data)
 /rom/*
 
-# Log files.
-*.log
-
 ##
 # From https://github.com/github/gitignore/blob/master/Go.gitignore
 

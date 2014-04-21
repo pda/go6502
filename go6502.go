@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 
@@ -21,23 +20,14 @@ func mainReturningStatus() int {
 
 	options := go6502.ParseOptions()
 
-	logFile, err := os.Create(options.LogFile)
-	if err != nil {
-		panic(err)
-	}
-	logger := log.New(logFile, "", log.Ltime|log.Lmicroseconds|log.Lshortfile)
-	logger.Println("Logger initialized")
-
 	kernal, err := go6502.RomFromFile(kernalPath)
 	if err != nil {
 		panic(err)
-	} else {
-		logger.Printf("Loaded %s: %d bytes\n", kernalPath, kernal.Size)
 	}
 
 	ram := &go6502.Ram{}
 
-	via := go6502.NewVia6522(logger, options)
+	via := go6502.NewVia6522(options)
 	if options.ViaSsd1306 {
 		ssd1306 := go6502.NewSsd1306()
 		defer ssd1306.Close()
@@ -46,11 +36,10 @@ func mainReturningStatus() int {
 
 	via.Reset()
 
-	addressBus, _ := go6502.CreateBus(logger)
+	addressBus, _ := go6502.CreateBus()
 	addressBus.Attach(ram, "ram", 0x0000)
 	addressBus.Attach(via, "VIA", 0xC000)
 	addressBus.Attach(kernal, "kernal", 0xE000)
-	logger.Println(addressBus)
 
 	exitChan := make(chan int, 0)
 
@@ -62,13 +51,11 @@ func mainReturningStatus() int {
 		cpu.AttachDebugger(debugger)
 	}
 	cpu.Reset()
-	logger.Println(cpu)
 
 	// Dispatch CPU in a goroutine.
 	go func() {
 		i := 0
 		for {
-			logger.Println("\n--- Step", i)
 			cpu.Step()
 			i++
 		}

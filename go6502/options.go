@@ -3,7 +3,6 @@ package go6502
 import (
 	"flag"
 	"fmt"
-	"os"
 	"strings"
 )
 
@@ -11,7 +10,6 @@ type Options struct {
 	viaDumpBinary bool
 	viaDumpAscii  bool
 	ViaSsd1306    bool
-	LogFile       string
 	Debug         bool
 	DebugCmds     commandList
 }
@@ -22,9 +20,6 @@ func ParseOptions() *Options {
 	// Debug
 	flag.BoolVar(&opt.Debug, "debug", false, "Run debugger")
 	flag.Var(&opt.DebugCmds, "debug-commands", "Debugger commands to run, semicolon separated.")
-
-	// Logging
-	flag.StringVar(&opt.LogFile, "log-file", os.DevNull, "Emulator debug log")
 
 	// VIA
 	flag.BoolVar(&opt.viaDumpBinary, "via-dump-binary", false, "VIA6522 dumps binary output")

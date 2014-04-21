@@ -2,7 +2,6 @@ package go6502
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"unicode"
 )
@@ -83,7 +82,6 @@ type Via6522 struct {
 	ddra        byte // data direction port A
 	ddrb        byte // data direction port B
 	pcr         byte // peripheral control register
-	logger      *log.Logger
 	options     *Options
 	peripherals map[uint8]ParallelPeripheral
 }
@@ -92,9 +90,8 @@ type ParallelPeripheral interface {
 	Notify(byte)
 }
 
-func NewVia6522(l *log.Logger, o *Options) *Via6522 {
+func NewVia6522(o *Options) *Via6522 {
 	via := &Via6522{}
-	via.logger = l
 	via.options = o
 	via.peripherals = make(map[uint8]ParallelPeripheral)
 	return via
@@ -116,14 +113,6 @@ func (via *Via6522) control1Mode(portOffset uint8) byte {
 // CA2 or CB2 3-bit mode for the given port offset (VIA_PCR_OFFSET_x)
 func (via *Via6522) control2Mode(portOffset uint8) byte {
 	return (via.pcr >> (portOffset + 1)) & 0x7
-}
-
-func (via *Via6522) dumpDataDirectionRegisters() {
-	via.logger.Printf("VIA DDRA:%08b DDRB:%08b\n", via.ddra, via.ddrb)
-}
-
-func (via *Via6522) dumpDataRegisters() {
-	via.logger.Printf("VIA ORA:0x%02X ORB:0x%02X IRA:0x%02X IRB:0x%02X\n", via.ora, via.orb, via.ira, via.irb)
 }
 
 func (via *Via6522) handleDataWrite(portOffset uint8, data byte) {
@@ -160,10 +149,8 @@ func (via *Via6522) Read(a address) byte {
 	default:
 		panic(fmt.Sprintf("read from 0x%X not handled by Via6522", a))
 	case 0x0:
-		via.dumpDataRegisters()
 		return via.readMixedInputOutput(via.irb, via.orb, via.ddrb)
 	case 0x1:
-		via.dumpDataRegisters()
 		return via.readMixedInputOutput(via.ira, via.ora, via.ddra)
 	case 0x2:
 		return via.ddra
@@ -217,17 +204,13 @@ func (via *Via6522) Write(a address, data byte) {
 	case 0x0:
 		via.orb = data
 		via.handleDataWrite(VIA_PCR_OFFSET_B, data)
-		via.dumpDataRegisters()
 	case 0x1:
 		via.ora = data
 		via.handleDataWrite(VIA_PCR_OFFSET_A, data)
-		via.dumpDataRegisters()
 	case 0x2:
 		via.ddrb = data
-		via.dumpDataDirectionRegisters()
 	case 0x3:
 		via.ddra = data
-		via.dumpDataDirectionRegisters()
 	case 0xC:
 		via.pcr = data
 	}
