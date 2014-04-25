@@ -66,6 +66,7 @@ func (s *Ssd1306) Notify(data byte) {
 			}
 
 			s.imgPixel++
+			s.imgPixel %= (128 * 64)
 		}
 	}
 
