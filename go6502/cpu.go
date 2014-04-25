@@ -274,6 +274,8 @@ func (c *Cpu) Execute(iop *Iop) {
 		c.ROL(iop)
 	case RTS:
 		c.RTS(iop)
+	case SBC:
+		c.SBC(iop)
 	case SEI:
 		c.SEI(iop)
 	case STA:
@@ -556,6 +558,17 @@ func (c *Cpu) RTS(iop *Iop) {
 	c.pc = c.Bus.Read16(c.StackHead(1))
 	c.sp += 2
 	c.pc += 1
+}
+
+// subract with carry
+// TODO: overflow status
+func (c *Cpu) SBC(iop *Iop) {
+	valueSigned := int16(c.ac) - int16(c.resolveOperand(iop))
+	if !c.getStatus(sCarry) {
+		valueSigned--
+	}
+	c.setStatus(sCarry, valueSigned < 0)
+	c.ac = uint8(valueSigned)
 }
 
 // set interrupt mask (disable maskable interrupts)
