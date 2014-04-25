@@ -206,8 +206,14 @@ func (c *Cpu) branch(iop *Iop) {
 
 func (c *Cpu) Execute(iop *Iop) {
 	switch iop.in.id {
+	case ADC:
+		c.ADC(iop)
 	case AND:
 		c.AND(iop)
+	case ASL:
+		c.ASL(iop)
+	case BCC:
+		c.BCC(iop)
 	case BCS:
 		c.BCS(iop)
 	case BEQ:
@@ -230,6 +236,8 @@ func (c *Cpu) Execute(iop *Iop) {
 		c.CPX(iop)
 	case CPY:
 		c.CPY(iop)
+	case DEC:
+		c.DEC(iop)
 	case DEX:
 		c.DEX(iop)
 	case DEY:
@@ -291,10 +299,45 @@ func (c *Cpu) Execute(iop *Iop) {
 	}
 }
 
+// add with carry
+func (c *Cpu) ADC(iop *Iop) {
+	value16 := uint16(c.ac) + uint16(c.resolveOperand(iop)) + uint16(c.getStatusInt(sCarry))
+	c.setStatus(sCarry, value16 > 0xFF)
+	c.ac = uint8(value16)
+	c.updateStatus(c.ac)
+}
+
 // bitwise AND with accumulator
 func (c *Cpu) AND(iop *Iop) {
 	c.ac &= c.resolveOperand(iop)
 	c.updateStatus(c.ac)
+}
+
+// arithmetic shift left
+func (c *Cpu) ASL(iop *Iop) {
+	// TODO: general support for memory-modifying instructions (ASL, LSR, ROL, ROR)
+	switch iop.in.addressing {
+	case accumulator:
+		c.setStatus(sCarry, (c.ac>>7) == 1) // carry = old bit 7
+		c.ac = c.ac << 1
+		c.updateStatus(c.ac)
+	case zeropageX:
+		address := address(iop.op8 + c.x)
+		value := c.Bus.Read(address)
+		c.setStatus(sCarry, (value>>7) == 1) // carry = old bit 7
+		value <<= 1
+		c.Bus.Write(address, value)
+		c.updateStatus(value) // TODO: status from value?
+	default:
+		panic("ASL addressing mode not implemented")
+	}
+}
+
+// branch if carry clear
+func (c *Cpu) BCC(iop *Iop) {
+	if !c.getStatus(sCarry) {
+		c.branch(iop)
+	}
 }
 
 // branch on carry (when carry set)
@@ -369,6 +412,14 @@ func (c *Cpu) CPY(iop *Iop) {
 	c.updateStatus(c.y - value)
 }
 
+// decrement memory
+func (c *Cpu) DEC(iop *Iop) {
+	address := c.memoryAddress(iop)
+	value := c.Bus.Read(address) - 1
+	c.Bus.Write(address, value)
+	c.updateStatus(value)
+}
+
 // decrement x
 func (c *Cpu) DEX(iop *Iop) {
 	c.x--
@@ -440,9 +491,22 @@ func (c *Cpu) LDX(iop *Iop) {
 
 // logical shift right.
 func (c *Cpu) LSR(iop *Iop) {
-	c.setStatus(sCarry, c.ac&1 == 1)
-	c.ac >>= 1
-	c.updateStatus(c.ac)
+	// TODO: general support for memory-modifying instructions (ASL, LSR, ROL, ROR)
+	switch iop.in.addressing {
+	case accumulator:
+		c.setStatus(sCarry, c.ac&1 == 1)
+		c.ac >>= 1
+		c.updateStatus(c.ac)
+	case zeropageX:
+		address := address(iop.op8 + c.x)
+		value := c.Bus.Read(address)
+		// TODO: carry?
+		value >>= 1
+		c.updateStatus(value)
+		c.Bus.Write(address, value)
+	default:
+		panic("LSR addressing mode not implemented")
+	}
 }
 
 // no operation
@@ -470,14 +534,20 @@ func (c *Cpu) PLA(iop *Iop) {
 // bitwise rotate left
 // SR carry into bit 0, original bit 7 into SR carry.
 func (c *Cpu) ROL(iop *Iop) {
+	// TODO: general support for memory-modifying instructions (ASL, LSR, ROL, ROR)
+	carry := c.getStatusInt(sCarry)
 	switch iop.in.addressing {
 	case accumulator:
-		carry := c.getStatusInt(sCarry)
 		c.setStatus(sCarry, (c.ac>>7) == 1)
 		c.ac = (c.ac << 1) | carry
 		c.updateStatus(c.ac)
 	default:
-		panic("ROL non-accumulator addressing not implemented")
+		address := c.memoryAddress(iop)
+		value := c.Bus.Read(address)
+		c.setStatus(sCarry, (value>>7) == 1)
+		value = (value << 1) | carry
+		c.Bus.Write(address, value)
+		c.updateStatus(value)
 	}
 }
 
