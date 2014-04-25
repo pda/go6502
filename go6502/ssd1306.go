@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"net/http"
 	"os"
 )
 
@@ -22,6 +23,7 @@ func NewSsd1306() *Ssd1306 {
 	s := Ssd1306{}
 	s.inputIndex = 7 // MSB-first, decrementing index.
 	s.img = image.NewGray(image.Rect(0, 0, 128, 32))
+	s.serveHttp()
 	return &s
 }
 
@@ -32,6 +34,21 @@ const (
 	dcMask    = 1 << 2
 	resetMask = 1 << 3
 )
+
+func (s *Ssd1306) serveHttp() {
+	httpHandler := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "image/png")
+		w.Header().Add("Refresh", "0.1")
+		png.Encode(w, s.img)
+	}
+	address := "localhost:1234"
+	srv := &http.Server{
+		Addr:    address,
+		Handler: http.HandlerFunc(httpHandler),
+	}
+	fmt.Printf("Ssd1306 output at http://%s/screen.png\n", address)
+	go srv.ListenAndServe()
+}
 
 func (s *Ssd1306) Notify(data byte) {
 
