@@ -56,7 +56,10 @@ func (b *Bus) String() string {
 }
 
 func (b *Bus) Write(a address, value byte) {
-	mem, _ := b.backendFor(a)
+	mem, err := b.backendFor(a)
+	if err != nil {
+		panic(err)
+	}
 	mem.Write(a, value)
 }
 
