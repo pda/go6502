@@ -508,7 +508,6 @@ func (c *Cpu) PLA(iop *Iop) {
 // bitwise rotate left
 // SR carry into bit 0, original bit 7 into SR carry.
 func (c *Cpu) ROL(iop *Iop) {
-	// TODO: general support for memory-modifying instructions (ASL, LSR, ROL, ROR)
 	carry := c.getStatusInt(sCarry)
 	switch iop.in.addressing {
 	case accumulator:
