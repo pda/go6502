@@ -174,95 +174,95 @@ func (c *Cpu) branch(iop *Iop) {
 
 func (c *Cpu) Execute(iop *Iop) {
 	switch iop.in.id {
-	case ADC:
+	case adc:
 		c.ADC(iop)
-	case AND:
+	case and:
 		c.AND(iop)
-	case ASL:
+	case asl:
 		c.ASL(iop)
-	case BCC:
+	case bcc:
 		c.BCC(iop)
-	case BCS:
+	case bcs:
 		c.BCS(iop)
-	case BEQ:
+	case beq:
 		c.BEQ(iop)
-	case BMI:
+	case bmi:
 		c.BMI(iop)
-	case BNE:
+	case bne:
 		c.BNE(iop)
-	case BPL:
+	case bpl:
 		c.BPL(iop)
-	case CLC:
+	case clc:
 		c.CLC(iop)
-	case CLD:
+	case cld:
 		c.CLD(iop)
-	case CLI:
+	case cli:
 		c.CLI(iop)
-	case CMP:
+	case cmp:
 		c.CMP(iop)
-	case CPX:
+	case cpx:
 		c.CPX(iop)
-	case CPY:
+	case cpy:
 		c.CPY(iop)
-	case DEC:
+	case dec:
 		c.DEC(iop)
-	case DEX:
+	case dex:
 		c.DEX(iop)
-	case DEY:
+	case dey:
 		c.DEY(iop)
-	case EOR:
+	case eor:
 		c.EOR(iop)
-	case INC:
+	case inc:
 		c.INC(iop)
-	case INX:
+	case inx:
 		c.INX(iop)
-	case INY:
+	case iny:
 		c.INY(iop)
-	case JMP:
+	case jmp:
 		c.JMP(iop)
-	case JSR:
+	case jsr:
 		c.JSR(iop)
-	case LDA:
+	case lda:
 		c.LDA(iop)
-	case LDX:
+	case ldx:
 		c.LDX(iop)
-	case LDY:
+	case ldy:
 		c.LDY(iop)
-	case LSR:
+	case lsr:
 		c.LSR(iop)
-	case NOP:
+	case nop:
 		c.NOP(iop)
-	case ORA:
+	case ora:
 		c.ORA(iop)
-	case PHA:
+	case pha:
 		c.PHA(iop)
-	case PLA:
+	case pla:
 		c.PLA(iop)
-	case ROL:
+	case rol:
 		c.ROL(iop)
-	case RTS:
+	case rts:
 		c.RTS(iop)
-	case SBC:
+	case sbc:
 		c.SBC(iop)
-	case SEI:
+	case sei:
 		c.SEI(iop)
-	case STA:
+	case sta:
 		c.STA(iop)
-	case STX:
+	case stx:
 		c.STX(iop)
-	case STY:
+	case sty:
 		c.STY(iop)
-	case TAX:
+	case tax:
 		c.TAX(iop)
-	case TAY:
+	case tay:
 		c.TAY(iop)
-	case TXA:
+	case txa:
 		c.TXA(iop)
-	case TXS:
+	case txs:
 		c.TXS(iop)
-	case TYA:
+	case tya:
 		c.TYA(iop)
-	case _END:
+	case _end:
 		c._END(iop)
 	default:
 		panic(fmt.Sprintf("unhandled instruction: %v", iop))
