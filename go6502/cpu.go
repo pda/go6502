@@ -45,26 +45,26 @@ func (c *Cpu) Reset() {
 
 func (c *Cpu) Step() {
 	op := c.Bus.Read(c.pc)
-	in := findInstruction(op)
-	iop := c.readOperand(in)
+	ot := findInstruction(op)
+	iop := c.readOperand(ot)
 	if c.debugger != nil {
 		c.debugger.BeforeExecute(iop)
 	}
-	c.pc += address(in.bytes)
+	c.pc += address(ot.bytes)
 	c.Execute(iop)
 }
 
-func (c *Cpu) readOperand(in *Instruction) *Iop {
+func (c *Cpu) readOperand(ot *OpType) *Iop {
 	// read instruction with operand
-	iop := &Iop{in: in}
-	switch in.bytes {
+	iop := &Iop{ot: ot}
+	switch ot.bytes {
 	case 1: // no operand
 	case 2:
 		iop.op8 = c.Bus.Read(c.pc + 1)
 	case 3:
 		iop.op16 = c.Bus.Read16(c.pc + 1)
 	default:
-		panic(fmt.Sprintf("unhandled instruction length: %d", in.bytes))
+		panic(fmt.Sprintf("unhandled instruction length: %d", ot.bytes))
 	}
 	return iop
 }
@@ -82,7 +82,7 @@ func (c *Cpu) StackHead(offset int8) address {
 }
 
 func (c *Cpu) resolveOperand(iop *Iop) uint8 {
-	switch iop.in.addressing {
+	switch iop.ot.addressing {
 	case immediate:
 		return iop.op8
 	default:
@@ -91,7 +91,7 @@ func (c *Cpu) resolveOperand(iop *Iop) uint8 {
 }
 
 func (c *Cpu) memoryAddress(iop *Iop) address {
-	switch iop.in.addressing {
+	switch iop.ot.addressing {
 	case absolute:
 		return iop.op16
 	case absoluteX:
@@ -173,7 +173,7 @@ func (c *Cpu) branch(iop *Iop) {
 }
 
 func (c *Cpu) Execute(iop *Iop) {
-	switch iop.in.id {
+	switch iop.ot.id {
 	case adc:
 		c.ADC(iop)
 	case and:
@@ -285,7 +285,7 @@ func (c *Cpu) AND(iop *Iop) {
 
 // ASL: Shift memory or accumulator left one bit.
 func (c *Cpu) ASL(iop *Iop) {
-	switch iop.in.addressing {
+	switch iop.ot.addressing {
 	case accumulator:
 		c.setStatus(sCarry, (c.ac>>7) == 1) // carry = old bit 7
 		c.ac <<= 1
@@ -457,7 +457,7 @@ func (c *Cpu) LDY(iop *Iop) {
 
 // LSR: Logical shift memory or accumulator right.
 func (c *Cpu) LSR(iop *Iop) {
-	switch iop.in.addressing {
+	switch iop.ot.addressing {
 	case accumulator:
 		c.setStatus(sCarry, c.ac&1 == 1)
 		c.ac >>= 1
@@ -497,7 +497,7 @@ func (c *Cpu) PLA(iop *Iop) {
 // ROL: Rotate memory or accumulator left one bit.
 func (c *Cpu) ROL(iop *Iop) {
 	carry := c.getStatusInt(sCarry)
-	switch iop.in.addressing {
+	switch iop.ot.addressing {
 	case accumulator:
 		c.setStatus(sCarry, (c.ac>>7) == 1)
 		c.ac = (c.ac << 1) | carry
