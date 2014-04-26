@@ -22,6 +22,23 @@ const (
 	zeropageY
 )
 
+var addressingNames = [...]string{
+	"",
+	"absolute",
+	"absoluteX",
+	"absoluteY",
+	"accumulator",
+	"immediate",
+	"implied",
+	"(indirect)",
+	"(indirect,X)",
+	"(indirect),Y",
+	"relative",
+	"zeropage",
+	"zeropageX",
+	"zeropageY",
+}
+
 // instruction (mnemonic) ids.
 const (
 	_ = iota
@@ -408,8 +425,7 @@ func findInstruction(opcode byte) *Instruction {
 }
 
 func (i *Instruction) String() string {
-	return fmt.Sprintf("Instruction[%s op:%02X addr:%d bytes:%d cycles:%d]",
-		i.name(), i.opcode, i.addressing, i.bytes, i.cycles)
+	return fmt.Sprintf("%s %s", i.name(), addressingNames[i.addressing])
 }
 
 func (i *Instruction) name() (s string) {

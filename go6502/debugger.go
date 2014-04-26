@@ -103,7 +103,7 @@ func (d *Debugger) BeforeExecute(iop *Iop) {
 	}
 
 	fmt.Println(d.cpu)
-	fmt.Println(iop)
+	fmt.Println("Next:", iop)
 
 	for !d.commandLoop(iop) {
 		// next
