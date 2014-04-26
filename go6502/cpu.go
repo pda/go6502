@@ -17,28 +17,6 @@ const (
 	sNegative
 )
 
-func srName(bit uint8) (s string) {
-	switch bit {
-	case 0:
-		s = "carry"
-	case 1:
-		s = "zero"
-	case 2:
-		s = "interrupt"
-	case 3:
-		s = "decimal"
-	case 4:
-		s = "break"
-	case 5:
-		s = "_"
-	case 6:
-		s = "overflow"
-	case 7:
-		s = "negative"
-	}
-	return
-}
-
 type Cpu struct {
 	pc       address
 	ac       byte
