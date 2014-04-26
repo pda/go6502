@@ -55,17 +55,17 @@ import (
 //   CA1: negative active edge (one of two options).
 
 const (
-	VIA_ORB = 0x0
-	VIA_IRB = 0x0
-	VIA_ORA = 0x1
-	VIA_IRA = 0x1
+	viaOrb = 0x0
+	viaIrb = 0x0
+	viaOra = 0x1
+	viaIra = 0x1
 
-	VIA_DDRB = 0x2
-	VIA_DDRA = 0x3
+	viaDdrb = 0x2
+	viaDdra = 0x3
 
 	// bit-offset into PCR for port A & B
-	VIA_PCR_OFFSET_A = 0
-	VIA_PCR_OFFSET_B = 4
+	viaPcrOffsetA = 0
+	viaPcrOffsetB = 4
 )
 
 /**
@@ -98,19 +98,19 @@ func NewVia6522(o *Options) *Via6522 {
 }
 
 func (via *Via6522) AttachToPortA(p ParallelPeripheral) {
-	via.peripherals[VIA_PCR_OFFSET_A] = p
+	via.peripherals[viaPcrOffsetA] = p
 }
 
 func (via *Via6522) AttachToPortB(p ParallelPeripheral) {
-	via.peripherals[VIA_PCR_OFFSET_B] = p
+	via.peripherals[viaPcrOffsetB] = p
 }
 
-// CA1 or CB1 1-bit mode for the given port offset (VIA_PCR_OFFSET_x)
+// CA1 or CB1 1-bit mode for the given port offset (viaPCR_OFFSET_x)
 func (via *Via6522) control1Mode(portOffset uint8) byte {
 	return (via.pcr >> portOffset) & 1
 }
 
-// CA2 or CB2 3-bit mode for the given port offset (VIA_PCR_OFFSET_x)
+// CA2 or CB2 3-bit mode for the given port offset (viaPCR_OFFSET_x)
 func (via *Via6522) control2Mode(portOffset uint8) byte {
 	return (via.pcr >> (portOffset + 1)) & 0x7
 }
@@ -203,10 +203,10 @@ func (via *Via6522) Write(a address, data byte) {
 		panic(fmt.Sprintf("write to 0x%X not handled by Via6522", a))
 	case 0x0:
 		via.orb = data
-		via.handleDataWrite(VIA_PCR_OFFSET_B, data)
+		via.handleDataWrite(viaPcrOffsetB, data)
 	case 0x1:
 		via.ora = data
-		via.handleDataWrite(VIA_PCR_OFFSET_A, data)
+		via.handleDataWrite(viaPcrOffsetA, data)
 	case 0x2:
 		via.ddrb = data
 	case 0x3:
