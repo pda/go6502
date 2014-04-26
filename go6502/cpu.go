@@ -172,9 +172,8 @@ func (c *Cpu) updateStatus(value uint8) {
 }
 
 func (c *Cpu) statusString() string {
-	// this is horrible, I think. Should be much simpler?
-	var chars = "nv_bdizc"
-	var out [8]string
+	chars := "nv_bdizc"
+	out := make([]string, 8)
 	for i := 0; i < 8; i++ {
 		if c.getStatus(uint8(7 - i)) {
 			out[i] = string(chars[i])
@@ -182,7 +181,7 @@ func (c *Cpu) statusString() string {
 			out[i] = "-"
 		}
 	}
-	return strings.Join(out[0:], "")
+	return strings.Join(out, "")
 }
 
 func (c *Cpu) branch(iop *Iop) {
