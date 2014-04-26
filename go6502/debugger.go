@@ -20,17 +20,17 @@ import (
 )
 
 const (
-	DEBUG_CMD_NONE = iota
-	DEBUG_CMD_BREAK_ADDRESS
-	DEBUG_CMD_BREAK_INSTRUCTION
-	DEBUG_CMD_BREAK_REGISTER
-	DEBUG_CMD_EXIT
-	DEBUG_CMD_HELP
-	DEBUG_CMD_INVALID
-	DEBUG_CMD_READ
-	DEBUG_CMD_READ16
-	DEBUG_CMD_RUN
-	DEBUG_CMD_STEP
+	debugCmdNone = iota
+	debugCmdBreakAddress
+	debugCmdBreakInstruction
+	debugCmdBreakRegister
+	debugCmdExit
+	debugCmdHelp
+	debugCmdInvalid
+	debugCmdRead
+	debugCmdRead16
+	debugCmdRun
+	debugCmdStep
 )
 
 type Debugger struct {
@@ -125,28 +125,28 @@ func (d *Debugger) commandLoop(in *Instruction) (release bool) {
 	}
 
 	switch cmd.id {
-	case DEBUG_CMD_BREAK_ADDRESS:
+	case debugCmdBreakAddress:
 		d.commandBreakAddress(cmd)
-	case DEBUG_CMD_BREAK_INSTRUCTION:
+	case debugCmdBreakInstruction:
 		d.breakInstruction = strings.ToUpper(cmd.arguments[0])
-	case DEBUG_CMD_BREAK_REGISTER:
+	case debugCmdBreakRegister:
 		d.commandBreakRegister(cmd)
-	case DEBUG_CMD_EXIT:
+	case debugCmdExit:
 		d.cpu.ExitChan <- 0
-	case DEBUG_CMD_HELP:
+	case debugCmdHelp:
 		d.commandHelp(cmd)
-	case DEBUG_CMD_NONE:
+	case debugCmdNone:
 		// pass
-	case DEBUG_CMD_READ:
+	case debugCmdRead:
 		d.commandRead(cmd)
-	case DEBUG_CMD_READ16:
+	case debugCmdRead16:
 		d.commandRead16(cmd)
-	case DEBUG_CMD_RUN:
+	case debugCmdRun:
 		d.run = true
 		release = true
-	case DEBUG_CMD_STEP:
+	case debugCmdStep:
 		release = true
-	case DEBUG_CMD_INVALID:
+	case debugCmdInvalid:
 		fmt.Println("Invalid command.")
 	default:
 		panic("Unknown command code.")
@@ -269,30 +269,30 @@ func (d *Debugger) getCommand() (*DebuggerCommand, error) {
 
 	switch cmdString {
 	case "":
-		id = DEBUG_CMD_NONE
+		id = debugCmdNone
 	case "break-address", "break-addr", "ba":
-		id = DEBUG_CMD_BREAK_ADDRESS
+		id = debugCmdBreakAddress
 	case "break-instruction", "bi":
-		id = DEBUG_CMD_BREAK_INSTRUCTION
+		id = debugCmdBreakInstruction
 	case "break-register", "break-reg", "br":
-		id = DEBUG_CMD_BREAK_REGISTER
+		id = debugCmdBreakRegister
 	case "exit", "quit", "q":
-		id = DEBUG_CMD_EXIT
+		id = debugCmdExit
 	case "help", "h", "?":
-		id = DEBUG_CMD_HELP
+		id = debugCmdHelp
 	case "read":
-		id = DEBUG_CMD_READ
+		id = debugCmdRead
 	case "read16":
-		id = DEBUG_CMD_READ16
+		id = debugCmdRead16
 	case "run", "r":
-		id = DEBUG_CMD_RUN
+		id = debugCmdRun
 	case "step", "st", "s":
-		id = DEBUG_CMD_STEP
+		id = debugCmdStep
 	default:
-		id = DEBUG_CMD_INVALID
+		id = debugCmdInvalid
 	}
 
-	if id == DEBUG_CMD_NONE && d.lastCommand != nil {
+	if id == debugCmdNone && d.lastCommand != nil {
 		cmd = d.lastCommand
 	} else {
 		cmd = &DebuggerCommand{id, input, arguments}
