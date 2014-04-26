@@ -11,14 +11,23 @@ type busEntry struct {
 	end   address
 }
 
+// Bus is a 16-bit address, 8-bit data bus, which maps reads and writes
+// at different locations to different backend Memory. For example the
+// lower 32K could be RAM, the upper 8KB ROM, and some I/O in the middle.
 type Bus struct {
 	entries []busEntry
+}
+
+func (b *Bus) String() string {
+	return fmt.Sprintf("Address bus (TODO: describe)")
 }
 
 func CreateBus() (*Bus, error) {
 	return &Bus{entries: make([]busEntry, 0)}, nil
 }
 
+// Attach maps a bus address range to a backend Memory implementation,
+// which could be RAM, ROM, I/O device etc.
 func (b *Bus) Attach(mem Memory, name string, offset address) error {
 	om := OffsetMemory{offset: offset, Memory: mem}
 	end := offset + address(mem.Size()-1)
@@ -36,6 +45,9 @@ func (b *Bus) backendFor(a address) (Memory, error) {
 	return nil, fmt.Errorf("No backend for address 0x%04X", a)
 }
 
+// Read returns the byte from memory mapped to the given address.
+// e.g. if ROM is mapped to 0xC000, then Read(0xC0FF) returns the byte at
+// 0x00FF in that RAM device.
 func (b *Bus) Read(a address) byte {
 	mem, err := b.backendFor(a)
 	if err != nil {
@@ -45,16 +57,15 @@ func (b *Bus) Read(a address) byte {
 	return value
 }
 
+// Read16 returns the 16-bit value stored in little-endian format with the
+// low byte at address, and the high byte at address+1.
 func (b *Bus) Read16(a address) address {
 	lo := address(b.Read(a))
 	hi := address(b.Read(a + 1))
 	return hi<<8 | lo
 }
 
-func (b *Bus) String() string {
-	return fmt.Sprintf("Address bus (TODO: describe)")
-}
-
+// Write the byte to the device mapped to the given address.
 func (b *Bus) Write(a address, value byte) {
 	mem, err := b.backendFor(a)
 	if err != nil {
@@ -63,6 +74,8 @@ func (b *Bus) Write(a address, value byte) {
 	mem.Write(a, value)
 }
 
+// Write16 writes the given 16-bit value to the specifie address, storing it
+// little-endian, with high byte at address+1.
 func (b *Bus) Write16(a address, value address) {
 	b.Write(a, byte(value))
 	b.Write(a+1, byte(value>>8))
