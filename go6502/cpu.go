@@ -54,13 +54,14 @@ func (c *Cpu) AttachDebugger(d *Debugger) {
 	c.debugger = d
 }
 
+// Reset the CPU, emulating triggering the RESB line.
+// From 65C02 manual: All Registers are initialized by software except the
+// Decimal and Interrupt disable mode select bits of the Processor Status
+// Register (P) are initialized by hardware. ... The program counter is loaded
+// with the reset vector from locations FFFC (low byte) and FFFD (high byte).
 func (c *Cpu) Reset() {
 	c.pc = c.Bus.Read16(0xFFFC)
-	c.ac = 0x00
-	c.x = 0x00
-	c.y = 0x00
-	c.sp = 0xFF // address relative to second page of memory (0x0100 ~ 0x01FF)
-	c.sr = 0x00
+	c.sr = 0x34 // Manual says xx1101xx, this sets 00110100.
 }
 
 func (c *Cpu) Step() {
