@@ -102,6 +102,67 @@ const (
 	_end
 )
 
+var instructionNames = [...]string{
+	"",
+	"ADC",
+	"AND",
+	"ASL",
+	"BCC",
+	"BCS",
+	"BEQ",
+	"BIT",
+	"BMI",
+	"BNE",
+	"BPL",
+	"BRK",
+	"BVC",
+	"BVS",
+	"CLC",
+	"CLD",
+	"CLI",
+	"CLV",
+	"CMP",
+	"CPX",
+	"CPY",
+	"DEC",
+	"DEX",
+	"DEY",
+	"EOR",
+	"INC",
+	"INX",
+	"INY",
+	"JMP",
+	"JSR",
+	"LDA",
+	"LDX",
+	"LDY",
+	"LSR",
+	"NOP",
+	"ORA",
+	"PHA",
+	"PHP",
+	"PLA",
+	"PLP",
+	"ROL",
+	"ROR",
+	"RTI",
+	"RTS",
+	"SBC",
+	"SEC",
+	"SED",
+	"SEI",
+	"STA",
+	"STX",
+	"STY",
+	"TAX",
+	"TAY",
+	"TSX",
+	"TXA",
+	"TXS",
+	"TYA",
+	"_END",
+}
+
 // Instruction represents a 6502 op-code instruction, including the addressing
 // mode encoded into the op-code, but not the operand value following the
 // opcode in memory.
@@ -454,121 +515,5 @@ func (i *Instruction) String() string {
 }
 
 func (i *Instruction) name() (s string) {
-	switch i.id {
-	case _end:
-		s = "_END"
-	case adc:
-		s = "ADC"
-	case and:
-		s = "AND"
-	case asl:
-		s = "ASL"
-	case bcc:
-		s = "BCC"
-	case bcs:
-		s = "BCS"
-	case beq:
-		s = "BEQ"
-	case bit:
-		s = "BIT"
-	case bmi:
-		s = "BMI"
-	case bne:
-		s = "BNE"
-	case bpl:
-		s = "BPL"
-	case brk:
-		s = "BRK"
-	case bvc:
-		s = "BVC"
-	case bvs:
-		s = "BVS"
-	case clc:
-		s = "CLC"
-	case cld:
-		s = "CLD"
-	case cli:
-		s = "CLI"
-	case clv:
-		s = "CLV"
-	case cmp:
-		s = "CMP"
-	case cpx:
-		s = "CPX"
-	case cpy:
-		s = "CPY"
-	case dec:
-		s = "DEC"
-	case dex:
-		s = "DEX"
-	case dey:
-		s = "DEY"
-	case eor:
-		s = "EOR"
-	case inc:
-		s = "INC"
-	case inx:
-		s = "INX"
-	case iny:
-		s = "INY"
-	case jmp:
-		s = "JMP"
-	case jsr:
-		s = "JSR"
-	case lda:
-		s = "LDA"
-	case ldx:
-		s = "LDX"
-	case ldy:
-		s = "LDY"
-	case lsr:
-		s = "LSR"
-	case nop:
-		s = "NOP"
-	case ora:
-		s = "ORA"
-	case pha:
-		s = "PHA"
-	case php:
-		s = "PHP"
-	case pla:
-		s = "PLA"
-	case plp:
-		s = "PLP"
-	case rol:
-		s = "ROL"
-	case ror:
-		s = "ROR"
-	case rti:
-		s = "RTI"
-	case rts:
-		s = "RTS"
-	case sbc:
-		s = "SBC"
-	case sec:
-		s = "SEC"
-	case sed:
-		s = "SED"
-	case sei:
-		s = "SEI"
-	case sta:
-		s = "STA"
-	case stx:
-		s = "STX"
-	case sty:
-		s = "STY"
-	case tax:
-		s = "TAX"
-	case tay:
-		s = "TAY"
-	case tsx:
-		s = "TSX"
-	case txa:
-		s = "TXA"
-	case txs:
-		s = "TXS"
-	case tya:
-		s = "TYA"
-	}
-	return
+	return instructionNames[i.id]
 }
