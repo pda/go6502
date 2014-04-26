@@ -468,21 +468,18 @@ func (c *Cpu) LDX(iop *Iop) {
 
 // logical shift right.
 func (c *Cpu) LSR(iop *Iop) {
-	// TODO: general support for memory-modifying instructions (ASL, LSR, ROL, ROR)
 	switch iop.in.addressing {
 	case accumulator:
 		c.setStatus(sCarry, c.ac&1 == 1)
 		c.ac >>= 1
 		c.updateStatus(c.ac)
-	case zeropageX:
-		address := address(iop.op8 + c.x)
-		value := c.Bus.Read(address)
-		// TODO: carry?
-		value >>= 1
-		c.updateStatus(value)
-		c.Bus.Write(address, value)
 	default:
-		panic("LSR addressing mode not implemented")
+		address := c.memoryAddress(iop)
+		value := c.Bus.Read(address)
+		c.setStatus(sCarry, value&1 == 1)
+		value >>= 1
+		c.Bus.Write(address, value)
+		c.updateStatus(value)
 	}
 }
 
