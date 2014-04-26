@@ -11,22 +11,37 @@ go6502
  | | | | | | | | | | | | | | | | | | | |
 ```
 
-A [go][golang]-based emulator for the [6502][6502]-based
+A [go][golang]-based emulator and debugger for the [6502][6502]-based
 [pda6502 homebrew computer][pda6502].
 
 
 Background
 ----------
 
-This started as a golang port of my [very incomplete Ruby 6502/6510/c64
-emulator][c64.rb].
+I've been designing and building a [6502-based homebrew computer][pda6502].
 
-Since then, I've started working on an actual [6502-based homebrew
-computer][pda6502], including designing the address decoder, RAM/ROM/IO memory
-layout etc.
+It's powered by an 8-bit 6502 (WDC 65C02 to be precise), varitions of which
+powered the venerable Commodore 64, Apple II, Vic 20, Nintendo and lots more.
 
-go6502 has become the emulator for that system, but has a flexible address
-bus which could be repurposed to other 6502-based systems.
+My system uses 74HC-series logic chips to map the 64K address space to 32K RAM,
+8K ROM, a VIA 6522 I/O controller, and room for expansion.
+
+The first output device (beyond flashing LEDs) is a [128x32 pixel OLED][oled],
+connected to one of the VIA 6522 parallel ports, with bit-banged serial comms.
+
+
+go6502
+------
+
+go6502 emulates the 6502, address bus, RAM, ROM, 6522 and OLED display well
+enough to run the current pda6502 code and get the same display output.
+
+It has a flexible address bus, which paves the way to emulating other
+6502-based systems.
+
+go6502 features a stepping debugger with breakpoints on instruction type,
+register values and memory location. This makes it far easier to get code
+working correctly before writing it to an actual EEPROM.
 
 
 Running it
@@ -109,3 +124,4 @@ Copyright 2013–2014 Paul Annesley, released under MIT license.
 [c64.rb]: https://github.com/pda/c64.rb
 [pda6502]: https://github.com/pda/pda6502
 [homebrew]: http://brew.sh/
+[oled]: https://www.adafruit.com/products/661
