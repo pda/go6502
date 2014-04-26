@@ -295,21 +295,18 @@ func (c *Cpu) AND(iop *Iop) {
 
 // arithmetic shift left
 func (c *Cpu) ASL(iop *Iop) {
-	// TODO: general support for memory-modifying instructions (ASL, LSR, ROL, ROR)
 	switch iop.in.addressing {
 	case accumulator:
 		c.setStatus(sCarry, (c.ac>>7) == 1) // carry = old bit 7
-		c.ac = c.ac << 1
+		c.ac <<= 1
 		c.updateStatus(c.ac)
-	case zeropageX:
-		address := address(iop.op8 + c.x)
+	default:
+		address := c.memoryAddress(iop)
 		value := c.Bus.Read(address)
 		c.setStatus(sCarry, (value>>7) == 1) // carry = old bit 7
 		value <<= 1
 		c.Bus.Write(address, value)
-		c.updateStatus(value) // TODO: status from value?
-	default:
-		panic("ASL addressing mode not implemented")
+		c.updateStatus(value)
 	}
 }
 
