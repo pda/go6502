@@ -45,7 +45,7 @@ func (c *Cpu) Reset() {
 
 func (c *Cpu) Step() {
 	op := c.Bus.Read(c.pc)
-	ot := findInstruction(op)
+	ot := optypes[op]
 	in := c.readOperand(ot)
 	if c.debugger != nil {
 		c.debugger.BeforeExecute(in)

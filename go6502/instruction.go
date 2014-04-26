@@ -167,8 +167,8 @@ var instructionNames = [...]string{
 // mode encoded into the op-code, but not the operand value following the
 // opcode in memory.
 type OpType struct {
-	id         uint8 // the const identifier of the instruction type, e.g. ADC
 	opcode     byte
+	id         uint8 // the const identifier of the instruction type, e.g. ADC
 	addressing int
 	bytes      int
 	cycles     int
@@ -181,6 +181,161 @@ func (ot *OpType) String() string {
 
 func (ot *OpType) name() (s string) {
 	return instructionNames[ot.id]
+}
+
+var optypes = map[uint8]*OpType{
+	0x69: &OpType{0x69, adc, immediate, 2, 2, 0},
+	0x65: &OpType{0x65, adc, zeropage, 2, 3, 0},
+	0x75: &OpType{0x75, adc, zeropageX, 2, 4, 0},
+	0x6D: &OpType{0x6D, adc, absolute, 3, 4, 0},
+	0x7D: &OpType{0x7D, adc, absoluteX, 3, 4, 0},
+	0x79: &OpType{0x79, adc, absoluteY, 3, 4, 0},
+	0x61: &OpType{0x61, adc, indirectX, 2, 6, 0},
+	0x71: &OpType{0x71, adc, indirectY, 2, 5, 0},
+	0x29: &OpType{0x29, and, immediate, 2, 2, 0},
+	0x25: &OpType{0x25, and, zeropage, 2, 3, 0},
+	0x35: &OpType{0x35, and, zeropageX, 2, 4, 0},
+	0x2D: &OpType{0x2D, and, absolute, 3, 4, 0},
+	0x3D: &OpType{0x3D, and, absoluteX, 3, 4, 0},
+	0x39: &OpType{0x39, and, absoluteY, 3, 4, 0},
+	0x21: &OpType{0x21, and, indirectX, 2, 6, 0},
+	0x31: &OpType{0x31, and, indirectY, 2, 5, 0},
+	0x0A: &OpType{0x0A, asl, accumulator, 1, 2, 0},
+	0x06: &OpType{0x06, asl, zeropage, 2, 5, 0},
+	0x16: &OpType{0x16, asl, zeropageX, 2, 6, 0},
+	0x0E: &OpType{0x0E, asl, absolute, 3, 6, 0},
+	0x1E: &OpType{0x1E, asl, absoluteX, 3, 7, 0},
+	0x90: &OpType{0x90, bcc, relative, 2, 2, 0},
+	0xB0: &OpType{0xB0, bcs, relative, 2, 2, 0},
+	0xF0: &OpType{0xF0, beq, relative, 2, 2, 0},
+	0x24: &OpType{0x24, bit, zeropage, 2, 3, 0},
+	0x2C: &OpType{0x2C, bit, absolute, 3, 4, 0},
+	0x30: &OpType{0x30, bmi, relative, 2, 2, 0},
+	0xD0: &OpType{0xD0, bne, relative, 2, 2, 0},
+	0x10: &OpType{0x10, bpl, relative, 2, 2, 0},
+	0x00: &OpType{0x00, brk, implied, 1, 7, 0},
+	0x50: &OpType{0x50, bvc, relative, 2, 2, 0},
+	0x70: &OpType{0x70, bvs, relative, 2, 2, 0},
+	0x18: &OpType{0x18, clc, implied, 1, 2, 0},
+	0xD8: &OpType{0xD8, cld, implied, 1, 2, 0},
+	0x58: &OpType{0x58, cli, implied, 1, 2, 0},
+	0xB8: &OpType{0xB8, clv, implied, 1, 2, 0},
+	0xC9: &OpType{0xC9, cmp, immediate, 2, 2, 0},
+	0xC5: &OpType{0xC5, cmp, zeropage, 2, 3, 0},
+	0xD5: &OpType{0xD5, cmp, zeropageX, 2, 4, 0},
+	0xCD: &OpType{0xCD, cmp, absolute, 3, 4, 0},
+	0xDD: &OpType{0xDD, cmp, absoluteX, 3, 4, 0},
+	0xD9: &OpType{0xD9, cmp, absoluteY, 3, 4, 0},
+	0xC1: &OpType{0xC1, cmp, indirectX, 2, 6, 0},
+	0xD1: &OpType{0xD1, cmp, indirectY, 2, 5, 0},
+	0xE0: &OpType{0xE0, cpx, immediate, 2, 2, 0},
+	0xE4: &OpType{0xE4, cpx, zeropage, 2, 3, 0},
+	0xEC: &OpType{0xEC, cpx, absolute, 3, 4, 0},
+	0xC0: &OpType{0xC0, cpy, immediate, 2, 2, 0},
+	0xC4: &OpType{0xC4, cpy, zeropage, 2, 3, 0},
+	0xCC: &OpType{0xCC, cpy, absolute, 3, 4, 0},
+	0xC6: &OpType{0xC6, dec, zeropage, 2, 5, 0},
+	0xD6: &OpType{0xD6, dec, zeropageX, 2, 6, 0},
+	0xCE: &OpType{0xCE, dec, absolute, 3, 3, 0},
+	0xDE: &OpType{0xDE, dec, absoluteX, 3, 7, 0},
+	0xCA: &OpType{0xCA, dex, implied, 1, 2, 0},
+	0x88: &OpType{0x88, dey, implied, 1, 2, 0},
+	0x49: &OpType{0x49, eor, immediate, 2, 2, 0},
+	0x45: &OpType{0x45, eor, zeropage, 2, 3, 0},
+	0x55: &OpType{0x55, eor, zeropageX, 2, 4, 0},
+	0x4D: &OpType{0x4D, eor, absolute, 3, 4, 0},
+	0x5D: &OpType{0x5D, eor, absoluteX, 3, 4, 0},
+	0x59: &OpType{0x59, eor, absoluteY, 3, 4, 0},
+	0x41: &OpType{0x41, eor, indirectX, 2, 6, 0},
+	0x51: &OpType{0x51, eor, indirectY, 2, 5, 0},
+	0xE6: &OpType{0xE6, inc, zeropage, 2, 5, 0},
+	0xF6: &OpType{0xF6, inc, zeropageX, 2, 6, 0},
+	0xEE: &OpType{0xEE, inc, absolute, 3, 6, 0},
+	0xFE: &OpType{0xFE, inc, absoluteX, 3, 7, 0},
+	0xE8: &OpType{0xE8, inx, implied, 1, 2, 0},
+	0xC8: &OpType{0xC8, iny, implied, 1, 2, 0},
+	0x4C: &OpType{0x4C, jmp, absolute, 3, 3, 0},
+	0x6C: &OpType{0x6C, jmp, indirect, 3, 5, 0},
+	0x20: &OpType{0x20, jsr, absolute, 3, 6, 0},
+	0xA9: &OpType{0xA9, lda, immediate, 2, 2, 0},
+	0xA5: &OpType{0xA5, lda, zeropage, 2, 3, 0},
+	0xB5: &OpType{0xB5, lda, zeropageX, 2, 4, 0},
+	0xAD: &OpType{0xAD, lda, absolute, 3, 4, 0},
+	0xBD: &OpType{0xBD, lda, absoluteX, 3, 4, 0},
+	0xB9: &OpType{0xB9, lda, absoluteY, 3, 4, 0},
+	0xA1: &OpType{0xA1, lda, indirectX, 2, 6, 0},
+	0xB1: &OpType{0xB1, lda, indirectY, 2, 5, 0},
+	0xA2: &OpType{0xA2, ldx, immediate, 2, 2, 0},
+	0xA6: &OpType{0xA6, ldx, zeropage, 2, 3, 0},
+	0xB6: &OpType{0xB6, ldx, zeropageY, 2, 4, 0},
+	0xAE: &OpType{0xAE, ldx, absolute, 3, 4, 0},
+	0xBE: &OpType{0xBE, ldx, absoluteY, 3, 4, 0},
+	0xA0: &OpType{0xA0, ldy, immediate, 2, 2, 0},
+	0xA4: &OpType{0xA4, ldy, zeropage, 2, 3, 0},
+	0xB4: &OpType{0xB4, ldy, zeropageX, 2, 4, 0},
+	0xAC: &OpType{0xAC, ldy, absolute, 3, 4, 0},
+	0xBC: &OpType{0xBC, ldy, absoluteX, 3, 4, 0},
+	0x4A: &OpType{0x4A, lsr, accumulator, 1, 2, 0},
+	0x46: &OpType{0x46, lsr, zeropage, 2, 5, 0},
+	0x56: &OpType{0x56, lsr, zeropageX, 2, 6, 0},
+	0x4E: &OpType{0x4E, lsr, absolute, 3, 6, 0},
+	0x5E: &OpType{0x5E, lsr, absoluteX, 3, 7, 0},
+	0xEA: &OpType{0xEA, nop, implied, 1, 2, 0},
+	0x09: &OpType{0x09, ora, immediate, 2, 2, 0},
+	0x05: &OpType{0x05, ora, zeropage, 2, 3, 0},
+	0x15: &OpType{0x15, ora, zeropageX, 2, 4, 0},
+	0x0D: &OpType{0x0D, ora, absolute, 3, 4, 0},
+	0x1D: &OpType{0x1D, ora, absoluteX, 3, 4, 0},
+	0x19: &OpType{0x19, ora, absoluteY, 3, 4, 0},
+	0x01: &OpType{0x01, ora, indirectX, 2, 6, 0},
+	0x11: &OpType{0x11, ora, indirectY, 2, 5, 0},
+	0x48: &OpType{0x48, pha, implied, 1, 3, 0},
+	0x08: &OpType{0x08, php, implied, 1, 3, 0},
+	0x68: &OpType{0x68, pla, implied, 1, 4, 0},
+	0x28: &OpType{0x28, php, implied, 1, 4, 0},
+	0x2A: &OpType{0x2A, rol, accumulator, 1, 2, 0},
+	0x26: &OpType{0x26, rol, zeropage, 2, 5, 0},
+	0x36: &OpType{0x36, rol, zeropageX, 2, 6, 0},
+	0x2E: &OpType{0x2E, rol, absolute, 3, 6, 0},
+	0x3E: &OpType{0x3E, rol, absoluteX, 3, 7, 0},
+	0x6A: &OpType{0x6A, ror, accumulator, 1, 2, 0},
+	0x66: &OpType{0x66, ror, zeropage, 2, 5, 0},
+	0x76: &OpType{0x76, ror, zeropageX, 2, 6, 0},
+	0x6E: &OpType{0x6E, ror, absolute, 3, 6, 0},
+	0x7E: &OpType{0x7E, ror, absoluteX, 3, 7, 0},
+	0x40: &OpType{0x40, rti, implied, 1, 6, 0},
+	0x60: &OpType{0x60, rts, implied, 1, 6, 0},
+	0xE9: &OpType{0xE9, sbc, immediate, 2, 2, 0},
+	0xE5: &OpType{0xE5, sbc, zeropage, 2, 3, 0},
+	0xF5: &OpType{0xF5, sbc, zeropageX, 2, 4, 0},
+	0xED: &OpType{0xED, sbc, absolute, 3, 4, 0},
+	0xFD: &OpType{0xFD, sbc, absoluteX, 3, 4, 0},
+	0xF9: &OpType{0xF9, sbc, absoluteY, 3, 4, 0},
+	0xE1: &OpType{0xE1, sbc, indirectX, 2, 6, 0},
+	0xF1: &OpType{0xF1, sbc, indirectY, 2, 5, 0},
+	0x38: &OpType{0x38, sec, implied, 1, 2, 0},
+	0xF8: &OpType{0xF8, sed, implied, 1, 2, 0},
+	0x78: &OpType{0x78, sei, implied, 1, 2, 0},
+	0x85: &OpType{0x85, sta, zeropage, 2, 3, 0},
+	0x95: &OpType{0x95, sta, zeropageX, 2, 4, 0},
+	0x8D: &OpType{0x8D, sta, absolute, 3, 4, 0},
+	0x9D: &OpType{0x9D, sta, absoluteX, 3, 5, 0},
+	0x99: &OpType{0x99, sta, absoluteY, 3, 5, 0},
+	0x81: &OpType{0x81, sta, indirectX, 2, 6, 0},
+	0x91: &OpType{0x91, sta, indirectY, 2, 6, 0},
+	0x86: &OpType{0x86, stx, zeropage, 2, 3, 0},
+	0x96: &OpType{0x96, stx, zeropageY, 2, 4, 0},
+	0x8E: &OpType{0x8E, stx, absolute, 3, 4, 0},
+	0x84: &OpType{0x84, sty, zeropage, 2, 3, 0},
+	0x94: &OpType{0x94, sty, zeropageX, 2, 4, 0},
+	0x8C: &OpType{0x8C, sty, absolute, 3, 4, 0},
+	0xAA: &OpType{0xAA, tax, implied, 1, 2, 0},
+	0xA8: &OpType{0xA8, tay, implied, 1, 2, 0},
+	0xBA: &OpType{0xBA, tsx, implied, 1, 2, 0},
+	0x8A: &OpType{0x8A, txa, implied, 1, 2, 0},
+	0x9A: &OpType{0x9A, txs, implied, 1, 2, 0},
+	0x98: &OpType{0x98, tya, implied, 1, 2, 0},
+	0xFF: &OpType{0xFF, _end, implied, 1, 1, 0},
 }
 
 // Instruction is an OpType plus its operand.
@@ -202,318 +357,4 @@ func (in *Instruction) String() (s string) {
 		s = in.ot.String()
 	}
 	return
-}
-
-func findInstruction(opcode byte) *OpType {
-	// TODO: singleton instructions; they're immutable.
-	var ot OpType
-	switch opcode {
-	default:
-		panic(fmt.Sprintf("Unknown opcode: 0x%02X", opcode))
-	case 0x69:
-		ot = OpType{adc, opcode, immediate, 2, 2, 0}
-	case 0x65:
-		ot = OpType{adc, opcode, zeropage, 2, 3, 0}
-	case 0x75:
-		ot = OpType{adc, opcode, zeropageX, 2, 4, 0}
-	case 0x6D:
-		ot = OpType{adc, opcode, absolute, 3, 4, 0}
-	case 0x7D:
-		ot = OpType{adc, opcode, absoluteX, 3, 4, 0}
-	case 0x79:
-		ot = OpType{adc, opcode, absoluteY, 3, 4, 0}
-	case 0x61:
-		ot = OpType{adc, opcode, indirectX, 2, 6, 0}
-	case 0x71:
-		ot = OpType{adc, opcode, indirectY, 2, 5, 0}
-	case 0x29:
-		ot = OpType{and, opcode, immediate, 2, 2, 0}
-	case 0x25:
-		ot = OpType{and, opcode, zeropage, 2, 3, 0}
-	case 0x35:
-		ot = OpType{and, opcode, zeropageX, 2, 4, 0}
-	case 0x2D:
-		ot = OpType{and, opcode, absolute, 3, 4, 0}
-	case 0x3D:
-		ot = OpType{and, opcode, absoluteX, 3, 4, 0}
-	case 0x39:
-		ot = OpType{and, opcode, absoluteY, 3, 4, 0}
-	case 0x21:
-		ot = OpType{and, opcode, indirectX, 2, 6, 0}
-	case 0x31:
-		ot = OpType{and, opcode, indirectY, 2, 5, 0}
-	case 0x0A:
-		ot = OpType{asl, opcode, accumulator, 1, 2, 0}
-	case 0x06:
-		ot = OpType{asl, opcode, zeropage, 2, 5, 0}
-	case 0x16:
-		ot = OpType{asl, opcode, zeropageX, 2, 6, 0}
-	case 0x0E:
-		ot = OpType{asl, opcode, absolute, 3, 6, 0}
-	case 0x1E:
-		ot = OpType{asl, opcode, absoluteX, 3, 7, 0}
-	case 0x90:
-		ot = OpType{bcc, opcode, relative, 2, 2, 0}
-	case 0xB0:
-		ot = OpType{bcs, opcode, relative, 2, 2, 0}
-	case 0xF0:
-		ot = OpType{beq, opcode, relative, 2, 2, 0}
-	case 0x24:
-		ot = OpType{bit, opcode, zeropage, 2, 3, 0}
-	case 0x2C:
-		ot = OpType{bit, opcode, absolute, 3, 4, 0}
-	case 0x30:
-		ot = OpType{bmi, opcode, relative, 2, 2, 0}
-	case 0xD0:
-		ot = OpType{bne, opcode, relative, 2, 2, 0}
-	case 0x10:
-		ot = OpType{bpl, opcode, relative, 2, 2, 0}
-	case 0x00:
-		ot = OpType{brk, opcode, implied, 1, 7, 0}
-	case 0x50:
-		ot = OpType{bvc, opcode, relative, 2, 2, 0}
-	case 0x70:
-		ot = OpType{bvs, opcode, relative, 2, 2, 0}
-	case 0x18:
-		ot = OpType{clc, opcode, implied, 1, 2, 0}
-	case 0xD8:
-		ot = OpType{cld, opcode, implied, 1, 2, 0}
-	case 0x58:
-		ot = OpType{cli, opcode, implied, 1, 2, 0}
-	case 0xB8:
-		ot = OpType{clv, opcode, implied, 1, 2, 0}
-	case 0xC9:
-		ot = OpType{cmp, opcode, immediate, 2, 2, 0}
-	case 0xC5:
-		ot = OpType{cmp, opcode, zeropage, 2, 3, 0}
-	case 0xD5:
-		ot = OpType{cmp, opcode, zeropageX, 2, 4, 0}
-	case 0xCD:
-		ot = OpType{cmp, opcode, absolute, 3, 4, 0}
-	case 0xDD:
-		ot = OpType{cmp, opcode, absoluteX, 3, 4, 0}
-	case 0xD9:
-		ot = OpType{cmp, opcode, absoluteY, 3, 4, 0}
-	case 0xC1:
-		ot = OpType{cmp, opcode, indirectX, 2, 6, 0}
-	case 0xD1:
-		ot = OpType{cmp, opcode, indirectY, 2, 5, 0}
-	case 0xE0:
-		ot = OpType{cpx, opcode, immediate, 2, 2, 0}
-	case 0xE4:
-		ot = OpType{cpx, opcode, zeropage, 2, 3, 0}
-	case 0xEC:
-		ot = OpType{cpx, opcode, absolute, 3, 4, 0}
-	case 0xC0:
-		ot = OpType{cpy, opcode, immediate, 2, 2, 0}
-	case 0xC4:
-		ot = OpType{cpy, opcode, zeropage, 2, 3, 0}
-	case 0xCC:
-		ot = OpType{cpy, opcode, absolute, 3, 4, 0}
-	case 0xC6:
-		ot = OpType{dec, opcode, zeropage, 2, 5, 0}
-	case 0xD6:
-		ot = OpType{dec, opcode, zeropageX, 2, 6, 0}
-	case 0xCE:
-		ot = OpType{dec, opcode, absolute, 3, 3, 0}
-	case 0xDE:
-		ot = OpType{dec, opcode, absoluteX, 3, 7, 0}
-	case 0xCA:
-		ot = OpType{dex, opcode, implied, 1, 2, 0}
-	case 0x88:
-		ot = OpType{dey, opcode, implied, 1, 2, 0}
-	case 0x49:
-		ot = OpType{eor, opcode, immediate, 2, 2, 0}
-	case 0x45:
-		ot = OpType{eor, opcode, zeropage, 2, 3, 0}
-	case 0x55:
-		ot = OpType{eor, opcode, zeropageX, 2, 4, 0}
-	case 0x4D:
-		ot = OpType{eor, opcode, absolute, 3, 4, 0}
-	case 0x5D:
-		ot = OpType{eor, opcode, absoluteX, 3, 4, 0}
-	case 0x59:
-		ot = OpType{eor, opcode, absoluteY, 3, 4, 0}
-	case 0x41:
-		ot = OpType{eor, opcode, indirectX, 2, 6, 0}
-	case 0x51:
-		ot = OpType{eor, opcode, indirectY, 2, 5, 0}
-	case 0xE6:
-		ot = OpType{inc, opcode, zeropage, 2, 5, 0}
-	case 0xF6:
-		ot = OpType{inc, opcode, zeropageX, 2, 6, 0}
-	case 0xEE:
-		ot = OpType{inc, opcode, absolute, 3, 6, 0}
-	case 0xFE:
-		ot = OpType{inc, opcode, absoluteX, 3, 7, 0}
-	case 0xE8:
-		ot = OpType{inx, opcode, implied, 1, 2, 0}
-	case 0xC8:
-		ot = OpType{iny, opcode, implied, 1, 2, 0}
-	case 0x4C:
-		ot = OpType{jmp, opcode, absolute, 3, 3, 0}
-	case 0x6C:
-		ot = OpType{jmp, opcode, indirect, 3, 5, 0}
-	case 0x20:
-		ot = OpType{jsr, opcode, absolute, 3, 6, 0}
-	case 0xA9:
-		ot = OpType{lda, opcode, immediate, 2, 2, 0}
-	case 0xA5:
-		ot = OpType{lda, opcode, zeropage, 2, 3, 0}
-	case 0xB5:
-		ot = OpType{lda, opcode, zeropageX, 2, 4, 0}
-	case 0xAD:
-		ot = OpType{lda, opcode, absolute, 3, 4, 0}
-	case 0xBD:
-		ot = OpType{lda, opcode, absoluteX, 3, 4, 0}
-	case 0xB9:
-		ot = OpType{lda, opcode, absoluteY, 3, 4, 0}
-	case 0xA1:
-		ot = OpType{lda, opcode, indirectX, 2, 6, 0}
-	case 0xB1:
-		ot = OpType{lda, opcode, indirectY, 2, 5, 0}
-	case 0xA2:
-		ot = OpType{ldx, opcode, immediate, 2, 2, 0}
-	case 0xA6:
-		ot = OpType{ldx, opcode, zeropage, 2, 3, 0}
-	case 0xB6:
-		ot = OpType{ldx, opcode, zeropageY, 2, 4, 0}
-	case 0xAE:
-		ot = OpType{ldx, opcode, absolute, 3, 4, 0}
-	case 0xBE:
-		ot = OpType{ldx, opcode, absoluteY, 3, 4, 0}
-	case 0xA0:
-		ot = OpType{ldy, opcode, immediate, 2, 2, 0}
-	case 0xA4:
-		ot = OpType{ldy, opcode, zeropage, 2, 3, 0}
-	case 0xB4:
-		ot = OpType{ldy, opcode, zeropageX, 2, 4, 0}
-	case 0xAC:
-		ot = OpType{ldy, opcode, absolute, 3, 4, 0}
-	case 0xBC:
-		ot = OpType{ldy, opcode, absoluteX, 3, 4, 0}
-	case 0x4A:
-		ot = OpType{lsr, opcode, accumulator, 1, 2, 0}
-	case 0x46:
-		ot = OpType{lsr, opcode, zeropage, 2, 5, 0}
-	case 0x56:
-		ot = OpType{lsr, opcode, zeropageX, 2, 6, 0}
-	case 0x4E:
-		ot = OpType{lsr, opcode, absolute, 3, 6, 0}
-	case 0x5E:
-		ot = OpType{lsr, opcode, absoluteX, 3, 7, 0}
-	case 0xEA:
-		ot = OpType{nop, opcode, implied, 1, 2, 0}
-	case 0x09:
-		ot = OpType{ora, opcode, immediate, 2, 2, 0}
-	case 0x05:
-		ot = OpType{ora, opcode, zeropage, 2, 3, 0}
-	case 0x15:
-		ot = OpType{ora, opcode, zeropageX, 2, 4, 0}
-	case 0x0D:
-		ot = OpType{ora, opcode, absolute, 3, 4, 0}
-	case 0x1D:
-		ot = OpType{ora, opcode, absoluteX, 3, 4, 0}
-	case 0x19:
-		ot = OpType{ora, opcode, absoluteY, 3, 4, 0}
-	case 0x01:
-		ot = OpType{ora, opcode, indirectX, 2, 6, 0}
-	case 0x11:
-		ot = OpType{ora, opcode, indirectY, 2, 5, 0}
-	case 0x48:
-		ot = OpType{pha, opcode, implied, 1, 3, 0}
-	case 0x08:
-		ot = OpType{php, opcode, implied, 1, 3, 0}
-	case 0x68:
-		ot = OpType{pla, opcode, implied, 1, 4, 0}
-	case 0x28:
-		ot = OpType{php, opcode, implied, 1, 4, 0}
-	case 0x2A:
-		ot = OpType{rol, opcode, accumulator, 1, 2, 0}
-	case 0x26:
-		ot = OpType{rol, opcode, zeropage, 2, 5, 0}
-	case 0x36:
-		ot = OpType{rol, opcode, zeropageX, 2, 6, 0}
-	case 0x2E:
-		ot = OpType{rol, opcode, absolute, 3, 6, 0}
-	case 0x3E:
-		ot = OpType{rol, opcode, absoluteX, 3, 7, 0}
-	case 0x6A:
-		ot = OpType{ror, opcode, accumulator, 1, 2, 0}
-	case 0x66:
-		ot = OpType{ror, opcode, zeropage, 2, 5, 0}
-	case 0x76:
-		ot = OpType{ror, opcode, zeropageX, 2, 6, 0}
-	case 0x6E:
-		ot = OpType{ror, opcode, absolute, 3, 6, 0}
-	case 0x7E:
-		ot = OpType{ror, opcode, absoluteX, 3, 7, 0}
-	case 0x40:
-		ot = OpType{rti, opcode, implied, 1, 6, 0}
-	case 0x60:
-		ot = OpType{rts, opcode, implied, 1, 6, 0}
-	case 0xE9:
-		ot = OpType{sbc, opcode, immediate, 2, 2, 0}
-	case 0xE5:
-		ot = OpType{sbc, opcode, zeropage, 2, 3, 0}
-	case 0xF5:
-		ot = OpType{sbc, opcode, zeropageX, 2, 4, 0}
-	case 0xED:
-		ot = OpType{sbc, opcode, absolute, 3, 4, 0}
-	case 0xFD:
-		ot = OpType{sbc, opcode, absoluteX, 3, 4, 0}
-	case 0xF9:
-		ot = OpType{sbc, opcode, absoluteY, 3, 4, 0}
-	case 0xE1:
-		ot = OpType{sbc, opcode, indirectX, 2, 6, 0}
-	case 0xF1:
-		ot = OpType{sbc, opcode, indirectY, 2, 5, 0}
-	case 0x38:
-		ot = OpType{sec, opcode, implied, 1, 2, 0}
-	case 0xF8:
-		ot = OpType{sed, opcode, implied, 1, 2, 0}
-	case 0x78:
-		ot = OpType{sei, opcode, implied, 1, 2, 0}
-	case 0x85:
-		ot = OpType{sta, opcode, zeropage, 2, 3, 0}
-	case 0x95:
-		ot = OpType{sta, opcode, zeropageX, 2, 4, 0}
-	case 0x8D:
-		ot = OpType{sta, opcode, absolute, 3, 4, 0}
-	case 0x9D:
-		ot = OpType{sta, opcode, absoluteX, 3, 5, 0}
-	case 0x99:
-		ot = OpType{sta, opcode, absoluteY, 3, 5, 0}
-	case 0x81:
-		ot = OpType{sta, opcode, indirectX, 2, 6, 0}
-	case 0x91:
-		ot = OpType{sta, opcode, indirectY, 2, 6, 0}
-	case 0x86:
-		ot = OpType{stx, opcode, zeropage, 2, 3, 0}
-	case 0x96:
-		ot = OpType{stx, opcode, zeropageY, 2, 4, 0}
-	case 0x8E:
-		ot = OpType{stx, opcode, absolute, 3, 4, 0}
-	case 0x84:
-		ot = OpType{sty, opcode, zeropage, 2, 3, 0}
-	case 0x94:
-		ot = OpType{sty, opcode, zeropageX, 2, 4, 0}
-	case 0x8C:
-		ot = OpType{sty, opcode, absolute, 3, 4, 0}
-	case 0xAA:
-		ot = OpType{tax, opcode, implied, 1, 2, 0}
-	case 0xA8:
-		ot = OpType{tay, opcode, implied, 1, 2, 0}
-	case 0xBA:
-		ot = OpType{tsx, opcode, implied, 1, 2, 0}
-	case 0x8A:
-		ot = OpType{txa, opcode, implied, 1, 2, 0}
-	case 0x9A:
-		ot = OpType{txs, opcode, implied, 1, 2, 0}
-	case 0x98:
-		ot = OpType{tya, opcode, implied, 1, 2, 0}
-	case 0xFF:
-		ot = OpType{_end, opcode, implied, 1, 1, 0}
-	}
-	return &ot
 }
