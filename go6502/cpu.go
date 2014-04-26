@@ -290,7 +290,7 @@ func (c *Cpu) Execute(iop *Iop) {
 	}
 }
 
-// add with carry
+// ADC: Add memory and carry to accumulator.
 func (c *Cpu) ADC(iop *Iop) {
 	value16 := uint16(c.ac) + uint16(c.resolveOperand(iop)) + uint16(c.getStatusInt(sCarry))
 	c.setStatus(sCarry, value16 > 0xFF)
@@ -298,13 +298,13 @@ func (c *Cpu) ADC(iop *Iop) {
 	c.updateStatus(c.ac)
 }
 
-// bitwise AND with accumulator
+// AND: And accumulator with memory.
 func (c *Cpu) AND(iop *Iop) {
 	c.ac &= c.resolveOperand(iop)
 	c.updateStatus(c.ac)
 }
 
-// arithmetic shift left
+// ASL: Shift memory or accumulator left one bit.
 func (c *Cpu) ASL(iop *Iop) {
 	switch iop.in.addressing {
 	case accumulator:
@@ -321,86 +321,85 @@ func (c *Cpu) ASL(iop *Iop) {
 	}
 }
 
-// branch if carry clear
+// BCC: Branch if carry clear.
 func (c *Cpu) BCC(iop *Iop) {
 	if !c.getStatus(sCarry) {
 		c.branch(iop)
 	}
 }
 
-// branch on carry (when carry set)
+// BCS: Branch if carry set.
 func (c *Cpu) BCS(iop *Iop) {
 	if c.getStatus(sCarry) {
 		c.branch(iop)
 	}
 }
 
-// branch on equal (zero set)
-// (branch on z = 1)
+// BEQ: Branch if equal (z=1).
 func (c *Cpu) BEQ(iop *Iop) {
 	if c.getStatus(sZero) {
 		c.branch(iop)
 	}
 }
 
-// branch on result minus (status negative)
+// BMI: Branch if negative.
 func (c *Cpu) BMI(iop *Iop) {
 	if c.getStatus(sNegative) {
 		c.branch(iop)
 	}
 }
 
-// branch on not-equal (zero clear)
+// BNE: Branch if not equal.
 func (c *Cpu) BNE(iop *Iop) {
 	if !c.getStatus(sZero) {
 		c.branch(iop)
 	}
 }
 
-// branch on not-negative
+// BPL: Branch if positive.
 func (c *Cpu) BPL(iop *Iop) {
 	if !c.getStatus(sNegative) {
 		c.branch(iop)
 	}
 }
 
-// clear carry
+// CLC: Clear carry flag.
 func (c *Cpu) CLC(iop *Iop) {
 	c.setStatus(sCarry, false)
 }
 
-// clear decimal
+// CLD: Clear decimal mode flag.
 func (c *Cpu) CLD(iop *Iop) {
 	c.setStatus(sDecimal, false)
 }
 
-// clear interrupt mask (enable maskable interrupts)
+// CLI: Clear interrupt-disable flag.
 func (c *Cpu) CLI(iop *Iop) {
 	c.setStatus(sInterrupt, true)
 }
 
-// compare (with accumulator)
+// CMP: Compare accumulator with memory.
 func (c *Cpu) CMP(iop *Iop) {
 	value := c.resolveOperand(iop)
 	c.setStatus(sCarry, c.ac >= value)
 	c.updateStatus(c.ac - value)
 }
 
-// compare X
+// CPX: Compare index register X with memory.
 func (c *Cpu) CPX(iop *Iop) {
 	value := c.resolveOperand(iop)
 	c.setStatus(sCarry, c.x >= value)
 	c.updateStatus(c.x - value)
 }
 
-// compare Y
+// CPY: Compare index register Y with memory.
 func (c *Cpu) CPY(iop *Iop) {
 	value := c.resolveOperand(iop)
 	c.setStatus(sCarry, c.y >= value)
 	c.updateStatus(c.y - value)
 }
 
-// decrement memory
+// DEC: Decrement.
 func (c *Cpu) DEC(iop *Iop) {
 	address := c.memoryAddress(iop)
 	value := c.Bus.Read(address) - 1
@@ -408,26 +407,26 @@ func (c *Cpu) DEC(iop *Iop) {
 	c.updateStatus(value)
 }
 
-// decrement x
+// DEX: Decrement index register X.
 func (c *Cpu) DEX(iop *Iop) {
 	c.x--
 	c.updateStatus(c.x)
 }
 
-// decrement y
+// DEY: Decrement index register Y.
 func (c *Cpu) DEY(iop *Iop) {
 	c.y--
 	c.updateStatus(c.y)
 }
 
-// Exclusive OR (accumulator)
+// EOR: Exclusive-OR accumulator with memory.
 func (c *Cpu) EOR(iop *Iop) {
 	value := c.resolveOperand(iop)
 	c.ac ^= value
 	c.updateStatus(c.ac)
 }
 
-// increment value in memory
+// INC: Increment.
 func (c *Cpu) INC(iop *Iop) {
 	address := c.memoryAddress(iop)
 	value := c.Bus.Read(address) + 1
@@ -435,49 +434,49 @@ func (c *Cpu) INC(iop *Iop) {
 	c.updateStatus(value)
 }
 
-// increment x
+// INX: Increment index register X.
 func (c *Cpu) INX(iop *Iop) {
 	c.x++
 	c.updateStatus(c.x)
 }
 
-// increment y
+// INY: Increment index register Y.
 func (c *Cpu) INY(iop *Iop) {
 	c.y++
 	c.updateStatus(c.y)
 }
 
-// jump
+// JMP: Jump.
 func (c *Cpu) JMP(iop *Iop) {
 	c.pc = c.memoryAddress(iop)
 }
 
-// jump to subroutine
+// JSR: Jump to subroutine.
 func (c *Cpu) JSR(iop *Iop) {
 	c.Bus.Write16(c.StackHead(-1), c.pc-1)
 	c.sp -= 2
 	c.pc = iop.op16
 }
 
-// load accumulator
+// LDA: Load accumulator from memory.
 func (c *Cpu) LDA(iop *Iop) {
 	c.ac = c.resolveOperand(iop)
 	c.updateStatus(c.ac)
 }
 
-// load Y
-func (c *Cpu) LDY(iop *Iop) {
-	c.y = c.resolveOperand(iop)
-	c.updateStatus(c.y)
-}
-
-// load X
+// LDX: Load index register X from memory.
 func (c *Cpu) LDX(iop *Iop) {
 	c.x = c.resolveOperand(iop)
 	c.updateStatus(c.x)
 }
 
-// logical shift right.
+// LDY: Load index register Y from memory.
+func (c *Cpu) LDY(iop *Iop) {
+	c.y = c.resolveOperand(iop)
+	c.updateStatus(c.y)
+}
+
+// LSR: Logical shift memory or accumulator right.
 func (c *Cpu) LSR(iop *Iop) {
 	switch iop.in.addressing {
 	case accumulator:
@@ -494,30 +493,29 @@ func (c *Cpu) LSR(iop *Iop) {
 	}
 }
 
-// no operation
+// NOP: No operation.
 func (c *Cpu) NOP(iop *Iop) {
 }
 
-// bitwise OR memory with accumulator
+// ORA: OR accumulator with memory.
 func (c *Cpu) ORA(iop *Iop) {
 	c.ac |= c.resolveOperand(iop)
 	c.updateStatus(c.ac)
 }
 
-// push accumulator
+// PHA: Push accumulator onto stack.
 func (c *Cpu) PHA(iop *Iop) {
 	c.Bus.Write(0x0100+address(c.sp), c.ac)
 	c.sp--
 }
 
-// pull accumulator
+// PLA: Pull accumulator from stack.
 func (c *Cpu) PLA(iop *Iop) {
 	c.sp++
 	c.ac = c.Bus.Read(0x0100 + address(c.sp))
 }
 
-// bitwise rotate left
-// SR carry into bit 0, original bit 7 into SR carry.
+// ROL: Rotate memory or accumulator left one bit.
 func (c *Cpu) ROL(iop *Iop) {
 	carry := c.getStatusInt(sCarry)
 	switch iop.in.addressing {
@@ -535,15 +533,14 @@ func (c *Cpu) ROL(iop *Iop) {
 	}
 }
 
-// return from subroutine
+// RTS: Return from subroutine.
 func (c *Cpu) RTS(iop *Iop) {
 	c.pc = c.Bus.Read16(c.StackHead(1))
 	c.sp += 2
 	c.pc += 1
 }
 
-// subract with carry
-// TODO: overflow status
+// SBC: Subtract memory with borrow from accumulator.
 func (c *Cpu) SBC(iop *Iop) {
 	valueSigned := int16(c.ac) - int16(c.resolveOperand(iop))
 	if !c.getStatus(sCarry) {
@@ -553,58 +550,57 @@ func (c *Cpu) SBC(iop *Iop) {
 	c.ac = uint8(valueSigned)
 }
 
-// set interrupt mask (disable maskable interrupts)
+// SEI: Set interrupt-disable flag.
 func (c *Cpu) SEI(iop *Iop) {
 	c.setStatus(sInterrupt, false)
 }
 
-// store from accumulator
+// STA: Store accumulator to memory.
 func (c *Cpu) STA(iop *Iop) {
 	c.Bus.Write(c.memoryAddress(iop), c.ac)
 }
 
-// store from X
+// STX: Store index register X to memory.
 func (c *Cpu) STX(iop *Iop) {
 	c.Bus.Write(c.memoryAddress(iop), c.x)
 }
 
-// store from Y
+// STY: Store index register Y to memory.
 func (c *Cpu) STY(iop *Iop) {
 	c.Bus.Write(c.memoryAddress(iop), c.y)
 }
 
-// transfer accumulator for index Y
+// TAX: Transfer accumulator to index register X.
 func (c *Cpu) TAX(iop *Iop) {
 	c.x = c.ac
 	c.updateStatus(c.x)
 }
 
-// transfer accumulator for index Y
+// TAY: Transfer accumulator to index register Y.
 func (c *Cpu) TAY(iop *Iop) {
 	c.y = c.ac
 	c.updateStatus(c.y)
 }
 
-// Copies the current contents of the X register into the accumulator and sets
-// the zero and negative flags as appropriate.
+// TXA: Transfer index register X to accumulator.
 func (c *Cpu) TXA(iop *Iop) {
 	c.ac = c.x
 	c.updateStatus(c.ac)
 }
 
-// transfer X to stack pointer
+// TXS: Transfer index register X to stack pointer.
 func (c *Cpu) TXS(iop *Iop) {
 	c.sp = c.x
 	c.updateStatus(c.sp)
 }
 
-// Transfer Y to Accumulator
+// TYA: Transfer index register Y to accumulator.
 func (c *Cpu) TYA(iop *Iop) {
 	c.ac = c.y
 	c.updateStatus(c.ac)
 }
 
-// Custom go6502 instruction.
+// _END: Custom go6502 instruction.
 // Exit, with contents of X register as exit status.
 func (c *Cpu) _END(iop *Iop) {
 	c.ExitChan <- int(c.x)
