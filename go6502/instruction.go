@@ -39,7 +39,8 @@ var addressingNames = [...]string{
 	"zeropageY",
 }
 
-// instruction (mnemonic) ids.
+// ADC..TYA represent the 6502 instruction set mnemonics. Each mnemonic maps to
+// a number of different opcodes, depending on the addressing mode.
 const (
 	_ = iota
 	ADC
@@ -101,6 +102,9 @@ const (
 	_END
 )
 
+// Instruction represents a 6502 op-code instruction, including the addressing
+// mode encoded into the op-code, but not the operand value following the
+// opcode in memory.
 type Instruction struct {
 	id         uint8 // the const identifier of the instruction type, e.g. ADC
 	opcode     byte
@@ -108,6 +112,27 @@ type Instruction struct {
 	bytes      int
 	cycles     int
 	flags      int
+}
+
+// Iop is an instruction with its operand.
+// One or both of the operand types will be zero.
+// This is determined by (in.bytes - 1) / 8
+type Iop struct {
+	in   *Instruction
+	op8  uint8
+	op16 address
+}
+
+func (iop *Iop) String() (s string) {
+	switch iop.in.bytes {
+	case 3:
+		s = fmt.Sprintf("%v $%04X", iop.in, iop.op16)
+	case 2:
+		s = fmt.Sprintf("%v $%02X", iop.in, iop.op8)
+	case 1:
+		s = iop.in.String()
+	}
+	return
 }
 
 func findInstruction(opcode byte) *Instruction {

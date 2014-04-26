@@ -29,27 +29,6 @@ type Cpu struct {
 	ExitChan chan int
 }
 
-// An instruction with its operand.
-// One or both of the operand types will be zero.
-// This is determined by (in.bytes - 1) / 8
-type Iop struct {
-	in   *Instruction
-	op8  uint8
-	op16 address
-}
-
-func (iop *Iop) String() (s string) {
-	switch iop.in.bytes {
-	case 3:
-		s = fmt.Sprintf("%v $%04X", iop.in, iop.op16)
-	case 2:
-		s = fmt.Sprintf("%v $%02X", iop.in, iop.op8)
-	case 1:
-		s = iop.in.String()
-	}
-	return
-}
-
 func (c *Cpu) AttachDebugger(d *Debugger) {
 	c.debugger = d
 }
