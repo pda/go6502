@@ -76,8 +76,8 @@ func (d *Debugger) checkRegBreakpoint(regStr string, on bool, expect byte, actua
 	}
 }
 
-func (d *Debugger) doBreakpoints(iop *Iop) {
-	inName := iop.ot.name()
+func (d *Debugger) doBreakpoints(in *Instruction) {
+	inName := in.ot.name()
 
 	if inName == d.breakInstruction {
 		fmt.Printf("Breakpoint for instruction %s\n", inName)
@@ -94,24 +94,24 @@ func (d *Debugger) doBreakpoints(iop *Iop) {
 	d.checkRegBreakpoint("Y", d.breakRegY, d.breakRegYValue, d.cpu.y)
 }
 
-func (d *Debugger) BeforeExecute(iop *Iop) {
+func (d *Debugger) BeforeExecute(in *Instruction) {
 
-	d.doBreakpoints(iop)
+	d.doBreakpoints(in)
 
 	if d.run {
 		return
 	}
 
 	fmt.Println(d.cpu)
-	fmt.Println("Next:", iop)
+	fmt.Println("Next:", in)
 
-	for !d.commandLoop(iop) {
+	for !d.commandLoop(in) {
 		// next
 	}
 }
 
 // Returns true when control is to be released.
-func (d *Debugger) commandLoop(iop *Iop) (release bool) {
+func (d *Debugger) commandLoop(in *Instruction) (release bool) {
 	var (
 		cmd *DebuggerCommand
 		err error

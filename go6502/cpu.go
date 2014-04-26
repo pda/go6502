@@ -46,27 +46,27 @@ func (c *Cpu) Reset() {
 func (c *Cpu) Step() {
 	op := c.Bus.Read(c.pc)
 	ot := findInstruction(op)
-	iop := c.readOperand(ot)
+	in := c.readOperand(ot)
 	if c.debugger != nil {
-		c.debugger.BeforeExecute(iop)
+		c.debugger.BeforeExecute(in)
 	}
 	c.pc += address(ot.bytes)
-	c.Execute(iop)
+	c.Execute(in)
 }
 
-func (c *Cpu) readOperand(ot *OpType) *Iop {
+func (c *Cpu) readOperand(ot *OpType) *Instruction {
 	// read instruction with operand
-	iop := &Iop{ot: ot}
+	in := &Instruction{ot: ot}
 	switch ot.bytes {
 	case 1: // no operand
 	case 2:
-		iop.op8 = c.Bus.Read(c.pc + 1)
+		in.op8 = c.Bus.Read(c.pc + 1)
 	case 3:
-		iop.op16 = c.Bus.Read16(c.pc + 1)
+		in.op16 = c.Bus.Read16(c.pc + 1)
 	default:
 		panic(fmt.Sprintf("unhandled instruction length: %d", ot.bytes))
 	}
-	return iop
+	return in
 }
 
 func (c *Cpu) String() string {
@@ -81,23 +81,23 @@ func (c *Cpu) StackHead(offset int8) address {
 	return address(0x0100) + address(c.sp) + address(offset)
 }
 
-func (c *Cpu) resolveOperand(iop *Iop) uint8 {
-	switch iop.ot.addressing {
+func (c *Cpu) resolveOperand(in *Instruction) uint8 {
+	switch in.ot.addressing {
 	case immediate:
-		return iop.op8
+		return in.op8
 	default:
-		return c.Bus.Read(c.memoryAddress(iop))
+		return c.Bus.Read(c.memoryAddress(in))
 	}
 }
 
-func (c *Cpu) memoryAddress(iop *Iop) address {
-	switch iop.ot.addressing {
+func (c *Cpu) memoryAddress(in *Instruction) address {
+	switch in.ot.addressing {
 	case absolute:
-		return iop.op16
+		return in.op16
 	case absoluteX:
-		return iop.op16 + address(c.x)
+		return in.op16 + address(c.x)
 	case absoluteY:
-		return iop.op16 + address(c.y)
+		return in.op16 + address(c.y)
 
 	// Indexed Indirect (X)
 	// Operand is the zero-page location of a little-endian 16-bit base address.
@@ -105,7 +105,7 @@ func (c *Cpu) memoryAddress(iop *Iop) address {
 	// The resulting address loaded from (base+X) becomes the effective operand.
 	// (base + X) must be in zero-page.
 	case indirectX:
-		location := address(iop.op8 + c.x)
+		location := address(in.op8 + c.x)
 		if location == 0xFF {
 			panic("Indexed indirect high-byte not on zero page.")
 		}
@@ -116,14 +116,14 @@ func (c *Cpu) memoryAddress(iop *Iop) address {
 	// The address is loaded, and then the Y register is added to it.
 	// The resulting loaded_address + Y becomes the effective operand.
 	case indirectY:
-		return c.Bus.Read16(address(iop.op8)) + address(c.y)
+		return c.Bus.Read16(address(in.op8)) + address(c.y)
 
 	case zeropage:
-		return address(iop.op8)
+		return address(in.op8)
 	case zeropageX:
-		return address(iop.op8 + c.x)
+		return address(in.op8 + c.x)
 	case zeropageY:
-		return address(iop.op8 + c.y)
+		return address(in.op8 + c.y)
 	default:
 		panic("unhandled addressing")
 	}
@@ -163,8 +163,8 @@ func (c *Cpu) statusString() string {
 	return strings.Join(out, "")
 }
 
-func (c *Cpu) branch(iop *Iop) {
-	relative := int8(iop.op8) // signed
+func (c *Cpu) branch(in *Instruction) {
+	relative := int8(in.op8) // signed
 	if relative >= 0 {
 		c.pc += address(relative)
 	} else {
@@ -172,126 +172,126 @@ func (c *Cpu) branch(iop *Iop) {
 	}
 }
 
-func (c *Cpu) Execute(iop *Iop) {
-	switch iop.ot.id {
+func (c *Cpu) Execute(in *Instruction) {
+	switch in.ot.id {
 	case adc:
-		c.ADC(iop)
+		c.ADC(in)
 	case and:
-		c.AND(iop)
+		c.AND(in)
 	case asl:
-		c.ASL(iop)
+		c.ASL(in)
 	case bcc:
-		c.BCC(iop)
+		c.BCC(in)
 	case bcs:
-		c.BCS(iop)
+		c.BCS(in)
 	case beq:
-		c.BEQ(iop)
+		c.BEQ(in)
 	case bmi:
-		c.BMI(iop)
+		c.BMI(in)
 	case bne:
-		c.BNE(iop)
+		c.BNE(in)
 	case bpl:
-		c.BPL(iop)
+		c.BPL(in)
 	case clc:
-		c.CLC(iop)
+		c.CLC(in)
 	case cld:
-		c.CLD(iop)
+		c.CLD(in)
 	case cli:
-		c.CLI(iop)
+		c.CLI(in)
 	case cmp:
-		c.CMP(iop)
+		c.CMP(in)
 	case cpx:
-		c.CPX(iop)
+		c.CPX(in)
 	case cpy:
-		c.CPY(iop)
+		c.CPY(in)
 	case dec:
-		c.DEC(iop)
+		c.DEC(in)
 	case dex:
-		c.DEX(iop)
+		c.DEX(in)
 	case dey:
-		c.DEY(iop)
+		c.DEY(in)
 	case eor:
-		c.EOR(iop)
+		c.EOR(in)
 	case inc:
-		c.INC(iop)
+		c.INC(in)
 	case inx:
-		c.INX(iop)
+		c.INX(in)
 	case iny:
-		c.INY(iop)
+		c.INY(in)
 	case jmp:
-		c.JMP(iop)
+		c.JMP(in)
 	case jsr:
-		c.JSR(iop)
+		c.JSR(in)
 	case lda:
-		c.LDA(iop)
+		c.LDA(in)
 	case ldx:
-		c.LDX(iop)
+		c.LDX(in)
 	case ldy:
-		c.LDY(iop)
+		c.LDY(in)
 	case lsr:
-		c.LSR(iop)
+		c.LSR(in)
 	case nop:
-		c.NOP(iop)
+		c.NOP(in)
 	case ora:
-		c.ORA(iop)
+		c.ORA(in)
 	case pha:
-		c.PHA(iop)
+		c.PHA(in)
 	case pla:
-		c.PLA(iop)
+		c.PLA(in)
 	case rol:
-		c.ROL(iop)
+		c.ROL(in)
 	case rts:
-		c.RTS(iop)
+		c.RTS(in)
 	case sbc:
-		c.SBC(iop)
+		c.SBC(in)
 	case sei:
-		c.SEI(iop)
+		c.SEI(in)
 	case sta:
-		c.STA(iop)
+		c.STA(in)
 	case stx:
-		c.STX(iop)
+		c.STX(in)
 	case sty:
-		c.STY(iop)
+		c.STY(in)
 	case tax:
-		c.TAX(iop)
+		c.TAX(in)
 	case tay:
-		c.TAY(iop)
+		c.TAY(in)
 	case txa:
-		c.TXA(iop)
+		c.TXA(in)
 	case txs:
-		c.TXS(iop)
+		c.TXS(in)
 	case tya:
-		c.TYA(iop)
+		c.TYA(in)
 	case _end:
-		c._END(iop)
+		c._END(in)
 	default:
-		panic(fmt.Sprintf("unhandled instruction: %v", iop))
+		panic(fmt.Sprintf("unhandled instruction: %v", in))
 	}
 }
 
 // ADC: Add memory and carry to accumulator.
-func (c *Cpu) ADC(iop *Iop) {
-	value16 := uint16(c.ac) + uint16(c.resolveOperand(iop)) + uint16(c.getStatusInt(sCarry))
+func (c *Cpu) ADC(in *Instruction) {
+	value16 := uint16(c.ac) + uint16(c.resolveOperand(in)) + uint16(c.getStatusInt(sCarry))
 	c.setStatus(sCarry, value16 > 0xFF)
 	c.ac = uint8(value16)
 	c.updateStatus(c.ac)
 }
 
 // AND: And accumulator with memory.
-func (c *Cpu) AND(iop *Iop) {
-	c.ac &= c.resolveOperand(iop)
+func (c *Cpu) AND(in *Instruction) {
+	c.ac &= c.resolveOperand(in)
 	c.updateStatus(c.ac)
 }
 
 // ASL: Shift memory or accumulator left one bit.
-func (c *Cpu) ASL(iop *Iop) {
-	switch iop.ot.addressing {
+func (c *Cpu) ASL(in *Instruction) {
+	switch in.ot.addressing {
 	case accumulator:
 		c.setStatus(sCarry, (c.ac>>7) == 1) // carry = old bit 7
 		c.ac <<= 1
 		c.updateStatus(c.ac)
 	default:
-		address := c.memoryAddress(iop)
+		address := c.memoryAddress(in)
 		value := c.Bus.Read(address)
 		c.setStatus(sCarry, (value>>7) == 1) // carry = old bit 7
 		value <<= 1
@@ -301,169 +301,169 @@ func (c *Cpu) ASL(iop *Iop) {
 }
 
 // BCC: Branch if carry clear.
-func (c *Cpu) BCC(iop *Iop) {
+func (c *Cpu) BCC(in *Instruction) {
 	if !c.getStatus(sCarry) {
-		c.branch(iop)
+		c.branch(in)
 	}
 }
 
 // BCS: Branch if carry set.
-func (c *Cpu) BCS(iop *Iop) {
+func (c *Cpu) BCS(in *Instruction) {
 	if c.getStatus(sCarry) {
-		c.branch(iop)
+		c.branch(in)
 	}
 }
 
 // BEQ: Branch if equal (z=1).
-func (c *Cpu) BEQ(iop *Iop) {
+func (c *Cpu) BEQ(in *Instruction) {
 	if c.getStatus(sZero) {
-		c.branch(iop)
+		c.branch(in)
 	}
 }
 
 // BMI: Branch if negative.
-func (c *Cpu) BMI(iop *Iop) {
+func (c *Cpu) BMI(in *Instruction) {
 	if c.getStatus(sNegative) {
-		c.branch(iop)
+		c.branch(in)
 	}
 }
 
 // BNE: Branch if not equal.
-func (c *Cpu) BNE(iop *Iop) {
+func (c *Cpu) BNE(in *Instruction) {
 	if !c.getStatus(sZero) {
-		c.branch(iop)
+		c.branch(in)
 	}
 }
 
 // BPL: Branch if positive.
-func (c *Cpu) BPL(iop *Iop) {
+func (c *Cpu) BPL(in *Instruction) {
 	if !c.getStatus(sNegative) {
-		c.branch(iop)
+		c.branch(in)
 	}
 }
 
 // CLC: Clear carry flag.
-func (c *Cpu) CLC(iop *Iop) {
+func (c *Cpu) CLC(in *Instruction) {
 	c.setStatus(sCarry, false)
 }
 
 // CLD: Clear decimal mode flag.
-func (c *Cpu) CLD(iop *Iop) {
+func (c *Cpu) CLD(in *Instruction) {
 	c.setStatus(sDecimal, false)
 }
 
 // CLI: Clear interrupt-disable flag.
-func (c *Cpu) CLI(iop *Iop) {
+func (c *Cpu) CLI(in *Instruction) {
 	c.setStatus(sInterrupt, true)
 }
 
 // CMP: Compare accumulator with memory.
-func (c *Cpu) CMP(iop *Iop) {
-	value := c.resolveOperand(iop)
+func (c *Cpu) CMP(in *Instruction) {
+	value := c.resolveOperand(in)
 	c.setStatus(sCarry, c.ac >= value)
 	c.updateStatus(c.ac - value)
 }
 
 // CPX: Compare index register X with memory.
-func (c *Cpu) CPX(iop *Iop) {
-	value := c.resolveOperand(iop)
+func (c *Cpu) CPX(in *Instruction) {
+	value := c.resolveOperand(in)
 	c.setStatus(sCarry, c.x >= value)
 	c.updateStatus(c.x - value)
 }
 
 // CPY: Compare index register Y with memory.
-func (c *Cpu) CPY(iop *Iop) {
-	value := c.resolveOperand(iop)
+func (c *Cpu) CPY(in *Instruction) {
+	value := c.resolveOperand(in)
 	c.setStatus(sCarry, c.y >= value)
 	c.updateStatus(c.y - value)
 }
 
 // DEC: Decrement.
-func (c *Cpu) DEC(iop *Iop) {
-	address := c.memoryAddress(iop)
+func (c *Cpu) DEC(in *Instruction) {
+	address := c.memoryAddress(in)
 	value := c.Bus.Read(address) - 1
 	c.Bus.Write(address, value)
 	c.updateStatus(value)
 }
 
 // DEX: Decrement index register X.
-func (c *Cpu) DEX(iop *Iop) {
+func (c *Cpu) DEX(in *Instruction) {
 	c.x--
 	c.updateStatus(c.x)
 }
 
 // DEY: Decrement index register Y.
-func (c *Cpu) DEY(iop *Iop) {
+func (c *Cpu) DEY(in *Instruction) {
 	c.y--
 	c.updateStatus(c.y)
 }
 
 // EOR: Exclusive-OR accumulator with memory.
-func (c *Cpu) EOR(iop *Iop) {
-	value := c.resolveOperand(iop)
+func (c *Cpu) EOR(in *Instruction) {
+	value := c.resolveOperand(in)
 	c.ac ^= value
 	c.updateStatus(c.ac)
 }
 
 // INC: Increment.
-func (c *Cpu) INC(iop *Iop) {
-	address := c.memoryAddress(iop)
+func (c *Cpu) INC(in *Instruction) {
+	address := c.memoryAddress(in)
 	value := c.Bus.Read(address) + 1
 	c.Bus.Write(address, value)
 	c.updateStatus(value)
 }
 
 // INX: Increment index register X.
-func (c *Cpu) INX(iop *Iop) {
+func (c *Cpu) INX(in *Instruction) {
 	c.x++
 	c.updateStatus(c.x)
 }
 
 // INY: Increment index register Y.
-func (c *Cpu) INY(iop *Iop) {
+func (c *Cpu) INY(in *Instruction) {
 	c.y++
 	c.updateStatus(c.y)
 }
 
 // JMP: Jump.
-func (c *Cpu) JMP(iop *Iop) {
-	c.pc = c.memoryAddress(iop)
+func (c *Cpu) JMP(in *Instruction) {
+	c.pc = c.memoryAddress(in)
 }
 
 // JSR: Jump to subroutine.
-func (c *Cpu) JSR(iop *Iop) {
+func (c *Cpu) JSR(in *Instruction) {
 	c.Bus.Write16(c.StackHead(-1), c.pc-1)
 	c.sp -= 2
-	c.pc = iop.op16
+	c.pc = in.op16
 }
 
 // LDA: Load accumulator from memory.
-func (c *Cpu) LDA(iop *Iop) {
-	c.ac = c.resolveOperand(iop)
+func (c *Cpu) LDA(in *Instruction) {
+	c.ac = c.resolveOperand(in)
 	c.updateStatus(c.ac)
 }
 
 // LDX: Load index register X from memory.
-func (c *Cpu) LDX(iop *Iop) {
-	c.x = c.resolveOperand(iop)
+func (c *Cpu) LDX(in *Instruction) {
+	c.x = c.resolveOperand(in)
 	c.updateStatus(c.x)
 }
 
 // LDY: Load index register Y from memory.
-func (c *Cpu) LDY(iop *Iop) {
-	c.y = c.resolveOperand(iop)
+func (c *Cpu) LDY(in *Instruction) {
+	c.y = c.resolveOperand(in)
 	c.updateStatus(c.y)
 }
 
 // LSR: Logical shift memory or accumulator right.
-func (c *Cpu) LSR(iop *Iop) {
-	switch iop.ot.addressing {
+func (c *Cpu) LSR(in *Instruction) {
+	switch in.ot.addressing {
 	case accumulator:
 		c.setStatus(sCarry, c.ac&1 == 1)
 		c.ac >>= 1
 		c.updateStatus(c.ac)
 	default:
-		address := c.memoryAddress(iop)
+		address := c.memoryAddress(in)
 		value := c.Bus.Read(address)
 		c.setStatus(sCarry, value&1 == 1)
 		value >>= 1
@@ -473,37 +473,37 @@ func (c *Cpu) LSR(iop *Iop) {
 }
 
 // NOP: No operation.
-func (c *Cpu) NOP(iop *Iop) {
+func (c *Cpu) NOP(in *Instruction) {
 }
 
 // ORA: OR accumulator with memory.
-func (c *Cpu) ORA(iop *Iop) {
-	c.ac |= c.resolveOperand(iop)
+func (c *Cpu) ORA(in *Instruction) {
+	c.ac |= c.resolveOperand(in)
 	c.updateStatus(c.ac)
 }
 
 // PHA: Push accumulator onto stack.
-func (c *Cpu) PHA(iop *Iop) {
+func (c *Cpu) PHA(in *Instruction) {
 	c.Bus.Write(0x0100+address(c.sp), c.ac)
 	c.sp--
 }
 
 // PLA: Pull accumulator from stack.
-func (c *Cpu) PLA(iop *Iop) {
+func (c *Cpu) PLA(in *Instruction) {
 	c.sp++
 	c.ac = c.Bus.Read(0x0100 + address(c.sp))
 }
 
 // ROL: Rotate memory or accumulator left one bit.
-func (c *Cpu) ROL(iop *Iop) {
+func (c *Cpu) ROL(in *Instruction) {
 	carry := c.getStatusInt(sCarry)
-	switch iop.ot.addressing {
+	switch in.ot.addressing {
 	case accumulator:
 		c.setStatus(sCarry, (c.ac>>7) == 1)
 		c.ac = (c.ac << 1) | carry
 		c.updateStatus(c.ac)
 	default:
-		address := c.memoryAddress(iop)
+		address := c.memoryAddress(in)
 		value := c.Bus.Read(address)
 		c.setStatus(sCarry, (value>>7) == 1)
 		value = (value << 1) | carry
@@ -513,15 +513,15 @@ func (c *Cpu) ROL(iop *Iop) {
 }
 
 // RTS: Return from subroutine.
-func (c *Cpu) RTS(iop *Iop) {
+func (c *Cpu) RTS(in *Instruction) {
 	c.pc = c.Bus.Read16(c.StackHead(1))
 	c.sp += 2
 	c.pc += 1
 }
 
 // SBC: Subtract memory with borrow from accumulator.
-func (c *Cpu) SBC(iop *Iop) {
-	valueSigned := int16(c.ac) - int16(c.resolveOperand(iop))
+func (c *Cpu) SBC(in *Instruction) {
+	valueSigned := int16(c.ac) - int16(c.resolveOperand(in))
 	if !c.getStatus(sCarry) {
 		valueSigned--
 	}
@@ -530,57 +530,57 @@ func (c *Cpu) SBC(iop *Iop) {
 }
 
 // SEI: Set interrupt-disable flag.
-func (c *Cpu) SEI(iop *Iop) {
+func (c *Cpu) SEI(in *Instruction) {
 	c.setStatus(sInterrupt, false)
 }
 
 // STA: Store accumulator to memory.
-func (c *Cpu) STA(iop *Iop) {
-	c.Bus.Write(c.memoryAddress(iop), c.ac)
+func (c *Cpu) STA(in *Instruction) {
+	c.Bus.Write(c.memoryAddress(in), c.ac)
 }
 
 // STX: Store index register X to memory.
-func (c *Cpu) STX(iop *Iop) {
-	c.Bus.Write(c.memoryAddress(iop), c.x)
+func (c *Cpu) STX(in *Instruction) {
+	c.Bus.Write(c.memoryAddress(in), c.x)
 }
 
 // STY: Store index register Y to memory.
-func (c *Cpu) STY(iop *Iop) {
-	c.Bus.Write(c.memoryAddress(iop), c.y)
+func (c *Cpu) STY(in *Instruction) {
+	c.Bus.Write(c.memoryAddress(in), c.y)
 }
 
 // TAX: Transfer accumulator to index register X.
-func (c *Cpu) TAX(iop *Iop) {
+func (c *Cpu) TAX(in *Instruction) {
 	c.x = c.ac
 	c.updateStatus(c.x)
 }
 
 // TAY: Transfer accumulator to index register Y.
-func (c *Cpu) TAY(iop *Iop) {
+func (c *Cpu) TAY(in *Instruction) {
 	c.y = c.ac
 	c.updateStatus(c.y)
 }
 
 // TXA: Transfer index register X to accumulator.
-func (c *Cpu) TXA(iop *Iop) {
+func (c *Cpu) TXA(in *Instruction) {
 	c.ac = c.x
 	c.updateStatus(c.ac)
 }
 
 // TXS: Transfer index register X to stack pointer.
-func (c *Cpu) TXS(iop *Iop) {
+func (c *Cpu) TXS(in *Instruction) {
 	c.sp = c.x
 	c.updateStatus(c.sp)
 }
 
 // TYA: Transfer index register Y to accumulator.
-func (c *Cpu) TYA(iop *Iop) {
+func (c *Cpu) TYA(in *Instruction) {
 	c.ac = c.y
 	c.updateStatus(c.ac)
 }
 
 // _END: Custom go6502 instruction.
 // Exit, with contents of X register as exit status.
-func (c *Cpu) _END(iop *Iop) {
+func (c *Cpu) _END(in *Instruction) {
 	c.ExitChan <- int(c.x)
 }

@@ -183,23 +183,23 @@ func (ot *OpType) name() (s string) {
 	return instructionNames[ot.id]
 }
 
-// Iop is an instruction with its operand.
+// Instruction is an OpType plus its operand.
 // One or both of the operand types will be zero.
 // This is determined by (ot.bytes - 1) / 8
-type Iop struct {
+type Instruction struct {
 	ot   *OpType
 	op8  uint8
 	op16 address
 }
 
-func (iop *Iop) String() (s string) {
-	switch iop.ot.bytes {
+func (in *Instruction) String() (s string) {
+	switch in.ot.bytes {
 	case 3:
-		s = fmt.Sprintf("%v $%04X", iop.ot, iop.op16)
+		s = fmt.Sprintf("%v $%04X", in.ot, in.op16)
 	case 2:
-		s = fmt.Sprintf("%v $%02X", iop.ot, iop.op8)
+		s = fmt.Sprintf("%v $%02X", in.ot, in.op8)
 	case 1:
-		s = iop.ot.String()
+		s = in.ot.String()
 	}
 	return
 }
