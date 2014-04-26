@@ -44,29 +44,12 @@ func (c *Cpu) Reset() {
 }
 
 func (c *Cpu) Step() {
-	op := c.Bus.Read(c.pc)
-	ot := optypes[op]
-	in := c.readOperand(ot)
+	in := ReadInstruction(c.pc, c.Bus)
 	if c.debugger != nil {
 		c.debugger.BeforeExecute(in)
 	}
-	c.pc += address(ot.bytes)
+	c.pc += address(in.ot.bytes)
 	c.Execute(in)
-}
-
-func (c *Cpu) readOperand(ot *OpType) *Instruction {
-	// read instruction with operand
-	in := &Instruction{ot: ot}
-	switch ot.bytes {
-	case 1: // no operand
-	case 2:
-		in.op8 = c.Bus.Read(c.pc + 1)
-	case 3:
-		in.op16 = c.Bus.Read16(c.pc + 1)
-	default:
-		panic(fmt.Sprintf("unhandled instruction length: %d", ot.bytes))
-	}
-	return in
 }
 
 func (c *Cpu) String() string {
