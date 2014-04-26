@@ -7,6 +7,7 @@ import (
 	"image/png"
 	"net/http"
 	"os"
+	"strconv"
 )
 
 // Ssd1306 implements ParallelPeripheral interface for Via6522.
@@ -38,7 +39,14 @@ const (
 func (s *Ssd1306) serveHttp() {
 	httpHandler := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "image/png")
-		w.Header().Add("Refresh", "0.1")
+
+		if refreshString := r.URL.Query().Get("refresh"); len(refreshString) > 0 {
+			refresh, err := strconv.ParseFloat(refreshString, 64)
+			if err == nil {
+				w.Header().Add("Refresh", fmt.Sprintf("%0.2f", refresh))
+			}
+		}
+
 		png.Encode(w, s.img)
 	}
 	address := "localhost:1234"
