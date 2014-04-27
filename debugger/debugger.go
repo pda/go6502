@@ -75,7 +75,7 @@ type Debugger struct {
 	inputQueue        []string
 	cpu               *go6502.Cpu
 	liner             *liner.State
-	lastCommand       *DebuggerCommand
+	lastCmd           *cmd
 	run               bool
 	breakAddress      bool
 	breakAddressValue go6502.Address
@@ -88,7 +88,7 @@ type Debugger struct {
 	breakRegYValue    byte
 }
 
-type DebuggerCommand struct {
+type cmd struct {
 	id        int
 	input     string
 	arguments []string
@@ -160,7 +160,7 @@ func (d *Debugger) BeforeExecute(in *go6502.Instruction) {
 // Returns true when control is to be released.
 func (d *Debugger) commandLoop(in *go6502.Instruction) (release bool) {
 	var (
-		cmd *DebuggerCommand
+		cmd *cmd
 		err error
 	)
 
@@ -202,7 +202,7 @@ func (d *Debugger) commandLoop(in *go6502.Instruction) (release bool) {
 	return
 }
 
-func (d *Debugger) commandRead(cmd *DebuggerCommand) {
+func (d *Debugger) commandRead(cmd *cmd) {
 	addr64, err := d.parseUint(cmd.arguments[0], 16)
 	if err != nil {
 		panic(err)
@@ -212,7 +212,7 @@ func (d *Debugger) commandRead(cmd *DebuggerCommand) {
 	fmt.Printf("$%04X => $%02X 0b%08b %d %q\n", addr, v, v, v, v)
 }
 
-func (d *Debugger) commandRead16(cmd *DebuggerCommand) {
+func (d *Debugger) commandRead16(cmd *cmd) {
 	addr64, err := d.parseUint(cmd.arguments[0], 16)
 	if err != nil {
 		panic(err)
@@ -225,7 +225,7 @@ func (d *Debugger) commandRead16(cmd *DebuggerCommand) {
 	fmt.Printf("$%04X,%04X => $%04X 0b%016b %d\n", addrLo, addrHi, v, v, v)
 }
 
-func (d *Debugger) commandHelp(cmd *DebuggerCommand) {
+func (d *Debugger) commandHelp(cmd *cmd) {
 	fmt.Println("")
 	fmt.Println("pda6502 debuger")
 	fmt.Println("---------------")
@@ -244,7 +244,7 @@ func (d *Debugger) commandHelp(cmd *DebuggerCommand) {
 	fmt.Println("Commands expecting uint16 treat . as current address (PC).")
 }
 
-func (d *Debugger) commandBreakAddress(cmd *DebuggerCommand) {
+func (d *Debugger) commandBreakAddress(cmd *cmd) {
 	value64, err := d.parseUint(cmd.arguments[0], 16)
 	if err != nil {
 		panic(err)
@@ -254,7 +254,7 @@ func (d *Debugger) commandBreakAddress(cmd *DebuggerCommand) {
 	d.breakAddressValue = addr
 }
 
-func (d *Debugger) commandBreakRegister(cmd *DebuggerCommand) {
+func (d *Debugger) commandBreakRegister(cmd *cmd) {
 	regStr := cmd.arguments[0]
 	valueStr := cmd.arguments[1]
 
@@ -284,12 +284,12 @@ func (d *Debugger) commandBreakRegister(cmd *DebuggerCommand) {
 	*ptr = value
 }
 
-func (d *Debugger) getCommand() (*DebuggerCommand, error) {
+func (d *Debugger) getCommand() (*cmd, error) {
 	var (
 		id        int
 		cmdString string
 		arguments []string
-		cmd       *DebuggerCommand
+		c         *cmd
 		input     string
 		err       error
 	)
@@ -339,14 +339,14 @@ func (d *Debugger) getCommand() (*DebuggerCommand, error) {
 		id = debugCmdInvalid
 	}
 
-	if id == debugCmdNone && d.lastCommand != nil {
-		cmd = d.lastCommand
+	if id == debugCmdNone && d.lastCmd != nil {
+		c = d.lastCmd
 	} else {
-		cmd = &DebuggerCommand{id, input, arguments}
-		d.lastCommand = cmd
+		c = &cmd{id, input, arguments}
+		d.lastCmd = c
 	}
 
-	return cmd, nil
+	return c, nil
 }
 
 func (d *Debugger) readInput() (string, error) {
