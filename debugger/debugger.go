@@ -1,8 +1,45 @@
+/*
+	Package debugger provides an interactive stepping debugger for go6502 with
+	breakpoints on instruction type, register values and memory location.
+
+	Example
+
+	An example interactive debugging session:
+
+		$ go run go6502.go --via-ssd1306 --debug
+		CPU PC:0xF31F AC:0x00 X:0x00 Y:0x00 SP:0x00 SR:--_b-i--
+		Next: SEI implied
+		$F31F> step
+		CPU PC:0xF320 AC:0x00 X:0x00 Y:0x00 SP:0x00 SR:--_b----
+		Next: LDX immediate $FF
+		$F320> break-register X $FF
+		Breakpoint set: X = $FF (255)
+		$F320> run
+		Breakpoint for X = $FF (255)
+		CPU PC:0xF322 AC:0x00 X:0xFF Y:0x00 SP:0x00 SR:n-_b----
+		Next: TXS implied
+		$F322> step
+		Breakpoint for X = $FF (255)
+		CPU PC:0xF323 AC:0x00 X:0xFF Y:0x00 SP:0xFF SR:n-_b----
+		Next: CLI implied
+		$F323>
+		Breakpoint for X = $FF (255)
+		CPU PC:0xF324 AC:0x00 X:0xFF Y:0x00 SP:0xFF SR:n-_b-i--
+		Next: CLD implied
+		$F324>
+		Breakpoint for X = $FF (255)
+		CPU PC:0xF325 AC:0x00 X:0xFF Y:0x00 SP:0xFF SR:n-_b-i--
+		Next: JMP absolute $F07B
+		$F325> break-instruction nop
+		$F325> r
+		Breakpoint for X = $FF (255)
+		CPU PC:0xF07B AC:0x00 X:0xFF Y:0x00 SP:0xFF SR:n-_b-i--
+		Next: LDA immediate $00
+		$F07B> q
+*/
 package debugger
 
 /**
- * Debugger / Monitor
- *
  * TODO:
  * -  `step n` e.g. `step 100` to step 100 instructions.
  * -  Read and write CLI history file.
@@ -57,15 +94,22 @@ type DebuggerCommand struct {
 	arguments []string
 }
 
+// NewDebugger creates a debugger.
+// Be sure to defer a call to Debugger.Close() afterwards, or your terminal
+// will be left in a broken state.
 func NewDebugger(cpu *go6502.Cpu) *Debugger {
 	d := &Debugger{liner: liner.NewLiner(), cpu: cpu}
 	return d
 }
 
+// Close the debugger session, including resetting the terminal to its previous
+// state.
 func (d *Debugger) Close() {
 	d.liner.Close()
 }
 
+// Queue a list of commands to be executed at the next prompt(s).
+// This is useful for accepting a list of commands as a CLI parameter.
 func (d *Debugger) QueueCommands(cmds []string) {
 	d.inputQueue = append(d.inputQueue, cmds...)
 }
@@ -95,6 +139,8 @@ func (d *Debugger) doBreakpoints(in *go6502.Instruction) {
 	d.checkRegBreakpoint("Y", d.breakRegY, d.breakRegYValue, d.cpu.Y)
 }
 
+// BeforeExecute receives each go6502.Instruction just before the program
+// counter is incremented and the instruction executed.
 func (d *Debugger) BeforeExecute(in *go6502.Instruction) {
 
 	d.doBreakpoints(in)
