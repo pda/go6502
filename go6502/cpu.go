@@ -45,10 +45,14 @@ type Cpu struct {
 	ExitChan chan int
 }
 
+// A Monitor is a blocking observer of instruction execution.
 type Monitor interface {
 	BeforeExecute(*Instruction)
 }
 
+// AttachMonitor sets the given Monitor to observe instructions before they
+// execute, in a blocking manner. This allows for logging, analysis, and
+// interactive debugging.
 func (c *Cpu) AttachMonitor(m Monitor) {
 	c.monitor = m
 }
@@ -69,7 +73,7 @@ func (c *Cpu) Step() {
 		c.monitor.BeforeExecute(in)
 	}
 	c.PC += Address(in.bytes)
-	c.Execute(in)
+	c.execute(in)
 }
 
 func (c *Cpu) String() string {
@@ -175,7 +179,7 @@ func (c *Cpu) branch(in *Instruction) {
 	}
 }
 
-func (c *Cpu) Execute(in *Instruction) {
+func (c *Cpu) execute(in *Instruction) {
 	switch in.id {
 	case adc:
 		c.ADC(in)
