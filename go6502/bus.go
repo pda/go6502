@@ -29,7 +29,7 @@ func CreateBus() (*Bus, error) {
 // Attach maps a bus address range to a backend Memory implementation,
 // which could be RAM, ROM, I/O device etc.
 func (b *Bus) Attach(mem Memory, name string, offset uint16) error {
-	om := OffsetMemory{offset: offset, Memory: mem}
+	om := OffsetMemory{Offset: offset, Memory: mem}
 	end := offset + uint16(mem.Size()-1)
 	entry := busEntry{mem: om, name: name, start: offset, end: end}
 	b.entries = append(b.entries, entry)
