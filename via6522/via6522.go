@@ -1,9 +1,11 @@
-package go6502
+package via6522
 
 import (
 	"fmt"
 	"strconv"
 	"unicode"
+
+	"github.com/pda/go6502/go6502"
 )
 
 // A partial emulation of MOS Technology 6522, or the modern WDC65C22
@@ -82,15 +84,20 @@ type Via6522 struct {
 	ddra        byte // data direction port A
 	ddrb        byte // data direction port B
 	pcr         byte // peripheral control register
-	options     *Options
+	options     Options
 	peripherals map[uint8]ParallelPeripheral
+}
+
+type Options struct {
+	DumpBinary bool
+	DumpAscii  bool
 }
 
 type ParallelPeripheral interface {
 	Notify(byte)
 }
 
-func NewVia6522(o *Options) *Via6522 {
+func NewVia6522(o Options) *Via6522 {
 	via := &Via6522{}
 	via.options = o
 	via.peripherals = make(map[uint8]ParallelPeripheral)
@@ -119,10 +126,10 @@ func (via *Via6522) handleDataWrite(portOffset uint8, data byte) {
 	mode := via.control2Mode(portOffset)
 	_ = mode
 
-	if via.options.viaDumpBinary {
+	if via.options.DumpBinary {
 		fmt.Printf("VIA output: %08b (0x%02X)\n", data, data)
 	}
-	if via.options.viaDumpAscii {
+	if via.options.DumpAscii {
 		printAsciiByte(data)
 	}
 	if p := via.peripherals[portOffset]; p != nil {
@@ -144,7 +151,7 @@ func printAsciiByte(b uint8) {
 // Read the register specified by the given 4-bit address (0x00..0x0F).
 // TODO: Unlike IRA, reading IRB actully returns bits from ORA for pins
 //       that are programmed as output.
-func (via *Via6522) Read(a Address) byte {
+func (via *Via6522) Read(a go6502.Address) byte {
 	switch a {
 	default:
 		panic(fmt.Sprintf("read from 0x%X not handled by Via6522", a))
@@ -196,7 +203,7 @@ func (via *Via6522) String() string {
 }
 
 // Write to register specified by the given 4-bit address (0x00..0x0F).
-func (via *Via6522) Write(a Address, data byte) {
+func (via *Via6522) Write(a go6502.Address, data byte) {
 	// TODO: mask with DDR here, or later.
 	switch a {
 	default:

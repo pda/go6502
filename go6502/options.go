@@ -7,8 +7,8 @@ import (
 )
 
 type Options struct {
-	viaDumpBinary bool
-	viaDumpAscii  bool
+	ViaDumpBinary bool
+	ViaDumpAscii  bool
 	ViaSsd1306    bool
 	Debug         bool
 	DebugCmds     commandList
@@ -22,8 +22,8 @@ func ParseOptions() *Options {
 	flag.Var(&opt.DebugCmds, "debug-commands", "Debugger commands to run, semicolon separated.")
 
 	// VIA
-	flag.BoolVar(&opt.viaDumpBinary, "via-dump-binary", false, "VIA6522 dumps binary output")
-	flag.BoolVar(&opt.viaDumpAscii, "via-dump-ascii", false, "VIA6522 dumps ASCII output")
+	flag.BoolVar(&opt.ViaDumpBinary, "via-dump-binary", false, "VIA6522 dumps binary output")
+	flag.BoolVar(&opt.ViaDumpAscii, "via-dump-ascii", false, "VIA6522 dumps ASCII output")
 	flag.BoolVar(&opt.ViaSsd1306, "via-ssd1306", false, "SSD1306 OLED display on VIA6522 port B")
 
 	flag.Parse()

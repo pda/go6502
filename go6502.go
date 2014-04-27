@@ -6,6 +6,7 @@ import (
 	"os/signal"
 
 	"github.com/pda/go6502/go6502"
+	"github.com/pda/go6502/via6522"
 )
 
 const (
@@ -27,7 +28,10 @@ func mainReturningStatus() int {
 
 	ram := &go6502.Ram{}
 
-	via := go6502.NewVia6522(options)
+	via := via6522.NewVia6522(via6522.Options{
+		DumpAscii:  options.ViaDumpAscii,
+		DumpBinary: options.ViaDumpBinary,
+	})
 	if options.ViaSsd1306 {
 		ssd1306 := go6502.NewSsd1306()
 		defer ssd1306.Close()
