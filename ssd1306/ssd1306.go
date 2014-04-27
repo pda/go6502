@@ -1,4 +1,10 @@
-package go6502
+/*
+Emulates a 128x32 pixel monochrome OLED display with SPI interface.
+Exposes the display as a dynamically generated PNG available from an HTTP URL.
+
+Physical hardware example: https://www.adafruit.com/products/661
+*/
+package ssd1306
 
 import (
 	"fmt"
@@ -58,6 +64,10 @@ func (s *Ssd1306) serveHttp() {
 	go srv.ListenAndServe()
 }
 
+// Notify expects a byte representing the updated status of the parallel port
+// that the display is connected to.
+// Four bits are considered: MOSI, CLK, D/C, RST.
+// The other four bits are ignored.
 func (s *Ssd1306) Notify(data byte) {
 
 	mosi := data&mosiMask > 0

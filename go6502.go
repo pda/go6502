@@ -7,6 +7,7 @@ import (
 
 	"github.com/pda/go6502/debugger"
 	"github.com/pda/go6502/go6502"
+	"github.com/pda/go6502/ssd1306"
 	"github.com/pda/go6502/via6522"
 )
 
@@ -34,7 +35,7 @@ func mainReturningStatus() int {
 		DumpBinary: options.ViaDumpBinary,
 	})
 	if options.ViaSsd1306 {
-		ssd1306 := go6502.NewSsd1306()
+		ssd1306 := ssd1306.NewSsd1306()
 		defer ssd1306.Close()
 		via.AttachToPortB(ssd1306)
 	}
