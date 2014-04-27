@@ -84,14 +84,14 @@ func (d *Debugger) doBreakpoints(in *Instruction) {
 		d.run = false
 	}
 
-	if d.breakAddress && d.cpu.pc == d.breakAddressValue {
+	if d.breakAddress && d.cpu.PC == d.breakAddressValue {
 		fmt.Printf("Breakpoint for PC address = $%04X\n", d.breakAddressValue)
 		d.run = false
 	}
 
-	d.checkRegBreakpoint("A", d.breakRegA, d.breakRegAValue, d.cpu.ac)
-	d.checkRegBreakpoint("X", d.breakRegX, d.breakRegXValue, d.cpu.x)
-	d.checkRegBreakpoint("Y", d.breakRegY, d.breakRegYValue, d.cpu.y)
+	d.checkRegBreakpoint("A", d.breakRegA, d.breakRegAValue, d.cpu.AC)
+	d.checkRegBreakpoint("X", d.breakRegX, d.breakRegXValue, d.cpu.X)
+	d.checkRegBreakpoint("Y", d.breakRegY, d.breakRegYValue, d.cpu.Y)
 }
 
 func (d *Debugger) BeforeExecute(in *Instruction) {
@@ -312,12 +312,12 @@ func (d *Debugger) readInput() (string, error) {
 }
 
 func (d *Debugger) prompt() string {
-	return fmt.Sprintf("$%04X> ", d.cpu.pc)
+	return fmt.Sprintf("$%04X> ", d.cpu.PC)
 }
 
 func (d *Debugger) parseUint(s string, bits int) (uint64, error) {
 	if s == "." && bits == 16 {
-		return uint64(d.cpu.pc), nil
+		return uint64(d.cpu.PC), nil
 	}
 	s = strings.Replace(s, "$", "0x", 1)
 	return strconv.ParseUint(s, 0, bits)

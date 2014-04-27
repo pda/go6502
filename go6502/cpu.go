@@ -18,13 +18,29 @@ const (
 )
 
 type Cpu struct {
-	pc       Address
-	ac       byte
-	x        byte
-	y        byte
-	sp       byte
-	sr       byte
-	Bus      *Bus
+
+	// Program counter.
+	PC Address
+
+	// Accumulator register.
+	AC byte
+
+	// X general purpose / index register.
+	X byte
+
+	// Y general purpose / index register.
+	Y byte
+
+	// Stack pointer (low byte of 0x0100..0x01FF).
+	SP byte
+
+	// Status register; carry, zero, interrupt, bcd, brk, _, overflow, sign.
+	SR byte
+
+	// Bus is the system address bus, mapping 64K of address space to
+	// different back-end devices.
+	Bus *Bus
+
 	debugger *Debugger
 	ExitChan chan int
 }
@@ -39,29 +55,29 @@ func (c *Cpu) AttachDebugger(d *Debugger) {
 // Register (P) are initialized by hardware. ... The program counter is loaded
 // with the reset vector from locations FFFC (low byte) and FFFD (high byte).
 func (c *Cpu) Reset() {
-	c.pc = c.Bus.Read16(0xFFFC)
-	c.sr = 0x34 // Manual says xx1101xx, this sets 00110100.
+	c.PC = c.Bus.Read16(0xFFFC)
+	c.SR = 0x34 // Manual says xx1101xx, this sets 00110100.
 }
 
 func (c *Cpu) Step() {
-	in := ReadInstruction(c.pc, c.Bus)
+	in := ReadInstruction(c.PC, c.Bus)
 	if c.debugger != nil {
 		c.debugger.BeforeExecute(in)
 	}
-	c.pc += Address(in.bytes)
+	c.PC += Address(in.bytes)
 	c.Execute(in)
 }
 
 func (c *Cpu) String() string {
 	return fmt.Sprintf(
-		"CPU pc:0x%04X ac:0x%02X x:0x%02X y:0x%02X sp:0x%02X sr:%s",
-		c.pc, c.ac, c.x, c.y, c.sp,
+		"CPU PC:0x%04X AC:0x%02X X:0x%02X Y:0x%02X SP:0x%02X SR:%s",
+		c.PC, c.AC, c.X, c.Y, c.SP,
 		c.statusString(),
 	)
 }
 
 func (c *Cpu) StackHead(offset int8) Address {
-	return Address(0x0100) + Address(c.sp) + Address(offset)
+	return Address(0x0100) + Address(c.SP) + Address(offset)
 }
 
 func (c *Cpu) resolveOperand(in *Instruction) uint8 {
@@ -78,9 +94,9 @@ func (c *Cpu) memoryAddress(in *Instruction) Address {
 	case absolute:
 		return in.op16
 	case absoluteX:
-		return in.op16 + Address(c.x)
+		return in.op16 + Address(c.X)
 	case absoluteY:
-		return in.op16 + Address(c.y)
+		return in.op16 + Address(c.Y)
 
 	// Indexed Indirect (X)
 	// Operand is the zero-page location of a little-endian 16-bit base address.
@@ -88,7 +104,7 @@ func (c *Cpu) memoryAddress(in *Instruction) Address {
 	// The resulting address loaded from (base+X) becomes the effective operand.
 	// (base + X) must be in zero-page.
 	case indirectX:
-		location := Address(in.op8 + c.x)
+		location := Address(in.op8 + c.X)
 		if location == 0xFF {
 			panic("Indexed indirect high-byte not on zero page.")
 		}
@@ -99,14 +115,14 @@ func (c *Cpu) memoryAddress(in *Instruction) Address {
 	// The address is loaded, and then the Y register is added to it.
 	// The resulting loaded_address + Y becomes the effective operand.
 	case indirectY:
-		return c.Bus.Read16(Address(in.op8)) + Address(c.y)
+		return c.Bus.Read16(Address(in.op8)) + Address(c.Y)
 
 	case zeropage:
 		return Address(in.op8)
 	case zeropageX:
-		return Address(in.op8 + c.x)
+		return Address(in.op8 + c.X)
 	case zeropageY:
-		return Address(in.op8 + c.y)
+		return Address(in.op8 + c.Y)
 	default:
 		panic("unhandled addressing")
 	}
@@ -117,14 +133,14 @@ func (c *Cpu) getStatus(bit uint8) bool {
 }
 
 func (c *Cpu) getStatusInt(bit uint8) uint8 {
-	return (c.sr >> bit) & 1
+	return (c.SR >> bit) & 1
 }
 
 func (c *Cpu) setStatus(bit uint8, state bool) {
 	if state {
-		c.sr |= 1 << bit
+		c.SR |= 1 << bit
 	} else {
-		c.sr &^= 1 << bit
+		c.SR &^= 1 << bit
 	}
 }
 
@@ -149,9 +165,9 @@ func (c *Cpu) statusString() string {
 func (c *Cpu) branch(in *Instruction) {
 	relative := int8(in.op8) // signed
 	if relative >= 0 {
-		c.pc += Address(relative)
+		c.PC += Address(relative)
 	} else {
-		c.pc -= Address(-relative)
+		c.PC -= Address(-relative)
 	}
 }
 
@@ -254,25 +270,25 @@ func (c *Cpu) Execute(in *Instruction) {
 
 // ADC: Add memory and carry to accumulator.
 func (c *Cpu) ADC(in *Instruction) {
-	value16 := uint16(c.ac) + uint16(c.resolveOperand(in)) + uint16(c.getStatusInt(sCarry))
+	value16 := uint16(c.AC) + uint16(c.resolveOperand(in)) + uint16(c.getStatusInt(sCarry))
 	c.setStatus(sCarry, value16 > 0xFF)
-	c.ac = uint8(value16)
-	c.updateStatus(c.ac)
+	c.AC = uint8(value16)
+	c.updateStatus(c.AC)
 }
 
 // AND: And accumulator with memory.
 func (c *Cpu) AND(in *Instruction) {
-	c.ac &= c.resolveOperand(in)
-	c.updateStatus(c.ac)
+	c.AC &= c.resolveOperand(in)
+	c.updateStatus(c.AC)
 }
 
 // ASL: Shift memory or accumulator left one bit.
 func (c *Cpu) ASL(in *Instruction) {
 	switch in.addressing {
 	case accumulator:
-		c.setStatus(sCarry, (c.ac>>7) == 1) // carry = old bit 7
-		c.ac <<= 1
-		c.updateStatus(c.ac)
+		c.setStatus(sCarry, (c.AC>>7) == 1) // carry = old bit 7
+		c.AC <<= 1
+		c.updateStatus(c.AC)
 	default:
 		address := c.memoryAddress(in)
 		value := c.Bus.Read(address)
@@ -343,22 +359,22 @@ func (c *Cpu) CLI(in *Instruction) {
 // CMP: Compare accumulator with memory.
 func (c *Cpu) CMP(in *Instruction) {
 	value := c.resolveOperand(in)
-	c.setStatus(sCarry, c.ac >= value)
-	c.updateStatus(c.ac - value)
+	c.setStatus(sCarry, c.AC >= value)
+	c.updateStatus(c.AC - value)
 }
 
 // CPX: Compare index register X with memory.
 func (c *Cpu) CPX(in *Instruction) {
 	value := c.resolveOperand(in)
-	c.setStatus(sCarry, c.x >= value)
-	c.updateStatus(c.x - value)
+	c.setStatus(sCarry, c.X >= value)
+	c.updateStatus(c.X - value)
 }
 
 // CPY: Compare index register Y with memory.
 func (c *Cpu) CPY(in *Instruction) {
 	value := c.resolveOperand(in)
-	c.setStatus(sCarry, c.y >= value)
-	c.updateStatus(c.y - value)
+	c.setStatus(sCarry, c.Y >= value)
+	c.updateStatus(c.Y - value)
 }
 
 // DEC: Decrement.
@@ -371,21 +387,21 @@ func (c *Cpu) DEC(in *Instruction) {
 
 // DEX: Decrement index register X.
 func (c *Cpu) DEX(in *Instruction) {
-	c.x--
-	c.updateStatus(c.x)
+	c.X--
+	c.updateStatus(c.X)
 }
 
 // DEY: Decrement index register Y.
 func (c *Cpu) DEY(in *Instruction) {
-	c.y--
-	c.updateStatus(c.y)
+	c.Y--
+	c.updateStatus(c.Y)
 }
 
 // EOR: Exclusive-OR accumulator with memory.
 func (c *Cpu) EOR(in *Instruction) {
 	value := c.resolveOperand(in)
-	c.ac ^= value
-	c.updateStatus(c.ac)
+	c.AC ^= value
+	c.updateStatus(c.AC)
 }
 
 // INC: Increment.
@@ -398,53 +414,53 @@ func (c *Cpu) INC(in *Instruction) {
 
 // INX: Increment index register X.
 func (c *Cpu) INX(in *Instruction) {
-	c.x++
-	c.updateStatus(c.x)
+	c.X++
+	c.updateStatus(c.X)
 }
 
 // INY: Increment index register Y.
 func (c *Cpu) INY(in *Instruction) {
-	c.y++
-	c.updateStatus(c.y)
+	c.Y++
+	c.updateStatus(c.Y)
 }
 
 // JMP: Jump.
 func (c *Cpu) JMP(in *Instruction) {
-	c.pc = c.memoryAddress(in)
+	c.PC = c.memoryAddress(in)
 }
 
 // JSR: Jump to subroutine.
 func (c *Cpu) JSR(in *Instruction) {
-	c.Bus.Write16(c.StackHead(-1), c.pc-1)
-	c.sp -= 2
-	c.pc = in.op16
+	c.Bus.Write16(c.StackHead(-1), c.PC-1)
+	c.SP -= 2
+	c.PC = in.op16
 }
 
 // LDA: Load accumulator from memory.
 func (c *Cpu) LDA(in *Instruction) {
-	c.ac = c.resolveOperand(in)
-	c.updateStatus(c.ac)
+	c.AC = c.resolveOperand(in)
+	c.updateStatus(c.AC)
 }
 
 // LDX: Load index register X from memory.
 func (c *Cpu) LDX(in *Instruction) {
-	c.x = c.resolveOperand(in)
-	c.updateStatus(c.x)
+	c.X = c.resolveOperand(in)
+	c.updateStatus(c.X)
 }
 
 // LDY: Load index register Y from memory.
 func (c *Cpu) LDY(in *Instruction) {
-	c.y = c.resolveOperand(in)
-	c.updateStatus(c.y)
+	c.Y = c.resolveOperand(in)
+	c.updateStatus(c.Y)
 }
 
 // LSR: Logical shift memory or accumulator right.
 func (c *Cpu) LSR(in *Instruction) {
 	switch in.addressing {
 	case accumulator:
-		c.setStatus(sCarry, c.ac&1 == 1)
-		c.ac >>= 1
-		c.updateStatus(c.ac)
+		c.setStatus(sCarry, c.AC&1 == 1)
+		c.AC >>= 1
+		c.updateStatus(c.AC)
 	default:
 		address := c.memoryAddress(in)
 		value := c.Bus.Read(address)
@@ -461,20 +477,20 @@ func (c *Cpu) NOP(in *Instruction) {
 
 // ORA: OR accumulator with memory.
 func (c *Cpu) ORA(in *Instruction) {
-	c.ac |= c.resolveOperand(in)
-	c.updateStatus(c.ac)
+	c.AC |= c.resolveOperand(in)
+	c.updateStatus(c.AC)
 }
 
 // PHA: Push accumulator onto stack.
 func (c *Cpu) PHA(in *Instruction) {
-	c.Bus.Write(0x0100+Address(c.sp), c.ac)
-	c.sp--
+	c.Bus.Write(0x0100+Address(c.SP), c.AC)
+	c.SP--
 }
 
 // PLA: Pull accumulator from stack.
 func (c *Cpu) PLA(in *Instruction) {
-	c.sp++
-	c.ac = c.Bus.Read(0x0100 + Address(c.sp))
+	c.SP++
+	c.AC = c.Bus.Read(0x0100 + Address(c.SP))
 }
 
 // ROL: Rotate memory or accumulator left one bit.
@@ -482,9 +498,9 @@ func (c *Cpu) ROL(in *Instruction) {
 	carry := c.getStatusInt(sCarry)
 	switch in.addressing {
 	case accumulator:
-		c.setStatus(sCarry, (c.ac>>7) == 1)
-		c.ac = (c.ac << 1) | carry
-		c.updateStatus(c.ac)
+		c.setStatus(sCarry, (c.AC>>7) == 1)
+		c.AC = (c.AC << 1) | carry
+		c.updateStatus(c.AC)
 	default:
 		address := c.memoryAddress(in)
 		value := c.Bus.Read(address)
@@ -497,19 +513,19 @@ func (c *Cpu) ROL(in *Instruction) {
 
 // RTS: Return from subroutine.
 func (c *Cpu) RTS(in *Instruction) {
-	c.pc = c.Bus.Read16(c.StackHead(1))
-	c.sp += 2
-	c.pc += 1
+	c.PC = c.Bus.Read16(c.StackHead(1))
+	c.SP += 2
+	c.PC += 1
 }
 
 // SBC: Subtract memory with borrow from accumulator.
 func (c *Cpu) SBC(in *Instruction) {
-	valueSigned := int16(c.ac) - int16(c.resolveOperand(in))
+	valueSigned := int16(c.AC) - int16(c.resolveOperand(in))
 	if !c.getStatus(sCarry) {
 		valueSigned--
 	}
 	c.setStatus(sCarry, valueSigned < 0)
-	c.ac = uint8(valueSigned)
+	c.AC = uint8(valueSigned)
 }
 
 // SEI: Set interrupt-disable flag.
@@ -519,51 +535,51 @@ func (c *Cpu) SEI(in *Instruction) {
 
 // STA: Store accumulator to memory.
 func (c *Cpu) STA(in *Instruction) {
-	c.Bus.Write(c.memoryAddress(in), c.ac)
+	c.Bus.Write(c.memoryAddress(in), c.AC)
 }
 
 // STX: Store index register X to memory.
 func (c *Cpu) STX(in *Instruction) {
-	c.Bus.Write(c.memoryAddress(in), c.x)
+	c.Bus.Write(c.memoryAddress(in), c.X)
 }
 
 // STY: Store index register Y to memory.
 func (c *Cpu) STY(in *Instruction) {
-	c.Bus.Write(c.memoryAddress(in), c.y)
+	c.Bus.Write(c.memoryAddress(in), c.Y)
 }
 
 // TAX: Transfer accumulator to index register X.
 func (c *Cpu) TAX(in *Instruction) {
-	c.x = c.ac
-	c.updateStatus(c.x)
+	c.X = c.AC
+	c.updateStatus(c.X)
 }
 
 // TAY: Transfer accumulator to index register Y.
 func (c *Cpu) TAY(in *Instruction) {
-	c.y = c.ac
-	c.updateStatus(c.y)
+	c.Y = c.AC
+	c.updateStatus(c.Y)
 }
 
 // TXA: Transfer index register X to accumulator.
 func (c *Cpu) TXA(in *Instruction) {
-	c.ac = c.x
-	c.updateStatus(c.ac)
+	c.AC = c.X
+	c.updateStatus(c.AC)
 }
 
 // TXS: Transfer index register X to stack pointer.
 func (c *Cpu) TXS(in *Instruction) {
-	c.sp = c.x
-	c.updateStatus(c.sp)
+	c.SP = c.X
+	c.updateStatus(c.SP)
 }
 
 // TYA: Transfer index register Y to accumulator.
 func (c *Cpu) TYA(in *Instruction) {
-	c.ac = c.y
-	c.updateStatus(c.ac)
+	c.AC = c.Y
+	c.updateStatus(c.AC)
 }
 
 // _END: Custom go6502 instruction.
 // Exit, with contents of X register as exit status.
 func (c *Cpu) _END(in *Instruction) {
-	c.ExitChan <- int(c.x)
+	c.ExitChan <- int(c.X)
 }
