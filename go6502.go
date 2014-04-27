@@ -7,6 +7,7 @@ import (
 
 	"github.com/pda/go6502/debugger"
 	"github.com/pda/go6502/go6502"
+	"github.com/pda/go6502/memory"
 	"github.com/pda/go6502/ssd1306"
 	"github.com/pda/go6502/via6522"
 )
@@ -23,7 +24,7 @@ func mainReturningStatus() int {
 
 	options := go6502.ParseOptions()
 
-	kernal, err := go6502.RomFromFile(kernalPath)
+	kernal, err := memory.RomFromFile(kernalPath)
 	if err != nil {
 		panic(err)
 	}

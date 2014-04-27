@@ -1,9 +1,11 @@
-package go6502
+package memory
 
 import (
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
+
+	"github.com/pda/go6502/go6502"
 )
 
 // A Rom provides read-only memory, with data generally pre-loaded from a file.
@@ -14,7 +16,7 @@ type Rom struct {
 }
 
 // Read a byte from the given address.
-func (rom *Rom) Read(a Address) byte {
+func (rom *Rom) Read(a go6502.Address) byte {
 	return rom.data[a]
 }
 
@@ -43,6 +45,6 @@ func (r *Rom) String() string {
 
 // Rom meets the go6502.Memory interface, but Write is not supported, and will
 // cause an error.
-func (r *Rom) Write(_ Address, _ byte) {
+func (r *Rom) Write(_ go6502.Address, _ byte) {
 	panic(fmt.Sprintf("%v is read-only", r))
 }
