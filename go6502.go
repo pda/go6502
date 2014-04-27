@@ -57,6 +57,10 @@ func mainReturningStatus() int {
 		defer debugger.Close()
 		debugger.QueueCommands(options.DebugCmds)
 		cpu.AttachMonitor(debugger)
+	} else if options.Speedometer {
+		speedo := go6502.NewSpeedometer()
+		defer speedo.Close()
+		cpu.AttachMonitor(speedo)
 	}
 	cpu.Reset()
 

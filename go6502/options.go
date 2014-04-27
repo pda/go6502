@@ -13,6 +13,7 @@ type Options struct {
 	ViaSsd1306    bool
 	Debug         bool
 	DebugCmds     commandList
+	Speedometer   bool
 }
 
 // ParseOptions uses the flag stdlib package to parse CLI options.
@@ -27,6 +28,9 @@ func ParseOptions() *Options {
 	flag.BoolVar(&opt.ViaDumpBinary, "via-dump-binary", false, "VIA6522 dumps binary output")
 	flag.BoolVar(&opt.ViaDumpAscii, "via-dump-ascii", false, "VIA6522 dumps ASCII output")
 	flag.BoolVar(&opt.ViaSsd1306, "via-ssd1306", false, "SSD1306 OLED display on VIA6522 port B")
+
+	// Speedometer
+	flag.BoolVar(&opt.Speedometer, "speedometer", false, "Measure effective clock speed")
 
 	flag.Parse()
 	return opt
