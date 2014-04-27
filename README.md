@@ -20,11 +20,11 @@ Background
 
 I've been designing and building a [6502-based homebrew computer][pda6502].
 
-It's powered by an 8-bit 6502 (WDC 65C02 to be precise), varitions of which
-powered the venerable Commodore 64, Apple II, Vic 20, Nintendo and lots more.
+It's powered by an 8-bit 6502 (WDC 65C02), varitions of which powered the
+venerable Commodore 64, Apple II, Vic 20, Nintendo and lots more.
 
-My system uses 74HC-series logic chips to map the 64K address space to 32K RAM,
-8K ROM, a VIA 6522 I/O controller, and room for expansion.
+74HC-series logic chips map the 64K address space to 32K RAM, 8K ROM, a VIA
+6522 I/O controller, and room for expansion.
 
 The first output device (beyond flashing LEDs) is a [128x32 pixel OLED][oled],
 connected to one of the VIA 6522 parallel ports, with bit-banged serial comms.
