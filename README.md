@@ -14,6 +14,7 @@ go6502
 A [go][golang]-based emulator and debugger for the [6502][6502]-based
 [pda6502 homebrew computer][pda6502].
 
+[![GoDoc](https://godoc.org/github.com/pda/go6502?status.png)](https://godoc.org/github.com/pda/go6502)
 
 Background
 ----------
