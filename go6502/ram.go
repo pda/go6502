@@ -12,11 +12,11 @@ func (r *Ram) String() string {
 	return "(RAM 32K)"
 }
 
-func (mem *Ram) Read(a address) byte {
+func (mem *Ram) Read(a Address) byte {
 	return mem[a]
 }
 
-func (mem *Ram) Write(a address, value byte) {
+func (mem *Ram) Write(a Address, value byte) {
 	mem[a] = value
 }
 

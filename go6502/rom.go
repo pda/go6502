@@ -12,7 +12,7 @@ type Rom struct {
 	data []byte
 }
 
-func (rom *Rom) Read(a address) byte {
+func (rom *Rom) Read(a Address) byte {
 	return rom.data[a]
 }
 
@@ -36,6 +36,6 @@ func (r *Rom) String() string {
 		hex.EncodeToString(r.data[len(r.data)-2:]))
 }
 
-func (r *Rom) Write(_ address, _ byte) {
+func (r *Rom) Write(_ Address, _ byte) {
 	panic(fmt.Sprintf("%v is read-only", r))
 }

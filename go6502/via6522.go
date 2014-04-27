@@ -144,7 +144,7 @@ func printAsciiByte(b uint8) {
 // Read the register specified by the given 4-bit address (0x00..0x0F).
 // TODO: Unlike IRA, reading IRB actully returns bits from ORA for pins
 //       that are programmed as output.
-func (via *Via6522) Read(a address) byte {
+func (via *Via6522) Read(a Address) byte {
 	switch a {
 	default:
 		panic(fmt.Sprintf("read from 0x%X not handled by Via6522", a))
@@ -196,7 +196,7 @@ func (via *Via6522) String() string {
 }
 
 // Write to register specified by the given 4-bit address (0x00..0x0F).
-func (via *Via6522) Write(a address, data byte) {
+func (via *Via6522) Write(a Address, data byte) {
 	// TODO: mask with DDR here, or later.
 	switch a {
 	default:

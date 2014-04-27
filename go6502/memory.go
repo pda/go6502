@@ -7,19 +7,19 @@ import (
 // Memory
 
 type Memory interface {
-	Read(address) byte
-	Write(address, byte)
+	Read(Address) byte
+	Write(Address, byte)
 	Size() int
 }
 
 // OffsetMemory
 
 type OffsetMemory struct {
-	offset address
+	offset Address
 	Memory
 }
 
-func (om OffsetMemory) Read(a address) byte {
+func (om OffsetMemory) Read(a Address) byte {
 	return om.Memory.Read(a - om.offset)
 }
 
@@ -27,6 +27,6 @@ func (om OffsetMemory) String() string {
 	return fmt.Sprintf("OffsetMemory(%v)", om.Memory)
 }
 
-func (om OffsetMemory) Write(a address, value byte) {
+func (om OffsetMemory) Write(a Address, value byte) {
 	om.Memory.Write(a-om.offset, value)
 }

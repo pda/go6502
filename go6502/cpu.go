@@ -18,7 +18,7 @@ const (
 )
 
 type Cpu struct {
-	pc       address
+	pc       Address
 	ac       byte
 	x        byte
 	y        byte
@@ -48,7 +48,7 @@ func (c *Cpu) Step() {
 	if c.debugger != nil {
 		c.debugger.BeforeExecute(in)
 	}
-	c.pc += address(in.ot.bytes)
+	c.pc += Address(in.ot.bytes)
 	c.Execute(in)
 }
 
@@ -60,8 +60,8 @@ func (c *Cpu) String() string {
 	)
 }
 
-func (c *Cpu) StackHead(offset int8) address {
-	return address(0x0100) + address(c.sp) + address(offset)
+func (c *Cpu) StackHead(offset int8) Address {
+	return Address(0x0100) + Address(c.sp) + Address(offset)
 }
 
 func (c *Cpu) resolveOperand(in *Instruction) uint8 {
@@ -73,14 +73,14 @@ func (c *Cpu) resolveOperand(in *Instruction) uint8 {
 	}
 }
 
-func (c *Cpu) memoryAddress(in *Instruction) address {
+func (c *Cpu) memoryAddress(in *Instruction) Address {
 	switch in.ot.addressing {
 	case absolute:
 		return in.op16
 	case absoluteX:
-		return in.op16 + address(c.x)
+		return in.op16 + Address(c.x)
 	case absoluteY:
-		return in.op16 + address(c.y)
+		return in.op16 + Address(c.y)
 
 	// Indexed Indirect (X)
 	// Operand is the zero-page location of a little-endian 16-bit base address.
@@ -88,7 +88,7 @@ func (c *Cpu) memoryAddress(in *Instruction) address {
 	// The resulting address loaded from (base+X) becomes the effective operand.
 	// (base + X) must be in zero-page.
 	case indirectX:
-		location := address(in.op8 + c.x)
+		location := Address(in.op8 + c.x)
 		if location == 0xFF {
 			panic("Indexed indirect high-byte not on zero page.")
 		}
@@ -99,14 +99,14 @@ func (c *Cpu) memoryAddress(in *Instruction) address {
 	// The address is loaded, and then the Y register is added to it.
 	// The resulting loaded_address + Y becomes the effective operand.
 	case indirectY:
-		return c.Bus.Read16(address(in.op8)) + address(c.y)
+		return c.Bus.Read16(Address(in.op8)) + Address(c.y)
 
 	case zeropage:
-		return address(in.op8)
+		return Address(in.op8)
 	case zeropageX:
-		return address(in.op8 + c.x)
+		return Address(in.op8 + c.x)
 	case zeropageY:
-		return address(in.op8 + c.y)
+		return Address(in.op8 + c.y)
 	default:
 		panic("unhandled addressing")
 	}
@@ -149,9 +149,9 @@ func (c *Cpu) statusString() string {
 func (c *Cpu) branch(in *Instruction) {
 	relative := int8(in.op8) // signed
 	if relative >= 0 {
-		c.pc += address(relative)
+		c.pc += Address(relative)
 	} else {
-		c.pc -= address(-relative)
+		c.pc -= Address(-relative)
 	}
 }
 
@@ -467,14 +467,14 @@ func (c *Cpu) ORA(in *Instruction) {
 
 // PHA: Push accumulator onto stack.
 func (c *Cpu) PHA(in *Instruction) {
-	c.Bus.Write(0x0100+address(c.sp), c.ac)
+	c.Bus.Write(0x0100+Address(c.sp), c.ac)
 	c.sp--
 }
 
 // PLA: Pull accumulator from stack.
 func (c *Cpu) PLA(in *Instruction) {
 	c.sp++
-	c.ac = c.Bus.Read(0x0100 + address(c.sp))
+	c.ac = c.Bus.Read(0x0100 + Address(c.sp))
 }
 
 // ROL: Rotate memory or accumulator left one bit.
