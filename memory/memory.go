@@ -1,4 +1,7 @@
-package go6502
+/*
+	Package memory provides ROM & RAM for go6502; 16-bit address, 8-bit data.
+*/
+package memory
 
 import (
 	"fmt"

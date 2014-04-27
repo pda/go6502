@@ -2,10 +2,12 @@ package go6502
 
 import (
 	"fmt"
+
+	"github.com/pda/go6502/memory"
 )
 
 type busEntry struct {
-	mem   Memory
+	mem   memory.Memory
 	name  string
 	start uint16
 	end   uint16
@@ -28,15 +30,15 @@ func CreateBus() (*Bus, error) {
 
 // Attach maps a bus address range to a backend Memory implementation,
 // which could be RAM, ROM, I/O device etc.
-func (b *Bus) Attach(mem Memory, name string, offset uint16) error {
-	om := OffsetMemory{Offset: offset, Memory: mem}
+func (b *Bus) Attach(mem memory.Memory, name string, offset uint16) error {
+	om := memory.OffsetMemory{Offset: offset, Memory: mem}
 	end := offset + uint16(mem.Size()-1)
 	entry := busEntry{mem: om, name: name, start: offset, end: end}
 	b.entries = append(b.entries, entry)
 	return nil
 }
 
-func (b *Bus) backendFor(a uint16) (Memory, error) {
+func (b *Bus) backendFor(a uint16) (memory.Memory, error) {
 	for _, be := range b.entries {
 		if a >= be.start && a <= be.end {
 			return be.mem, nil
