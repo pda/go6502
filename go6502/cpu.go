@@ -41,12 +41,16 @@ type Cpu struct {
 	// different back-end devices.
 	Bus *Bus
 
-	debugger *Debugger
+	monitor  Monitor
 	ExitChan chan int
 }
 
-func (c *Cpu) AttachDebugger(d *Debugger) {
-	c.debugger = d
+type Monitor interface {
+	BeforeExecute(*Instruction)
+}
+
+func (c *Cpu) AttachMonitor(m Monitor) {
+	c.monitor = m
 }
 
 // Reset the CPU, emulating triggering the RESB line.
@@ -61,8 +65,8 @@ func (c *Cpu) Reset() {
 
 func (c *Cpu) Step() {
 	in := ReadInstruction(c.PC, c.Bus)
-	if c.debugger != nil {
-		c.debugger.BeforeExecute(in)
+	if c.monitor != nil {
+		c.monitor.BeforeExecute(in)
 	}
 	c.PC += Address(in.bytes)
 	c.Execute(in)

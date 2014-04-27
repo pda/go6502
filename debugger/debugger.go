@@ -1,4 +1,4 @@
-package go6502
+package debugger
 
 /**
  * Debugger / Monitor
@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pda/go6502/go6502"
 	"github.com/peterh/liner"
 )
 
@@ -35,12 +36,12 @@ const (
 
 type Debugger struct {
 	inputQueue        []string
-	cpu               *Cpu
+	cpu               *go6502.Cpu
 	liner             *liner.State
 	lastCommand       *DebuggerCommand
 	run               bool
 	breakAddress      bool
-	breakAddressValue Address
+	breakAddressValue go6502.Address
 	breakInstruction  string
 	breakRegA         bool
 	breakRegAValue    byte
@@ -56,7 +57,7 @@ type DebuggerCommand struct {
 	arguments []string
 }
 
-func NewDebugger(cpu *Cpu) *Debugger {
+func NewDebugger(cpu *go6502.Cpu) *Debugger {
 	d := &Debugger{liner: liner.NewLiner(), cpu: cpu}
 	return d
 }
@@ -76,7 +77,7 @@ func (d *Debugger) checkRegBreakpoint(regStr string, on bool, expect byte, actua
 	}
 }
 
-func (d *Debugger) doBreakpoints(in *Instruction) {
+func (d *Debugger) doBreakpoints(in *go6502.Instruction) {
 	inName := in.Name()
 
 	if inName == d.breakInstruction {
@@ -94,7 +95,7 @@ func (d *Debugger) doBreakpoints(in *Instruction) {
 	d.checkRegBreakpoint("Y", d.breakRegY, d.breakRegYValue, d.cpu.Y)
 }
 
-func (d *Debugger) BeforeExecute(in *Instruction) {
+func (d *Debugger) BeforeExecute(in *go6502.Instruction) {
 
 	d.doBreakpoints(in)
 
@@ -111,7 +112,7 @@ func (d *Debugger) BeforeExecute(in *Instruction) {
 }
 
 // Returns true when control is to be released.
-func (d *Debugger) commandLoop(in *Instruction) (release bool) {
+func (d *Debugger) commandLoop(in *go6502.Instruction) (release bool) {
 	var (
 		cmd *DebuggerCommand
 		err error
@@ -160,7 +161,7 @@ func (d *Debugger) commandRead(cmd *DebuggerCommand) {
 	if err != nil {
 		panic(err)
 	}
-	addr := Address(addr64)
+	addr := go6502.Address(addr64)
 	v := d.cpu.Bus.Read(addr)
 	fmt.Printf("$%04X => $%02X 0b%08b %d %q\n", addr, v, v, v, v)
 }
@@ -170,7 +171,7 @@ func (d *Debugger) commandRead16(cmd *DebuggerCommand) {
 	if err != nil {
 		panic(err)
 	}
-	addrLo := Address(addr64)
+	addrLo := go6502.Address(addr64)
 	addrHi := addrLo + 1
 	vLo := d.cpu.Bus.Read(addrLo)
 	vHi := d.cpu.Bus.Read(addrHi)
@@ -202,7 +203,7 @@ func (d *Debugger) commandBreakAddress(cmd *DebuggerCommand) {
 	if err != nil {
 		panic(err)
 	}
-	addr := Address(value64)
+	addr := go6502.Address(value64)
 	d.breakAddress = true
 	d.breakAddressValue = addr
 }
