@@ -8,7 +8,7 @@ import (
 // One or both of the operand types will be zero.
 // This is determined by (ot.bytes - 1) / 8
 type Instruction struct {
-	ot   *OpType
+	ot   OpType
 	op8  uint8
 	op16 Address
 }
