@@ -10,7 +10,7 @@ import (
 type Instruction struct {
 	OpType
 	op8  uint8
-	op16 Address
+	op16 uint16
 }
 
 func (in *Instruction) String() (s string) {
@@ -28,7 +28,7 @@ func (in *Instruction) String() (s string) {
 // ReadInstruction reads an instruction from the bus starting at the given
 // address. An instruction may be 1, 2 or 3 bytes long, including its optional
 // 8 or 16 bit operand.
-func ReadInstruction(PC Address, bus *Bus) *Instruction {
+func ReadInstruction(PC uint16, bus *Bus) *Instruction {
 	in := &Instruction{OpType: optypes[bus.Read(PC)]}
 	switch in.bytes {
 	case 1: // no operand

@@ -63,8 +63,6 @@ import (
 	"fmt"
 	"strconv"
 	"unicode"
-
-	"github.com/pda/go6502/go6502"
 )
 
 const (
@@ -169,7 +167,7 @@ func printAsciiByte(b uint8) {
 // Read the register specified by the given 4-bit address (0x00..0x0F).
 // TODO: Unlike IRA, reading IRB actully returns bits from ORA for pins
 //       that are programmed as output.
-func (via *Via6522) Read(a go6502.Address) byte {
+func (via *Via6522) Read(a uint16) byte {
 	switch a {
 	default:
 		panic(fmt.Sprintf("read from 0x%X not handled by Via6522", a))
@@ -223,7 +221,7 @@ func (via *Via6522) String() string {
 }
 
 // Write to register specified by the given 4-bit address (0x00..0x0F).
-func (via *Via6522) Write(a go6502.Address, data byte) {
+func (via *Via6522) Write(a uint16, data byte) {
 	// TODO: mask with DDR here, or later.
 	switch a {
 	default:

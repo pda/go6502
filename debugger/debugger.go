@@ -78,7 +78,7 @@ type Debugger struct {
 	lastCmd           *cmd
 	run               bool
 	breakAddress      bool
-	breakAddressValue go6502.Address
+	breakAddressValue uint16
 	breakInstruction  string
 	breakRegA         bool
 	breakRegAValue    byte
@@ -207,7 +207,7 @@ func (d *Debugger) commandRead(cmd *cmd) {
 	if err != nil {
 		panic(err)
 	}
-	addr := go6502.Address(addr64)
+	addr := uint16(addr64)
 	v := d.cpu.Bus.Read(addr)
 	fmt.Printf("$%04X => $%02X 0b%08b %d %q\n", addr, v, v, v, v)
 }
@@ -217,7 +217,7 @@ func (d *Debugger) commandRead16(cmd *cmd) {
 	if err != nil {
 		panic(err)
 	}
-	addrLo := go6502.Address(addr64)
+	addrLo := uint16(addr64)
 	addrHi := addrLo + 1
 	vLo := d.cpu.Bus.Read(addrLo)
 	vHi := d.cpu.Bus.Read(addrHi)
@@ -249,7 +249,7 @@ func (d *Debugger) commandBreakAddress(cmd *cmd) {
 	if err != nil {
 		panic(err)
 	}
-	addr := go6502.Address(value64)
+	addr := uint16(value64)
 	d.breakAddress = true
 	d.breakAddressValue = addr
 }

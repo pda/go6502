@@ -7,8 +7,8 @@ import (
 type busEntry struct {
 	mem   Memory
 	name  string
-	start Address
-	end   Address
+	start uint16
+	end   uint16
 }
 
 // Bus is a 16-bit address, 8-bit data bus, which maps reads and writes
@@ -28,15 +28,15 @@ func CreateBus() (*Bus, error) {
 
 // Attach maps a bus address range to a backend Memory implementation,
 // which could be RAM, ROM, I/O device etc.
-func (b *Bus) Attach(mem Memory, name string, offset Address) error {
+func (b *Bus) Attach(mem Memory, name string, offset uint16) error {
 	om := OffsetMemory{offset: offset, Memory: mem}
-	end := offset + Address(mem.Size()-1)
+	end := offset + uint16(mem.Size()-1)
 	entry := busEntry{mem: om, name: name, start: offset, end: end}
 	b.entries = append(b.entries, entry)
 	return nil
 }
 
-func (b *Bus) backendFor(a Address) (Memory, error) {
+func (b *Bus) backendFor(a uint16) (Memory, error) {
 	for _, be := range b.entries {
 		if a >= be.start && a <= be.end {
 			return be.mem, nil
@@ -48,7 +48,7 @@ func (b *Bus) backendFor(a Address) (Memory, error) {
 // Read returns the byte from memory mapped to the given address.
 // e.g. if ROM is mapped to 0xC000, then Read(0xC0FF) returns the byte at
 // 0x00FF in that RAM device.
-func (b *Bus) Read(a Address) byte {
+func (b *Bus) Read(a uint16) byte {
 	mem, err := b.backendFor(a)
 	if err != nil {
 		panic(err)
@@ -59,14 +59,14 @@ func (b *Bus) Read(a Address) byte {
 
 // Read16 returns the 16-bit value stored in little-endian format with the
 // low byte at address, and the high byte at address+1.
-func (b *Bus) Read16(a Address) Address {
-	lo := Address(b.Read(a))
-	hi := Address(b.Read(a + 1))
+func (b *Bus) Read16(a uint16) uint16 {
+	lo := uint16(b.Read(a))
+	hi := uint16(b.Read(a + 1))
 	return hi<<8 | lo
 }
 
 // Write the byte to the device mapped to the given address.
-func (b *Bus) Write(a Address, value byte) {
+func (b *Bus) Write(a uint16, value byte) {
 	mem, err := b.backendFor(a)
 	if err != nil {
 		panic(err)
@@ -76,7 +76,7 @@ func (b *Bus) Write(a Address, value byte) {
 
 // Write16 writes the given 16-bit value to the specifie address, storing it
 // little-endian, with high byte at address+1.
-func (b *Bus) Write16(a Address, value Address) {
+func (b *Bus) Write16(a uint16, value uint16) {
 	b.Write(a, byte(value))
 	b.Write(a+1, byte(value>>8))
 }
