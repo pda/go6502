@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/pda/go6502/bus"
 	"github.com/pda/go6502/debugger"
 	"github.com/pda/go6502/go6502"
 	"github.com/pda/go6502/memory"
@@ -43,7 +44,7 @@ func mainReturningStatus() int {
 
 	via.Reset()
 
-	addressBus, _ := go6502.CreateBus()
+	addressBus, _ := bus.CreateBus()
 	addressBus.Attach(ram, "ram", 0x0000)
 	addressBus.Attach(via, "VIA", 0xC000)
 	addressBus.Attach(kernal, "kernal", 0xE000)

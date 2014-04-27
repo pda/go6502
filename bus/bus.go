@@ -1,4 +1,8 @@
-package go6502
+/*
+	Package bus provides a mappable 16-bit addressable 8-bit data bus for go6502.
+	Different Memory backends can be attached at different base addresses.
+*/
+package bus
 
 import (
 	"fmt"
@@ -31,7 +35,7 @@ func CreateBus() (*Bus, error) {
 // Attach maps a bus address range to a backend Memory implementation,
 // which could be RAM, ROM, I/O device etc.
 func (b *Bus) Attach(mem memory.Memory, name string, offset uint16) error {
-	om := memory.OffsetMemory{Offset: offset, Memory: mem}
+	om := OffsetMemory{Offset: offset, Memory: mem}
 	end := offset + uint16(mem.Size()-1)
 	entry := busEntry{mem: om, name: name, start: offset, end: end}
 	b.entries = append(b.entries, entry)

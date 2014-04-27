@@ -3,6 +3,8 @@ package go6502
 import (
 	"fmt"
 	"strings"
+
+	"github.com/pda/go6502/bus"
 )
 
 // status register bits
@@ -39,7 +41,7 @@ type Cpu struct {
 
 	// Bus is the system address bus, mapping 64K of address space to
 	// different back-end devices.
-	Bus *Bus
+	Bus *bus.Bus
 
 	monitor  Monitor
 	ExitChan chan int
