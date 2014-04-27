@@ -19,6 +19,11 @@ const (
 	sNegative
 )
 
+// StackBase is the base address of the stack, which begins at StackBase+0xFF
+// and grows downwards towards this address.
+const StackBase = 0x0100
+
+// Cpu represents the internal state of the CPU.
 type Cpu struct {
 
 	// Program counter.
@@ -86,8 +91,8 @@ func (c *Cpu) String() string {
 	)
 }
 
-func (c *Cpu) StackHead(offset int8) uint16 {
-	return uint16(0x0100) + uint16(c.SP) + uint16(offset)
+func (c *Cpu) stackHead(offset int8) uint16 {
+	return uint16(StackBase) + uint16(c.SP) + uint16(offset)
 }
 
 func (c *Cpu) resolveOperand(in *Instruction) uint8 {
@@ -441,7 +446,7 @@ func (c *Cpu) JMP(in *Instruction) {
 
 // JSR: Jump to subroutine.
 func (c *Cpu) JSR(in *Instruction) {
-	c.Bus.Write16(c.StackHead(-1), c.PC-1)
+	c.Bus.Write16(c.stackHead(-1), c.PC-1)
 	c.SP -= 2
 	c.PC = in.op16
 }
@@ -523,7 +528,7 @@ func (c *Cpu) ROL(in *Instruction) {
 
 // RTS: Return from subroutine.
 func (c *Cpu) RTS(in *Instruction) {
-	c.PC = c.Bus.Read16(c.StackHead(1))
+	c.PC = c.Bus.Read16(c.stackHead(1))
 	c.SP += 2
 	c.PC += 1
 }
