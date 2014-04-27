@@ -77,7 +77,7 @@ func (d *Debugger) checkRegBreakpoint(regStr string, on bool, expect byte, actua
 }
 
 func (d *Debugger) doBreakpoints(in *Instruction) {
-	inName := in.ot.name()
+	inName := in.name()
 
 	if inName == d.breakInstruction {
 		fmt.Printf("Breakpoint for instruction %s\n", inName)
