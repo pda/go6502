@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// Options stores the value of command line options after they're parsed.
 type Options struct {
 	ViaDumpBinary bool
 	ViaDumpAscii  bool
@@ -14,6 +15,7 @@ type Options struct {
 	DebugCmds     commandList
 }
 
+// ParseOptions uses the flag stdlib package to parse CLI options.
 func ParseOptions() *Options {
 	opt := &Options{}
 
