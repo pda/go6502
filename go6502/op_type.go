@@ -174,10 +174,11 @@ type OpType struct {
 }
 
 func (ot OpType) String() string {
-	return fmt.Sprintf("%s %s", ot.name(), addressingNames[ot.addressing])
+	return fmt.Sprintf("%s %s", ot.Name(), addressingNames[ot.addressing])
 }
 
-func (ot OpType) name() (s string) {
+// Name returns the instruction mnemonic name, e.g. ADC or TYA.
+func (ot OpType) Name() (s string) {
 	return instructionNames[ot.id]
 }
 
