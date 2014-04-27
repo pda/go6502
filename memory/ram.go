@@ -1,7 +1,9 @@
-package go6502
+package memory
 
 import (
 	"io/ioutil"
+
+	"github.com/pda/go6502/go6502"
 )
 
 // Ram (32 KiB)
@@ -12,12 +14,12 @@ func (r *Ram) String() string {
 }
 
 // Read a byte from a 16-bit address.
-func (mem *Ram) Read(a Address) byte {
+func (mem *Ram) Read(a go6502.Address) byte {
 	return mem[a]
 }
 
 // Write a byte to a 16-bit address.
-func (mem *Ram) Write(a Address, value byte) {
+func (mem *Ram) Write(a go6502.Address, value byte) {
 	mem[a] = value
 }
 

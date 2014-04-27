@@ -29,7 +29,7 @@ func mainReturningStatus() int {
 		panic(err)
 	}
 
-	ram := &go6502.Ram{}
+	ram := &memory.Ram{}
 
 	via := via6522.NewVia6522(via6522.Options{
 		DumpAscii:  options.ViaDumpAscii,
