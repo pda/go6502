@@ -258,6 +258,8 @@ func (c *Cpu) execute(in *Instruction) {
 		c.RTS(in)
 	case sbc:
 		c.SBC(in)
+	case sec:
+		c.SEC(in)
 	case sei:
 		c.SEI(in)
 	case sta:
@@ -541,6 +543,11 @@ func (c *Cpu) SBC(in *Instruction) {
 	}
 	c.setStatus(sCarry, valueSigned < 0)
 	c.AC = uint8(valueSigned)
+}
+
+// SEC: Set carry flag.
+func (c *Cpu) SEC(in *Instruction) {
+	c.setStatus(sCarry, true)
 }
 
 // SEI: Set interrupt-disable flag.
