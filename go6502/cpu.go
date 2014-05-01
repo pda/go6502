@@ -541,8 +541,17 @@ func (c *Cpu) SBC(in *Instruction) {
 	if !c.getStatus(sCarry) {
 		valueSigned--
 	}
-	c.setStatus(sCarry, valueSigned < 0)
 	c.AC = uint8(valueSigned)
+
+    // v: Set if signed overflow; cleared if valid sign result.
+	// TODO: c.setStatus(sOverflow, something)
+
+    // c: Set if unsigned borrow not required; cleared if unsigned borrow.
+	c.setStatus(sCarry, valueSigned >= 0)
+
+	// n: Set if most significant bit of result is set; else cleared.
+    // z: Set if result is zero; else cleared.
+	c.updateStatus(c.AC)
 }
 
 // SEC: Set carry flag.
