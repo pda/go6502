@@ -32,9 +32,7 @@ func NewSpeedometer() *Speedometer {
 
 // BeforeExecute meets go6502.Monitor interface.
 func (s *Speedometer) BeforeExecute(in *Instruction) {
-	if s.cycleChan != nil {
-		s.cycleChan <- in.cycles
-	}
+	s.cycleChan <-in.cycles
 }
 
 // Close the Speedometer session, reporting stats to stdout.
