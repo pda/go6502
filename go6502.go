@@ -76,10 +76,8 @@ func mainReturningStatus() int {
 
 	// Dispatch CPU in a goroutine.
 	go func() {
-		i := 0
 		for {
 			cpu.Step()
-			i++
 		}
 	}()
 
