@@ -167,9 +167,9 @@ var instructionNames = [...]string{
 type OpType struct {
 	opcode     byte
 	id         uint8 // the const identifier of the instruction type, e.g. ADC
-	addressing int
-	bytes      int
-	cycles     int
+	addressing uint8
+	bytes      uint8
+	cycles     uint8
 }
 
 func (ot OpType) String() string {

@@ -11,7 +11,7 @@ type Speedometer struct {
 	cycles       uint64
 	instructions uint64
 	timeStart    time.Time
-	cycleChan    chan int
+	cycleChan    chan uint8
 }
 
 // NewSpeedometer creates a Speedometer, and starts a goroutine to receive
@@ -19,7 +19,7 @@ type Speedometer struct {
 func NewSpeedometer() *Speedometer {
 	s := &Speedometer{
 		timeStart: time.Now(),
-		cycleChan: make(chan int),
+		cycleChan: make(chan uint8),
 	}
 	go func() {
 		for {
