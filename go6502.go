@@ -9,8 +9,8 @@ import (
 	"github.com/pda/go6502/cli"
 	"github.com/pda/go6502/cpu"
 	"github.com/pda/go6502/debugger"
-	"github.com/pda/go6502/go6502"
 	"github.com/pda/go6502/memory"
+	"github.com/pda/go6502/speedometer"
 	"github.com/pda/go6502/ssd1306"
 	"github.com/pda/go6502/via6522"
 )
@@ -60,7 +60,7 @@ func mainReturningStatus() int {
 		debugger.QueueCommands(options.DebugCmds)
 		cpu.AttachMonitor(debugger)
 	} else if options.Speedometer {
-		speedo := go6502.NewSpeedometer()
+		speedo := speedometer.NewSpeedometer()
 		defer speedo.Close()
 		cpu.AttachMonitor(speedo)
 	}

@@ -1,4 +1,4 @@
-package go6502
+package speedometer
 
 import (
 	"fmt"
