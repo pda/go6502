@@ -1,4 +1,9 @@
-package go6502
+/*
+	Package cli provides command line support for go6502.
+
+	It parses CLI flags and exposes the resulting options.
+*/
+package cli
 
 import (
 	"flag"
@@ -16,8 +21,8 @@ type Options struct {
 	Speedometer   bool
 }
 
-// ParseOptions uses the flag stdlib package to parse CLI options.
-func ParseOptions() *Options {
+// ParseFlags uses the flag stdlib package to parse CLI options.
+func ParseFlags() *Options {
 	opt := &Options{}
 
 	// Debug

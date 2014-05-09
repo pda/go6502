@@ -6,6 +6,7 @@ import (
 	"os/signal"
 
 	"github.com/pda/go6502/bus"
+	"github.com/pda/go6502/cli"
 	"github.com/pda/go6502/cpu"
 	"github.com/pda/go6502/debugger"
 	"github.com/pda/go6502/go6502"
@@ -24,7 +25,7 @@ func main() {
 
 func mainReturningStatus() int {
 
-	options := go6502.ParseOptions()
+	options := cli.ParseFlags()
 
 	kernal, err := memory.RomFromFile(kernalPath)
 	if err != nil {
