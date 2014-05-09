@@ -12,8 +12,17 @@ import (
 	"image/color"
 	"image/png"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
+)
+
+const (
+	// Filename where SSD1306 will write its display upon exit.
+	DumpFilename = "ssd1306.png"
+
+	// HttpUrl where screen data will be available.
+	HttpUrl = "http://localhost:1234/ssd1306.png"
 )
 
 // Ssd1306 implements ParallelPeripheral interface for Via6522.
@@ -41,28 +50,6 @@ const (
 	dcMask    = 1 << 2
 	resetMask = 1 << 3
 )
-
-func (s *Ssd1306) serveHttp() {
-	httpHandler := func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "image/png")
-
-		if refreshString := r.URL.Query().Get("refresh"); len(refreshString) > 0 {
-			refresh, err := strconv.ParseFloat(refreshString, 64)
-			if err == nil {
-				w.Header().Add("Refresh", fmt.Sprintf("%0.2f", refresh))
-			}
-		}
-
-		png.Encode(w, s.img)
-	}
-	address := "localhost:1234"
-	srv := &http.Server{
-		Addr:    address,
-		Handler: http.HandlerFunc(httpHandler),
-	}
-	fmt.Printf("Ssd1306 output at http://%s/screen.png\n", address)
-	go srv.ListenAndServe()
-}
 
 // Notify expects a byte representing the updated status of the parallel port
 // that the display is connected to.
@@ -113,10 +100,37 @@ func (s *Ssd1306) Notify(data byte) {
 }
 
 func (s *Ssd1306) Close() {
-	fmt.Println("Writing SSD1306 data to PNG")
-	writer, err := os.Create("output.png")
+	fmt.Println("Writing SSD1306 screen to", DumpFilename)
+	writer, err := os.Create(DumpFilename)
 	if err != nil {
 		panic(err)
 	}
 	_ = png.Encode(writer, s.img)
+}
+
+func (s *Ssd1306) httpHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "image/png")
+
+	if refreshString := r.URL.Query().Get("refresh"); len(refreshString) > 0 {
+		refresh, err := strconv.ParseFloat(refreshString, 64)
+		if err == nil {
+			w.Header().Add("Refresh", fmt.Sprintf("%0.2f", refresh))
+		}
+	}
+
+	png.Encode(w, s.img)
+}
+
+func (s *Ssd1306) serveHttp() {
+	url, err := url.Parse(HttpUrl)
+	if err != nil {
+		panic(err)
+	}
+
+	srv := &http.Server{
+		Addr:    url.Host,
+		Handler: http.HandlerFunc(s.httpHandler),
+	}
+	fmt.Printf("Ssd1306 output at %s\n", url)
+	go srv.ListenAndServe()
 }
