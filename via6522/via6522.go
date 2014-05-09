@@ -108,6 +108,7 @@ type Options struct {
 // either of the parallel ports to read and write data.
 // Currently only reading is supported, via Notify(byte).
 type ParallelPeripheral interface {
+	Shutdown()
 	Notify(byte)
 }
 
@@ -126,6 +127,13 @@ func (via *Via6522) AttachToPortA(p ParallelPeripheral) {
 // AttachToPortA attaches a ParallelPeripheral to PB.
 func (via *Via6522) AttachToPortB(p ParallelPeripheral) {
 	via.peripherals[viaPcrOffsetB] = p
+}
+
+// Shutdown tells Via6522 and its devices that the system is shutting down.
+func (via *Via6522) Shutdown() {
+	for _, p := range via.peripherals {
+		p.Shutdown()
+	}
 }
 
 // CA1 or CB1 1-bit mode for the given port offset (viaPCR_OFFSET_x)

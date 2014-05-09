@@ -51,6 +51,14 @@ func (b *Bus) backendFor(a uint16) (memory.Memory, error) {
 	return nil, fmt.Errorf("No backend for address 0x%04X", a)
 }
 
+// Shutdown tells the address bus a shutdown is occurring, and to pass the
+// message on to subordinates.
+func (b *Bus) Shutdown() {
+	for _, be := range b.entries {
+		be.mem.Shutdown()
+	}
+}
+
 // Read returns the byte from memory mapped to the given address.
 // e.g. if ROM is mapped to 0xC000, then Read(0xC0FF) returns the byte at
 // 0x00FF in that RAM device.

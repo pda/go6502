@@ -95,16 +95,16 @@ type cmd struct {
 }
 
 // NewDebugger creates a debugger.
-// Be sure to defer a call to Debugger.Close() afterwards, or your terminal
+// Be sure to defer a call to Debugger.Shutdown() afterwards, or your terminal
 // will be left in a broken state.
 func NewDebugger(cpu *cpu.Cpu) *Debugger {
 	d := &Debugger{liner: liner.NewLiner(), cpu: cpu}
 	return d
 }
 
-// Close the debugger session, including resetting the terminal to its previous
+// Shutdown the debugger session, including resetting the terminal to its previous
 // state.
-func (d *Debugger) Close() {
+func (d *Debugger) Shutdown() {
 	d.liner.Close()
 }
 

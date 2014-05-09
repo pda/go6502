@@ -63,6 +63,7 @@ type Cpu struct {
 // A Monitor is a blocking observer of instruction execution.
 type Monitor interface {
 	BeforeExecute(Instruction)
+	Shutdown()
 }
 
 // AttachMonitor sets the given Monitor to observe instructions before they
@@ -70,6 +71,13 @@ type Monitor interface {
 // interactive debugging.
 func (c *Cpu) AttachMonitor(m Monitor) {
 	c.monitor = m
+}
+
+// Shutdown tells the CPU to shut-down, and to pass the message on
+// to subordinates such as the address bus.
+func (c *Cpu) Shutdown() {
+	c.Bus.Shutdown()
+	c.monitor.Shutdown()
 }
 
 // Reset the CPU, emulating triggering the RESB line.

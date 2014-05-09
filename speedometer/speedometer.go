@@ -37,8 +37,8 @@ func (s *Speedometer) BeforeExecute(in cpu.Instruction) {
 	s.cycleChan <- in.Cycles
 }
 
-// Close the Speedometer session, reporting stats to stdout.
-func (s *Speedometer) Close() {
+// Shutdown the Speedometer session, reporting stats to stdout.
+func (s *Speedometer) Shutdown() {
 	duration := time.Since(s.timeStart)
 	seconds := time.Since(s.timeStart).Seconds()
 	us := float64(duration) / 1000.0

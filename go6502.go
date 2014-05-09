@@ -34,6 +34,8 @@ func mainReturningStatus() int {
 
 	options := cli.ParseFlags()
 
+	// Create addressable devices.
+
 	kernal, err := memory.RomFromFile(kernalPath)
 	if err != nil {
 		panic(err)
@@ -47,11 +49,11 @@ func mainReturningStatus() int {
 	})
 	if options.ViaSsd1306 {
 		ssd1306 := ssd1306.NewSsd1306()
-		defer ssd1306.Close()
 		via.AttachToPortB(ssd1306)
 	}
-
 	via.Reset()
+
+	// Attach devices to address bus.
 
 	addressBus, _ := bus.CreateBus()
 	addressBus.Attach(ram, "ram", 0x0000)
@@ -61,14 +63,13 @@ func mainReturningStatus() int {
 	exitChan := make(chan int, 0)
 
 	cpu := &cpu.Cpu{Bus: addressBus, ExitChan: exitChan}
+	defer cpu.Shutdown()
 	if options.Debug {
 		debugger := debugger.NewDebugger(cpu)
-		defer debugger.Close()
 		debugger.QueueCommands(options.DebugCmds)
 		cpu.AttachMonitor(debugger)
 	} else if options.Speedometer {
 		speedo := speedometer.NewSpeedometer()
-		defer speedo.Close()
 		cpu.AttachMonitor(speedo)
 	}
 	cpu.Reset()

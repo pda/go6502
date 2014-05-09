@@ -99,7 +99,7 @@ func (s *Ssd1306) Notify(data byte) {
 
 }
 
-func (s *Ssd1306) Close() {
+func (s *Ssd1306) Shutdown() {
 	fmt.Println("Writing SSD1306 screen to", DumpFilename)
 	writer, err := os.Create(DumpFilename)
 	if err != nil {

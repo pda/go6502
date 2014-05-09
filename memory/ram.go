@@ -5,6 +5,10 @@ import "io/ioutil"
 // Ram (32 KiB)
 type Ram [0x8000]byte
 
+// Shutdown is part of the Memory interface, but takes no action for Ram.
+func (r *Ram) Shutdown() {
+}
+
 func (r *Ram) String() string {
 	return "(RAM 32K)"
 }

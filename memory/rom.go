@@ -13,6 +13,10 @@ type Rom struct {
 	data []byte
 }
 
+// Shutdown is part of the Memory interface, but takes no action for Rom.
+func (r *Rom) Shutdown() {
+}
+
 // Read a byte from the given address.
 func (rom *Rom) Read(a uint16) byte {
 	return rom.data[a]
