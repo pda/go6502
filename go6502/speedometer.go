@@ -31,7 +31,7 @@ func NewSpeedometer() *Speedometer {
 }
 
 // BeforeExecute meets go6502.Monitor interface.
-func (s *Speedometer) BeforeExecute(in *Instruction) {
+func (s *Speedometer) BeforeExecute(in Instruction) {
 	s.cycleChan <-in.cycles
 }
 

@@ -54,7 +54,7 @@ type Cpu struct {
 
 // A Monitor is a blocking observer of instruction execution.
 type Monitor interface {
-	BeforeExecute(*Instruction)
+	BeforeExecute(Instruction)
 }
 
 // AttachMonitor sets the given Monitor to observe instructions before they
@@ -95,7 +95,7 @@ func (c *Cpu) stackHead(offset int8) uint16 {
 	return uint16(StackBase) + uint16(c.SP) + uint16(offset)
 }
 
-func (c *Cpu) resolveOperand(in *Instruction) uint8 {
+func (c *Cpu) resolveOperand(in Instruction) uint8 {
 	switch in.addressing {
 	case immediate:
 		return in.op8
@@ -104,7 +104,7 @@ func (c *Cpu) resolveOperand(in *Instruction) uint8 {
 	}
 }
 
-func (c *Cpu) memoryAddress(in *Instruction) uint16 {
+func (c *Cpu) memoryAddress(in Instruction) uint16 {
 	switch in.addressing {
 	case absolute:
 		return in.op16
@@ -177,7 +177,7 @@ func (c *Cpu) statusString() string {
 	return strings.Join(out, "")
 }
 
-func (c *Cpu) branch(in *Instruction) {
+func (c *Cpu) branch(in Instruction) {
 	relative := int8(in.op8) // signed
 	if relative >= 0 {
 		c.PC += uint16(relative)
@@ -186,7 +186,7 @@ func (c *Cpu) branch(in *Instruction) {
 	}
 }
 
-func (c *Cpu) execute(in *Instruction) {
+func (c *Cpu) execute(in Instruction) {
 	switch in.id {
 	case adc:
 		c.ADC(in)
@@ -286,7 +286,7 @@ func (c *Cpu) execute(in *Instruction) {
 }
 
 // ADC: Add memory and carry to accumulator.
-func (c *Cpu) ADC(in *Instruction) {
+func (c *Cpu) ADC(in Instruction) {
 	value16 := uint16(c.AC) + uint16(c.resolveOperand(in)) + uint16(c.getStatusInt(sCarry))
 	c.setStatus(sCarry, value16 > 0xFF)
 	c.AC = uint8(value16)
@@ -294,13 +294,13 @@ func (c *Cpu) ADC(in *Instruction) {
 }
 
 // AND: And accumulator with memory.
-func (c *Cpu) AND(in *Instruction) {
+func (c *Cpu) AND(in Instruction) {
 	c.AC &= c.resolveOperand(in)
 	c.updateStatus(c.AC)
 }
 
 // ASL: Shift memory or accumulator left one bit.
-func (c *Cpu) ASL(in *Instruction) {
+func (c *Cpu) ASL(in Instruction) {
 	switch in.addressing {
 	case accumulator:
 		c.setStatus(sCarry, (c.AC>>7) == 1) // carry = old bit 7
@@ -317,85 +317,85 @@ func (c *Cpu) ASL(in *Instruction) {
 }
 
 // BCC: Branch if carry clear.
-func (c *Cpu) BCC(in *Instruction) {
+func (c *Cpu) BCC(in Instruction) {
 	if !c.getStatus(sCarry) {
 		c.branch(in)
 	}
 }
 
 // BCS: Branch if carry set.
-func (c *Cpu) BCS(in *Instruction) {
+func (c *Cpu) BCS(in Instruction) {
 	if c.getStatus(sCarry) {
 		c.branch(in)
 	}
 }
 
 // BEQ: Branch if equal (z=1).
-func (c *Cpu) BEQ(in *Instruction) {
+func (c *Cpu) BEQ(in Instruction) {
 	if c.getStatus(sZero) {
 		c.branch(in)
 	}
 }
 
 // BMI: Branch if negative.
-func (c *Cpu) BMI(in *Instruction) {
+func (c *Cpu) BMI(in Instruction) {
 	if c.getStatus(sNegative) {
 		c.branch(in)
 	}
 }
 
 // BNE: Branch if not equal.
-func (c *Cpu) BNE(in *Instruction) {
+func (c *Cpu) BNE(in Instruction) {
 	if !c.getStatus(sZero) {
 		c.branch(in)
 	}
 }
 
 // BPL: Branch if positive.
-func (c *Cpu) BPL(in *Instruction) {
+func (c *Cpu) BPL(in Instruction) {
 	if !c.getStatus(sNegative) {
 		c.branch(in)
 	}
 }
 
 // CLC: Clear carry flag.
-func (c *Cpu) CLC(in *Instruction) {
+func (c *Cpu) CLC(in Instruction) {
 	c.setStatus(sCarry, false)
 }
 
 // CLD: Clear decimal mode flag.
-func (c *Cpu) CLD(in *Instruction) {
+func (c *Cpu) CLD(in Instruction) {
 	c.setStatus(sDecimal, false)
 }
 
 // CLI: Clear interrupt-disable flag.
-func (c *Cpu) CLI(in *Instruction) {
+func (c *Cpu) CLI(in Instruction) {
 	c.setStatus(sInterrupt, true)
 }
 
 // CMP: Compare accumulator with memory.
-func (c *Cpu) CMP(in *Instruction) {
+func (c *Cpu) CMP(in Instruction) {
 	value := c.resolveOperand(in)
 	c.setStatus(sCarry, c.AC >= value)
 	c.updateStatus(c.AC - value)
 }
 
 // CPX: Compare index register X with memory.
-func (c *Cpu) CPX(in *Instruction) {
+func (c *Cpu) CPX(in Instruction) {
 	value := c.resolveOperand(in)
 	c.setStatus(sCarry, c.X >= value)
 	c.updateStatus(c.X - value)
 }
 
 // CPY: Compare index register Y with memory.
-func (c *Cpu) CPY(in *Instruction) {
+func (c *Cpu) CPY(in Instruction) {
 	value := c.resolveOperand(in)
 	c.setStatus(sCarry, c.Y >= value)
 	c.updateStatus(c.Y - value)
 }
 
 // DEC: Decrement.
-func (c *Cpu) DEC(in *Instruction) {
+func (c *Cpu) DEC(in Instruction) {
 	address := c.memoryAddress(in)
 	value := c.Bus.Read(address) - 1
 	c.Bus.Write(address, value)
@@ -403,26 +403,26 @@ func (c *Cpu) DEC(in *Instruction) {
 }
 
 // DEX: Decrement index register X.
-func (c *Cpu) DEX(in *Instruction) {
+func (c *Cpu) DEX(in Instruction) {
 	c.X--
 	c.updateStatus(c.X)
 }
 
 // DEY: Decrement index register Y.
-func (c *Cpu) DEY(in *Instruction) {
+func (c *Cpu) DEY(in Instruction) {
 	c.Y--
 	c.updateStatus(c.Y)
 }
 
 // EOR: Exclusive-OR accumulator with memory.
-func (c *Cpu) EOR(in *Instruction) {
+func (c *Cpu) EOR(in Instruction) {
 	value := c.resolveOperand(in)
 	c.AC ^= value
 	c.updateStatus(c.AC)
 }
 
 // INC: Increment.
-func (c *Cpu) INC(in *Instruction) {
+func (c *Cpu) INC(in Instruction) {
 	address := c.memoryAddress(in)
 	value := c.Bus.Read(address) + 1
 	c.Bus.Write(address, value)
@@ -430,49 +430,49 @@ func (c *Cpu) INC(in *Instruction) {
 }
 
 // INX: Increment index register X.
-func (c *Cpu) INX(in *Instruction) {
+func (c *Cpu) INX(in Instruction) {
 	c.X++
 	c.updateStatus(c.X)
 }
 
 // INY: Increment index register Y.
-func (c *Cpu) INY(in *Instruction) {
+func (c *Cpu) INY(in Instruction) {
 	c.Y++
 	c.updateStatus(c.Y)
 }
 
 // JMP: Jump.
-func (c *Cpu) JMP(in *Instruction) {
+func (c *Cpu) JMP(in Instruction) {
 	c.PC = c.memoryAddress(in)
 }
 
 // JSR: Jump to subroutine.
-func (c *Cpu) JSR(in *Instruction) {
+func (c *Cpu) JSR(in Instruction) {
 	c.Bus.Write16(c.stackHead(-1), c.PC-1)
 	c.SP -= 2
 	c.PC = in.op16
 }
 
 // LDA: Load accumulator from memory.
-func (c *Cpu) LDA(in *Instruction) {
+func (c *Cpu) LDA(in Instruction) {
 	c.AC = c.resolveOperand(in)
 	c.updateStatus(c.AC)
 }
 
 // LDX: Load index register X from memory.
-func (c *Cpu) LDX(in *Instruction) {
+func (c *Cpu) LDX(in Instruction) {
 	c.X = c.resolveOperand(in)
 	c.updateStatus(c.X)
 }
 
 // LDY: Load index register Y from memory.
-func (c *Cpu) LDY(in *Instruction) {
+func (c *Cpu) LDY(in Instruction) {
 	c.Y = c.resolveOperand(in)
 	c.updateStatus(c.Y)
 }
 
 // LSR: Logical shift memory or accumulator right.
-func (c *Cpu) LSR(in *Instruction) {
+func (c *Cpu) LSR(in Instruction) {
 	switch in.addressing {
 	case accumulator:
 		c.setStatus(sCarry, c.AC&1 == 1)
@@ -489,29 +489,29 @@ func (c *Cpu) LSR(in *Instruction) {
 }
 
 // NOP: No operation.
-func (c *Cpu) NOP(in *Instruction) {
+func (c *Cpu) NOP(in Instruction) {
 }
 
 // ORA: OR accumulator with memory.
-func (c *Cpu) ORA(in *Instruction) {
+func (c *Cpu) ORA(in Instruction) {
 	c.AC |= c.resolveOperand(in)
 	c.updateStatus(c.AC)
 }
 
 // PHA: Push accumulator onto stack.
-func (c *Cpu) PHA(in *Instruction) {
+func (c *Cpu) PHA(in Instruction) {
 	c.Bus.Write(0x0100+uint16(c.SP), c.AC)
 	c.SP--
 }
 
 // PLA: Pull accumulator from stack.
-func (c *Cpu) PLA(in *Instruction) {
+func (c *Cpu) PLA(in Instruction) {
 	c.SP++
 	c.AC = c.Bus.Read(0x0100 + uint16(c.SP))
 }
 
 // ROL: Rotate memory or accumulator left one bit.
-func (c *Cpu) ROL(in *Instruction) {
+func (c *Cpu) ROL(in Instruction) {
 	carry := c.getStatusInt(sCarry)
 	switch in.addressing {
 	case accumulator:
@@ -529,14 +529,14 @@ func (c *Cpu) ROL(in *Instruction) {
 }
 
 // RTS: Return from subroutine.
-func (c *Cpu) RTS(in *Instruction) {
+func (c *Cpu) RTS(in Instruction) {
 	c.PC = c.Bus.Read16(c.stackHead(1))
 	c.SP += 2
 	c.PC += 1
 }
 
 // SBC: Subtract memory with borrow from accumulator.
-func (c *Cpu) SBC(in *Instruction) {
+func (c *Cpu) SBC(in Instruction) {
 	valueSigned := int16(c.AC) - int16(c.resolveOperand(in))
 	if !c.getStatus(sCarry) {
 		valueSigned--
@@ -555,62 +555,62 @@ func (c *Cpu) SBC(in *Instruction) {
 }
 
 // SEC: Set carry flag.
-func (c *Cpu) SEC(in *Instruction) {
+func (c *Cpu) SEC(in Instruction) {
 	c.setStatus(sCarry, true)
 }
 
 // SEI: Set interrupt-disable flag.
-func (c *Cpu) SEI(in *Instruction) {
+func (c *Cpu) SEI(in Instruction) {
 	c.setStatus(sInterrupt, false)
 }
 
 // STA: Store accumulator to memory.
-func (c *Cpu) STA(in *Instruction) {
+func (c *Cpu) STA(in Instruction) {
 	c.Bus.Write(c.memoryAddress(in), c.AC)
 }
 
 // STX: Store index register X to memory.
-func (c *Cpu) STX(in *Instruction) {
+func (c *Cpu) STX(in Instruction) {
 	c.Bus.Write(c.memoryAddress(in), c.X)
 }
 
 // STY: Store index register Y to memory.
-func (c *Cpu) STY(in *Instruction) {
+func (c *Cpu) STY(in Instruction) {
 	c.Bus.Write(c.memoryAddress(in), c.Y)
 }
 
 // TAX: Transfer accumulator to index register X.
-func (c *Cpu) TAX(in *Instruction) {
+func (c *Cpu) TAX(in Instruction) {
 	c.X = c.AC
 	c.updateStatus(c.X)
 }
 
 // TAY: Transfer accumulator to index register Y.
-func (c *Cpu) TAY(in *Instruction) {
+func (c *Cpu) TAY(in Instruction) {
 	c.Y = c.AC
 	c.updateStatus(c.Y)
 }
 
 // TXA: Transfer index register X to accumulator.
-func (c *Cpu) TXA(in *Instruction) {
+func (c *Cpu) TXA(in Instruction) {
 	c.AC = c.X
 	c.updateStatus(c.AC)
 }
 
 // TXS: Transfer index register X to stack pointer.
-func (c *Cpu) TXS(in *Instruction) {
+func (c *Cpu) TXS(in Instruction) {
 	c.SP = c.X
 	c.updateStatus(c.SP)
 }
 
 // TYA: Transfer index register Y to accumulator.
-func (c *Cpu) TYA(in *Instruction) {
+func (c *Cpu) TYA(in Instruction) {
 	c.AC = c.Y
 	c.updateStatus(c.AC)
 }
 
 // _END: Custom go6502 instruction.
 // Exit, with contents of X register as exit status.
-func (c *Cpu) _END(in *Instruction) {
+func (c *Cpu) _END(in Instruction) {
 	c.ExitChan <- int(c.X)
 }

@@ -121,7 +121,7 @@ func (d *Debugger) checkRegBreakpoint(regStr string, on bool, expect byte, actua
 	}
 }
 
-func (d *Debugger) doBreakpoints(in *go6502.Instruction) {
+func (d *Debugger) doBreakpoints(in go6502.Instruction) {
 	inName := in.Name()
 
 	if inName == d.breakInstruction {
@@ -141,7 +141,7 @@ func (d *Debugger) doBreakpoints(in *go6502.Instruction) {
 
 // BeforeExecute receives each go6502.Instruction just before the program
 // counter is incremented and the instruction executed.
-func (d *Debugger) BeforeExecute(in *go6502.Instruction) {
+func (d *Debugger) BeforeExecute(in go6502.Instruction) {
 
 	d.doBreakpoints(in)
 
@@ -158,7 +158,7 @@ func (d *Debugger) BeforeExecute(in *go6502.Instruction) {
 }
 
 // Returns true when control is to be released.
-func (d *Debugger) commandLoop(in *go6502.Instruction) (release bool) {
+func (d *Debugger) commandLoop(in go6502.Instruction) (release bool) {
 	var (
 		cmd *cmd
 		err error
