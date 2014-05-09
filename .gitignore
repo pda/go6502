@@ -1,5 +1,8 @@
 # Core dump file.
 /core
 
+# Compiled binary.
+/go6502
+
 # ROM images (programs/data)
 /rom/*
