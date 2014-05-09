@@ -1,4 +1,4 @@
-package go6502
+package cpu
 
 import "fmt"
 
@@ -165,11 +165,25 @@ var instructionNames = [...]string{
 // mode encoded into the op-code, but not the operand value following the
 // opcode in memory.
 type OpType struct {
-	opcode     byte
-	id         uint8 // the const identifier of the instruction type, e.g. ADC
+
+	// Opcode is a byte representing an instruction and its addressing mode.
+	Opcode byte
+
+	// id is an internal identifier of the instruction type/mnemonic, e.g. ADC
+	id uint8
+
+	// addressing is an internal identifier for the addressing mode.
 	addressing uint8
-	bytes      uint8
-	cycles     uint8
+
+	// Bytes is the size of the instruction with its operand.
+	// Opcodes with implicit/null operand are 1 byte.
+	// Opcodes with immediate or zeropage operand are 2 bytes.
+	// Opcodes with adddress operands are 3 bytes.
+	Bytes uint8
+
+	// Cycles is the number of times the system clock signal will rise and fall
+	// before the instruction is complete.
+	Cycles uint8
 }
 
 func (ot OpType) String() string {

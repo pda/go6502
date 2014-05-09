@@ -1,4 +1,12 @@
-package go6502
+/*
+	Package cpu implements the MOS 6502 processor.
+
+	cpu.Cpu requires a bus.Bus to read/write 8-bit data to 16-bit addresses.
+
+	cpu.Cpu also provides a monitor hook, allowing external code to observe
+	and block on instructions before they're executed.
+*/
+package cpu
 
 import (
 	"fmt"
@@ -79,7 +87,7 @@ func (c *Cpu) Step() {
 	if c.monitor != nil {
 		c.monitor.BeforeExecute(in)
 	}
-	c.PC += uint16(in.bytes)
+	c.PC += uint16(in.Bytes)
 	c.execute(in)
 }
 
@@ -543,14 +551,14 @@ func (c *Cpu) SBC(in Instruction) {
 	}
 	c.AC = uint8(valueSigned)
 
-    // v: Set if signed overflow; cleared if valid sign result.
+	// v: Set if signed overflow; cleared if valid sign result.
 	// TODO: c.setStatus(sOverflow, something)
 
-    // c: Set if unsigned borrow not required; cleared if unsigned borrow.
+	// c: Set if unsigned borrow not required; cleared if unsigned borrow.
 	c.setStatus(sCarry, valueSigned >= 0)
 
 	// n: Set if most significant bit of result is set; else cleared.
-    // z: Set if result is zero; else cleared.
+	// z: Set if result is zero; else cleared.
 	c.updateStatus(c.AC)
 }
 

@@ -3,6 +3,8 @@ package go6502
 import (
 	"fmt"
 	"time"
+
+	"github.com/pda/go6502/cpu"
 )
 
 // Speedometer tracks how many instructions and cycles have executed in how
@@ -31,8 +33,8 @@ func NewSpeedometer() *Speedometer {
 }
 
 // BeforeExecute meets go6502.Monitor interface.
-func (s *Speedometer) BeforeExecute(in Instruction) {
-	s.cycleChan <-in.cycles
+func (s *Speedometer) BeforeExecute(in cpu.Instruction) {
+	s.cycleChan <- in.Cycles
 }
 
 // Close the Speedometer session, reporting stats to stdout.

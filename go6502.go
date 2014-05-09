@@ -6,6 +6,7 @@ import (
 	"os/signal"
 
 	"github.com/pda/go6502/bus"
+	"github.com/pda/go6502/cpu"
 	"github.com/pda/go6502/debugger"
 	"github.com/pda/go6502/go6502"
 	"github.com/pda/go6502/memory"
@@ -51,7 +52,7 @@ func mainReturningStatus() int {
 
 	exitChan := make(chan int, 0)
 
-	cpu := &go6502.Cpu{Bus: addressBus, ExitChan: exitChan}
+	cpu := &cpu.Cpu{Bus: addressBus, ExitChan: exitChan}
 	if options.Debug {
 		debugger := debugger.NewDebugger(cpu)
 		defer debugger.Close()

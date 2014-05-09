@@ -53,7 +53,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pda/go6502/go6502"
+	"github.com/pda/go6502/cpu"
 	"github.com/peterh/liner"
 )
 
@@ -73,7 +73,7 @@ const (
 
 type Debugger struct {
 	inputQueue        []string
-	cpu               *go6502.Cpu
+	cpu               *cpu.Cpu
 	liner             *liner.State
 	lastCmd           *cmd
 	run               bool
@@ -97,7 +97,7 @@ type cmd struct {
 // NewDebugger creates a debugger.
 // Be sure to defer a call to Debugger.Close() afterwards, or your terminal
 // will be left in a broken state.
-func NewDebugger(cpu *go6502.Cpu) *Debugger {
+func NewDebugger(cpu *cpu.Cpu) *Debugger {
 	d := &Debugger{liner: liner.NewLiner(), cpu: cpu}
 	return d
 }
@@ -121,7 +121,7 @@ func (d *Debugger) checkRegBreakpoint(regStr string, on bool, expect byte, actua
 	}
 }
 
-func (d *Debugger) doBreakpoints(in go6502.Instruction) {
+func (d *Debugger) doBreakpoints(in cpu.Instruction) {
 	inName := in.Name()
 
 	if inName == d.breakInstruction {
@@ -139,9 +139,9 @@ func (d *Debugger) doBreakpoints(in go6502.Instruction) {
 	d.checkRegBreakpoint("Y", d.breakRegY, d.breakRegYValue, d.cpu.Y)
 }
 
-// BeforeExecute receives each go6502.Instruction just before the program
+// BeforeExecute receives each cpu.Instruction just before the program
 // counter is incremented and the instruction executed.
-func (d *Debugger) BeforeExecute(in go6502.Instruction) {
+func (d *Debugger) BeforeExecute(in cpu.Instruction) {
 
 	d.doBreakpoints(in)
 
@@ -158,7 +158,7 @@ func (d *Debugger) BeforeExecute(in go6502.Instruction) {
 }
 
 // Returns true when control is to be released.
-func (d *Debugger) commandLoop(in go6502.Instruction) (release bool) {
+func (d *Debugger) commandLoop(in cpu.Instruction) (release bool) {
 	var (
 		cmd *cmd
 		err error
