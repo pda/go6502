@@ -40,14 +40,13 @@ func (s *Speedometer) BeforeExecute(in cpu.Instruction) {
 // Shutdown the Speedometer session, reporting stats to stdout.
 func (s *Speedometer) Shutdown() {
 	duration := time.Since(s.timeStart)
-	seconds := time.Since(s.timeStart).Seconds()
-	us := float64(duration) / 1000.0
+	us := float64(duration) / float64(time.Microsecond)
 
 	fmt.Printf("Speedometer\n")
 	fmt.Printf("----------------------------------\n")
 	fmt.Printf("Instructions: % 20d\n", s.instructions)
 	fmt.Printf("Cycles:       % 20d\n", s.cycles)
-	fmt.Printf("Seconds:      % 20.2f\n", seconds)
+	fmt.Printf("Seconds:      % 20.2f\n", duration.Seconds())
 	fmt.Printf("MHz:          % 20.2f\n", float64(s.cycles)/us)
 	fmt.Printf("MIPS:         % 20.2f\n", float64(s.instructions)/us)
 	fmt.Printf("----------------------------------\n")
