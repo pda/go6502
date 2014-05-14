@@ -13,12 +13,12 @@ import (
 
 // Options stores the value of command line options after they're parsed.
 type Options struct {
-	ViaDumpBinary bool
-	ViaDumpAscii  bool
-	ViaSsd1306    bool
 	Debug         bool
 	DebugCmds     commandList
 	Speedometer   bool
+	ViaDumpAscii  bool
+	ViaDumpBinary bool
+	ViaSsd1306    bool
 }
 
 // ParseFlags uses the flag stdlib package to parse CLI options.
@@ -29,13 +29,13 @@ func ParseFlags() *Options {
 	flag.BoolVar(&opt.Debug, "debug", false, "Run debugger")
 	flag.Var(&opt.DebugCmds, "debug-commands", "Debugger commands to run, semicolon separated.")
 
+	// Speedometer
+	flag.BoolVar(&opt.Speedometer, "speedometer", false, "Measure effective clock speed")
+
 	// VIA
 	flag.BoolVar(&opt.ViaDumpBinary, "via-dump-binary", false, "VIA6522 dumps binary output")
 	flag.BoolVar(&opt.ViaDumpAscii, "via-dump-ascii", false, "VIA6522 dumps ASCII output")
 	flag.BoolVar(&opt.ViaSsd1306, "via-ssd1306", false, "SSD1306 OLED display on VIA6522 port B")
-
-	// Speedometer
-	flag.BoolVar(&opt.Speedometer, "speedometer", false, "Measure effective clock speed")
 
 	flag.Parse()
 	return opt
