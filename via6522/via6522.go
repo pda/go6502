@@ -195,14 +195,7 @@ func (via *Via6522) Read(a uint16) byte {
 // This represents the correct behavior for reading IRB,
 // and maybe an approximation of the correct behavior for IRA.
 func (via *Via6522) readMixedInputOutput(in byte, out byte, ddr byte) byte {
-	if ddr == 0xFF {
-		return out
-	} else if ddr == 0x00 {
-		return in
-	} else {
-		// TODO: splice in and out bits based on DDR.
-		panic("Unhandled mixed input/output reading VIA port")
-	}
+	return (out & ddr) | (in & ^ddr)
 }
 
 // From the datasheet:
