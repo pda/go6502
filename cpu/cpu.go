@@ -77,7 +77,9 @@ func (c *Cpu) AttachMonitor(m Monitor) {
 // to subordinates such as the address bus.
 func (c *Cpu) Shutdown() {
 	c.Bus.Shutdown()
-	c.monitor.Shutdown()
+	if c.monitor != nil {
+		c.monitor.Shutdown()
+	}
 }
 
 // Reset the CPU, emulating triggering the RESB line.
