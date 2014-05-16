@@ -17,6 +17,7 @@ import (
 	"github.com/pda/go6502/cpu"
 	"github.com/pda/go6502/debugger"
 	"github.com/pda/go6502/memory"
+	"github.com/pda/go6502/sd"
 	"github.com/pda/go6502/speedometer"
 	"github.com/pda/go6502/ssd1306"
 	"github.com/pda/go6502/via6522"
@@ -47,10 +48,20 @@ func mainReturningStatus() int {
 		DumpAscii:  options.ViaDumpAscii,
 		DumpBinary: options.ViaDumpBinary,
 	})
+
 	if options.ViaSsd1306 {
 		ssd1306 := ssd1306.NewSsd1306()
 		via.AttachToPortB(ssd1306)
 	}
+
+	if len(options.SdCard) > 0 {
+		sd, err := sd.SdFromFile(options.SdCard)
+		if err != nil {
+			panic(err)
+		}
+		via.AttachToPortA(sd)
+	}
+
 	via.Reset()
 
 	// Attach devices to address bus.

@@ -15,6 +15,7 @@ import (
 type Options struct {
 	Debug         bool
 	DebugCmds     commandList
+	SdCard        string
 	Speedometer   bool
 	ViaDumpAscii  bool
 	ViaDumpBinary bool
@@ -29,13 +30,16 @@ func ParseFlags() *Options {
 	flag.BoolVar(&opt.Debug, "debug", false, "Run debugger")
 	flag.Var(&opt.DebugCmds, "debug-commands", "Debugger commands to run, semicolon separated.")
 
+	// SD card
+	flag.StringVar(&opt.SdCard, "sd-card", "", "Load file as SD card on VIA port A[4..7]")
+
 	// Speedometer
 	flag.BoolVar(&opt.Speedometer, "speedometer", false, "Measure effective clock speed")
 
 	// VIA
 	flag.BoolVar(&opt.ViaDumpBinary, "via-dump-binary", false, "VIA6522 dumps binary output")
 	flag.BoolVar(&opt.ViaDumpAscii, "via-dump-ascii", false, "VIA6522 dumps ASCII output")
-	flag.BoolVar(&opt.ViaSsd1306, "via-ssd1306", false, "SSD1306 OLED display on VIA6522 port B")
+	flag.BoolVar(&opt.ViaSsd1306, "via-ssd1306", false, "SSD1306 OLED display on VIA6522 port B[0..3]")
 
 	flag.Parse()
 	return opt
