@@ -8,18 +8,20 @@ import (
 	"io/ioutil"
 )
 
+// spiState is state of the SPI 8-bit stream.
 type spiState struct {
-	clock      bool   // the most recent clock state
-	index      uint8  // the bit index of the current byte (mod 8).
-	misoBuffer byte   // current byte being sent one bit at a time via Read().
-	misoQueue  []byte // data waiting to be sent via Read().
-	readByte   byte   // the state of the pins as read by the VIA controller.
-	mosiBuffer byte   // the byte being built from bits
+	clock      bool  // the most recent clock state
+	index      uint8 // the bit index of the current byte (mod 8).
+	misoBuffer byte  // current byte being sent one bit at a time via Read().
+	readByte   byte  // the state of the pins as read by the VIA controller.
+	mosiBuffer byte  // the byte being built from bits
 }
 
 type SdCard struct {
-	data []byte
-	size int
+	data  []byte
+	size  int
+	state *sdState
+
 	spiState
 	PinMap
 
@@ -43,7 +45,10 @@ func (p PinMap) PinMask() byte {
 
 // SdFromFile creates a new SdCard based on the contents of a file.
 func NewSdCard(pm PinMap) (sd *SdCard, err error) {
-	sd = &SdCard{PinMap: pm}
+	sd = &SdCard{
+		PinMap: pm,
+		state:  newSdState(),
+	}
 
 	sd.maskSclk = 1 << pm.Sclk
 	sd.maskMosi = 1 << pm.Mosi
@@ -51,10 +56,9 @@ func NewSdCard(pm PinMap) (sd *SdCard, err error) {
 	sd.maskSs = 1 << pm.Ss
 
 	sd.spiState.index = 7
-	sd.spiState.misoQueue = make([]byte, 0, 1024)
 
 	// two busy bytes, then ready.
-	sd.queueMiso(0x00, 0x00, 0x00, 0xFF)
+	sd.state.queueMiso(0x00, 0x00, 0x00, 0xFF)
 
 	// initialize MISO buffer.
 	sd.handleMisoByte()
@@ -127,26 +131,13 @@ func (sd *SdCard) logExchange(mosi, miso byte) {
 }
 
 func (sd *SdCard) handleMisoByte() byte {
-	if len(sd.misoQueue) > 0 {
-		sd.misoBuffer = sd.misoQueue[0]
-		sd.misoQueue = sd.misoQueue[1:len(sd.misoQueue)]
-	} else {
-		sd.misoBuffer = 0x00 // default to low for empty buffer.
-	}
+	sd.misoBuffer = sd.state.shiftMiso()
 	return sd.misoBuffer
 }
 
 func (sd *SdCard) handleMosiByte() byte {
 	data := sd.mosiBuffer
 	sd.mosiBuffer = 0x00
-	switch data {
-	case 0x40:
-		fmt.Printf("SD: Got 0x40; queueing response bytes.\n")
-		sd.queueMiso(0xAA, 0xAB, 0xAC, 0xAD)
-	}
+	sd.state.consumeByte(data)
 	return data
-}
-
-func (sd *SdCard) queueMiso(bytes ...byte) {
-	sd.misoQueue = append(sd.misoQueue, bytes...)
 }
