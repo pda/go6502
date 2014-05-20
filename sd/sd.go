@@ -51,8 +51,14 @@ func NewSdCard(pm PinMap) (sd *SdCard, err error) {
 	sd.maskSs = 1 << pm.Ss
 
 	sd.spiState.index = 7
-	sd.misoBuffer = 0xFF
 	sd.spiState.misoQueue = make([]byte, 0, 1024)
+
+	// two busy bytes, then ready.
+	sd.queueMiso(0x00, 0x00, 0x00, 0xFF)
+
+	// initialize MISO buffer.
+	sd.handleMisoByte()
+
 	return
 }
 
@@ -106,33 +112,41 @@ func (sd *SdCard) Write(data byte) {
 
 		// after eigth bit
 		if sd.index == 0 {
-			sd.handleMosiByte()
-			sd.handleMisoByte()
-
+			mosiByte := sd.handleMosiByte()
+			misoByte := sd.handleMisoByte()
+			sd.logExchange(mosiByte, misoByte)
 			sd.index = 7
-			sd.mosiBuffer = 0x00
 		} else {
 			sd.index--
 		}
 	}
 }
 
-func (sd *SdCard) handleMisoByte() {
+func (sd *SdCard) logExchange(mosi, miso byte) {
+	fmt.Printf("SD MOSI $%02X %08b <-> $%02X %08b MISO\n", mosi, mosi, miso, miso)
+}
+
+func (sd *SdCard) handleMisoByte() byte {
 	if len(sd.misoQueue) > 0 {
-		fmt.Printf("%08b ($%02X) misoQueue -> misoBuffer\n", sd.misoQueue[0], sd.misoQueue[0])
 		sd.misoBuffer = sd.misoQueue[0]
 		sd.misoQueue = sd.misoQueue[1:len(sd.misoQueue)]
 	} else {
 		sd.misoBuffer = 0x00 // default to low for empty buffer.
 	}
+	return sd.misoBuffer
 }
 
-func (sd *SdCard) handleMosiByte() {
+func (sd *SdCard) handleMosiByte() byte {
 	data := sd.mosiBuffer
-	fmt.Printf("SD MOSI: 0x%02X 0b%08b\n", sd.mosiBuffer, sd.mosiBuffer)
+	sd.mosiBuffer = 0x00
 	switch data {
 	case 0x40:
-		fmt.Printf("Got 0x40; queueing response bytes.\n")
-		sd.misoQueue = append(sd.misoQueue, 0xAA, 0xAB, 0xAC, 0xAD)
+		fmt.Printf("SD: Got 0x40; queueing response bytes.\n")
+		sd.queueMiso(0xAA, 0xAB, 0xAC, 0xAD)
 	}
+	return data
+}
+
+func (sd *SdCard) queueMiso(bytes ...byte) {
+	sd.misoQueue = append(sd.misoQueue, bytes...)
 }
