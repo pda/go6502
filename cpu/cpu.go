@@ -224,6 +224,8 @@ func (c *Cpu) execute(in Instruction) {
 		c.BNE(in)
 	case bpl:
 		c.BPL(in)
+	case brk:
+		c.BRK(in)
 	case clc:
 		c.CLC(in)
 	case cld:
@@ -374,6 +376,12 @@ func (c *Cpu) BPL(in Instruction) {
 	if !c.getStatus(sNegative) {
 		c.branch(in)
 	}
+}
+
+// BRK: software interrupt
+func (c *Cpu) BRK(in Instruction) {
+	// temporarily used to dump status
+	fmt.Println("BRK:", c)
 }
 
 // CLC: Clear carry flag.
