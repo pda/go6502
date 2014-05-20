@@ -106,10 +106,22 @@ type Options struct {
 
 // ParallelPeripheral defines an interface for peripheral devices which can connect to
 // either of the parallel ports to read and write data.
-// Currently only reading is supported, via Notify(byte).
 type ParallelPeripheral interface {
+
+	// PinMask is a bitfield representing which VIA pins the device is
+	// connected to. 1 = connected, 0 = not connected.
+	PinMask() byte
+
+	// Read returns the state of the device's output pins (VIA DDR input).
+	// Bits not set in PinMask will be ignored.
+	Read() byte
+
+	// Shutdown runs tear-down tasks when the system is shutting down.
 	Shutdown()
-	Notify(byte)
+
+	// Write is passed the updated port state when data is written.
+	// Bits not set in PinMask should be ignored.
+	Write(byte)
 }
 
 func NewVia6522(o Options) *Via6522 {
@@ -157,7 +169,7 @@ func (via *Via6522) handleDataWrite(portOffset uint8, data byte) {
 		printAsciiByte(data)
 	}
 	if p := via.peripherals[portOffset]; p != nil {
-		p.Notify(data)
+		p.Write(data)
 	}
 }
 
@@ -180,8 +192,14 @@ func (via *Via6522) Read(a uint16) byte {
 	default:
 		panic(fmt.Sprintf("read from 0x%X not handled by Via6522", a))
 	case 0x0:
+		if p := via.peripherals[viaPcrOffsetB]; p != nil {
+			via.irb = p.Read()
+		}
 		return via.readMixedInputOutput(via.irb, via.orb, via.ddrb)
 	case 0x1:
+		if p := via.peripherals[viaPcrOffsetA]; p != nil {
+			via.ira = p.Read()
+		}
 		return via.readMixedInputOutput(via.ira, via.ora, via.ddra)
 	case 0x2:
 		return via.ddra

@@ -51,11 +51,21 @@ const (
 	resetMask = 1 << 3
 )
 
-// Notify expects a byte representing the updated status of the parallel port
+// PinMask declares the I/O pins the device is connected to.
+func (s *Ssd1306) PinMask() byte {
+	return 0x0F
+}
+
+// Read 0x00; this peripheral is write-only.
+func (s *Ssd1306) Read() byte {
+	return 0x00
+}
+
+// Write expects a byte representing the updated status of the parallel port
 // that the display is connected to.
 // Four bits are considered: MOSI, CLK, D/C, RST.
 // The other four bits are ignored.
-func (s *Ssd1306) Notify(data byte) {
+func (s *Ssd1306) Write(data byte) {
 
 	mosi := data&mosiMask > 0
 	clock := data&clockMask > 0

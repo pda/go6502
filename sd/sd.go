@@ -8,65 +8,131 @@ import (
 	"io/ioutil"
 )
 
-// TODO: runtime configurable lines
-const (
-	mosiMask  = 1 << 4
-	clockMask = 1 << 6
-	csMask    = 1 << 7
-)
-
-type spiReader struct {
-	clock  bool // the previous clock state
-	buffer byte // the byte being built from bits
-	index  uint8
+type spiState struct {
+	clock      bool   // the most recent clock state
+	index      uint8  // the bit index of the current byte (mod 8).
+	misoBuffer byte   // current byte being sent one bit at a time via Read().
+	misoQueue  []byte // data waiting to be sent via Read().
+	readByte   byte   // the state of the pins as read by the VIA controller.
+	mosiBuffer byte   // the byte being built from bits
 }
 
 type SdCard struct {
 	data []byte
 	size int
-	spiReader
+	spiState
+	PinMap
+
+	maskSclk uint8
+	maskMosi uint8
+	maskMiso uint8
+	maskSs   uint8
+}
+
+// PinMap associates SD card lines with parallel port pin numbers (0..7).
+type PinMap struct {
+	Sclk uint
+	Mosi uint
+	Miso uint
+	Ss   uint
+}
+
+func (p PinMap) PinMask() byte {
+	return 1<<p.Sclk | 1<<p.Mosi | 1<<p.Miso | 1<<p.Ss
 }
 
 // SdFromFile creates a new SdCard based on the contents of a file.
-func SdFromFile(path string) (sd *SdCard, err error) {
+func NewSdCard(pm PinMap) (sd *SdCard, err error) {
+	sd = &SdCard{PinMap: pm}
+
+	sd.maskSclk = 1 << pm.Sclk
+	sd.maskMosi = 1 << pm.Mosi
+	sd.maskMiso = 1 << pm.Miso
+	sd.maskSs = 1 << pm.Ss
+
+	sd.spiState.index = 7
+	sd.misoBuffer = 0xFF
+	sd.spiState.misoQueue = make([]byte, 0, 1024)
+	return
+}
+
+// LoadFile is equivalent to inserting an SD card.
+func (sd *SdCard) LoadFile(path string) (err error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return
 	}
-	sd = &SdCard{size: len(data), data: data}
-	sd.spiReader.index = 7
+	sd.size = len(data)
+	sd.data = data
 	return
 }
 
 func (sd *SdCard) Shutdown() {
 }
 
-func (sd *SdCard) Notify(data byte) {
+func (sd *SdCard) Read() byte {
+	return sd.readByte
+}
 
-	cs := data&csMask > 0
+// Write takes an updated parallel port state.
+func (sd *SdCard) Write(data byte) {
+
+	cs := data&sd.maskSs > 0
 	if cs { // high = inactive
 		return
 	}
 
-	mosi := data&mosiMask > 0
-	clock := data&clockMask > 0
+	mosi := data&sd.maskMosi > 0
+	clock := data&sd.maskSclk > 0
 
-	if clock && !sd.clock { // rising clock
-		sd.clock = clock
-		if mosi {
-			sd.buffer |= (1 << sd.index)
+	rising := !sd.clock && clock
+	falling := sd.clock && !clock
+	sd.clock = clock
+
+	// sclk:rise -> miso -> sclk:fall -> mosi -> ...
+
+	if rising {
+		if sd.misoBuffer&(1<<sd.index) > 0 {
+			sd.readByte = 0x00 | sd.maskMiso
+		} else {
+			sd.readByte = 0x00
 		}
+	}
+
+	if falling {
+		if mosi {
+			sd.mosiBuffer |= (1 << sd.index)
+		}
+
+		// after eigth bit
 		if sd.index == 0 {
-			fmt.Printf("SD: 0x%02X 0b%08b\n", sd.buffer, sd.buffer)
+			sd.handleMosiByte()
+			sd.handleMisoByte()
+
 			sd.index = 7
-			sd.buffer = 0x00
+			sd.mosiBuffer = 0x00
 		} else {
 			sd.index--
 		}
 	}
+}
 
-	if !clock && sd.clock {
-		// falling clock
-		sd.clock = clock
+func (sd *SdCard) handleMisoByte() {
+	if len(sd.misoQueue) > 0 {
+		fmt.Printf("%08b ($%02X) misoQueue -> misoBuffer\n", sd.misoQueue[0], sd.misoQueue[0])
+		sd.misoBuffer = sd.misoQueue[0]
+		sd.misoQueue = sd.misoQueue[1:len(sd.misoQueue)]
+	} else {
+		sd.misoBuffer = 0x00 // default to low for empty buffer.
+	}
+}
+
+func (sd *SdCard) handleMosiByte() {
+	data := sd.mosiBuffer
+	fmt.Printf("SD MOSI: 0x%02X 0b%08b\n", sd.mosiBuffer, sd.mosiBuffer)
+	switch data {
+	case 0x40:
+		fmt.Printf("Got 0x40; queueing response bytes.\n")
+		sd.misoQueue = append(sd.misoQueue, 0xAA, 0xAB, 0xAC, 0xAD)
 	}
 }

@@ -55,7 +55,16 @@ func mainReturningStatus() int {
 	}
 
 	if len(options.SdCard) > 0 {
-		sd, err := sd.SdFromFile(options.SdCard)
+		sd, err := sd.NewSdCard(sd.PinMap{
+			Sclk: 4,
+			Mosi: 5,
+			Miso: 6,
+			Ss:   7,
+		})
+		if err != nil {
+			panic(err)
+		}
+		err = sd.LoadFile(options.SdCard)
 		if err != nil {
 			panic(err)
 		}
