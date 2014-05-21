@@ -8,27 +8,12 @@ import (
 	"io/ioutil"
 )
 
-// spiState is state of the SPI 8-bit stream.
-type spiState struct {
-	clock      bool  // the most recent clock state
-	index      uint8 // the bit index of the current byte (mod 8).
-	misoBuffer byte  // current byte being sent one bit at a time via Read().
-	readByte   byte  // the state of the pins as read by the VIA controller.
-	mosiBuffer byte  // the byte being built from bits
-}
-
 type SdCard struct {
 	data  []byte
 	size  int
 	state *sdState
-
-	spiState
+	spi   *spi
 	PinMap
-
-	maskSclk uint8
-	maskMosi uint8
-	maskMiso uint8
-	maskSs   uint8
 }
 
 // PinMap associates SD card lines with parallel port pin numbers (0..7).
@@ -48,20 +33,11 @@ func NewSdCard(pm PinMap) (sd *SdCard, err error) {
 	sd = &SdCard{
 		PinMap: pm,
 		state:  newSdState(),
+		spi:    newSpi(pm),
 	}
 
-	sd.maskSclk = 1 << pm.Sclk
-	sd.maskMosi = 1 << pm.Mosi
-	sd.maskMiso = 1 << pm.Miso
-	sd.maskSs = 1 << pm.Ss
-
-	sd.spiState.index = 7
-
 	// two busy bytes, then ready.
-	sd.state.queueMiso(0x00, 0x00, 0x00, 0xFF)
-
-	// initialize MISO buffer.
-	sd.handleMisoByte()
+	sd.state.queueMiso(0x00, 0x00, 0xFF)
 
 	return
 }
@@ -81,63 +57,21 @@ func (sd *SdCard) Shutdown() {
 }
 
 func (sd *SdCard) Read() byte {
-	return sd.readByte
+	return sd.spi.Read()
 }
 
 // Write takes an updated parallel port state.
 func (sd *SdCard) Write(data byte) {
+	if sd.spi.Write(data) {
+		if sd.spi.Done {
+			mosi := sd.spi.Mosi
+			miso := sd.state.shiftMiso()
 
-	cs := data&sd.maskSs > 0
-	if cs { // high = inactive
-		return
-	}
+			sd.state.consumeByte(mosi)
+			sd.spi.QueueMiso(miso)
 
-	mosi := data&sd.maskMosi > 0
-	clock := data&sd.maskSclk > 0
-
-	rising := !sd.clock && clock
-	falling := sd.clock && !clock
-	sd.clock = clock
-
-	// sclk:rise -> miso -> sclk:fall -> mosi -> ...
-
-	if rising {
-		if sd.misoBuffer&(1<<sd.index) > 0 {
-			sd.readByte = 0x00 | sd.maskMiso
-		} else {
-			sd.readByte = 0x00
+			fmt.Printf("SD MOSI $%02X %08b <-> $%02X %08b MISO\n",
+				mosi, mosi, miso, miso)
 		}
 	}
-
-	if falling {
-		if mosi {
-			sd.mosiBuffer |= (1 << sd.index)
-		}
-
-		// after eigth bit
-		if sd.index == 0 {
-			mosiByte := sd.handleMosiByte()
-			misoByte := sd.handleMisoByte()
-			sd.logExchange(mosiByte, misoByte)
-			sd.index = 7
-		} else {
-			sd.index--
-		}
-	}
-}
-
-func (sd *SdCard) logExchange(mosi, miso byte) {
-	fmt.Printf("SD MOSI $%02X %08b <-> $%02X %08b MISO\n", mosi, mosi, miso, miso)
-}
-
-func (sd *SdCard) handleMisoByte() byte {
-	sd.misoBuffer = sd.state.shiftMiso()
-	return sd.misoBuffer
-}
-
-func (sd *SdCard) handleMosiByte() byte {
-	data := sd.mosiBuffer
-	sd.mosiBuffer = 0x00
-	sd.state.consumeByte(data)
-	return data
 }
