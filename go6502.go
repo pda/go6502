@@ -19,6 +19,7 @@ import (
 	"github.com/pda/go6502/memory"
 	"github.com/pda/go6502/sd"
 	"github.com/pda/go6502/speedometer"
+	"github.com/pda/go6502/spi"
 	"github.com/pda/go6502/ssd1306"
 	"github.com/pda/go6502/via6522"
 )
@@ -55,7 +56,7 @@ func mainReturningStatus() int {
 	}
 
 	if len(options.SdCard) > 0 {
-		sd, err := sd.NewSdCard(sd.PinMap{
+		sd, err := sd.NewSdCard(spi.PinMap{
 			Sclk: 4,
 			Mosi: 5,
 			Miso: 6,

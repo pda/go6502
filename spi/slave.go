@@ -1,13 +1,15 @@
-package sd
+package spi
 
-// spiState is state of the SPI 8-bit stream.
-type spi struct {
+// Slave represents an 8-bit MSB-first mode-0 SPI slave device.
+type Slave struct {
 
 	// Done is true after a write() completed a byte transfer.
 	Done bool
 
 	// Mosi is the most recently transferred byte.
 	Mosi byte
+
+	PinMap
 
 	clock      bool  // the most recent clock state
 	index      uint8 // the bit index of the current byte.
@@ -21,8 +23,8 @@ type spi struct {
 	maskSs   uint8
 }
 
-func newSpi(pm PinMap) *spi {
-	return &spi{
+func NewSlave(pm PinMap) *Slave {
+	return &Slave{
 		index:    7,
 		maskSclk: 1 << pm.Sclk,
 		maskMosi: 1 << pm.Mosi,
@@ -32,7 +34,7 @@ func newSpi(pm PinMap) *spi {
 }
 
 // Read returns the current output (MISO) state for the parallel interface.
-func (s *spi) Read() byte {
+func (s *Slave) Read() byte {
 	return s.readByte
 }
 
@@ -40,7 +42,7 @@ func (s *spi) Read() byte {
 // It may update the result of Read().
 // spi.Done is updated to reflect whether the write completed a byte transfer,
 // in which case spi.Mosi is set.
-func (s *spi) Write(data byte) bool {
+func (s *Slave) Write(data byte) bool {
 	if data&s.maskSs != 0 {
 		// do nothing unless SS is low (active)
 		return false
@@ -86,7 +88,7 @@ func (s *spi) Write(data byte) bool {
 
 // QueueMiso loads a byte into the MISO buffer, to be sent during the next
 // eight clock cycles.
-func (s *spi) QueueMiso(b byte) {
+func (s *Slave) QueueMiso(b byte) {
 	if s.index != 7 {
 		panic("Cannot queue MISO; byte send in progress.")
 	}

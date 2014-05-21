@@ -6,40 +6,32 @@ package sd
 import (
 	"fmt"
 	"io/ioutil"
+
+	"github.com/pda/go6502/spi"
 )
 
 type SdCard struct {
 	data  []byte
 	size  int
 	state *sdState
-	spi   *spi
-	PinMap
-}
-
-// PinMap associates SD card lines with parallel port pin numbers (0..7).
-type PinMap struct {
-	Sclk uint
-	Mosi uint
-	Miso uint
-	Ss   uint
-}
-
-func (p PinMap) PinMask() byte {
-	return 1<<p.Sclk | 1<<p.Mosi | 1<<p.Miso | 1<<p.Ss
+	spi   *spi.Slave
 }
 
 // SdFromFile creates a new SdCard based on the contents of a file.
-func NewSdCard(pm PinMap) (sd *SdCard, err error) {
+func NewSdCard(pm spi.PinMap) (sd *SdCard, err error) {
 	sd = &SdCard{
-		PinMap: pm,
-		state:  newSdState(),
-		spi:    newSpi(pm),
+		state: newSdState(),
+		spi:   spi.NewSlave(pm),
 	}
 
 	// two busy bytes, then ready.
 	sd.state.queueMiso(0x00, 0x00, 0xFF)
 
 	return
+}
+
+func (sd *SdCard) PinMask() byte {
+	return sd.spi.PinMask()
 }
 
 // LoadFile is equivalent to inserting an SD card.
