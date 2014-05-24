@@ -17,11 +17,11 @@ func (s *sdState) consumeByte(b byte) {
 	switch b {
 	case 0x40:
 		fmt.Printf("SD: Got 0x40; queueing response bytes.\n")
-		s.queueMiso(0xAA, 0xAB, 0xAC, 0xAD)
+		s.queueMisoBytes(0xAA, 0xAB, 0xAC, 0xAD)
 	}
 }
 
-func (s *sdState) queueMiso(bytes ...byte) {
+func (s *sdState) queueMisoBytes(bytes ...byte) {
 	s.misoQueue = append(s.misoQueue, bytes...)
 }
 

@@ -25,7 +25,7 @@ func NewSdCard(pm spi.PinMap) (sd *SdCard, err error) {
 	}
 
 	// two busy bytes, then ready.
-	sd.state.queueMiso(0x00, 0x00, 0xFF)
+	sd.state.queueMisoBytes(0x00, 0x00, 0xFF)
 
 	return
 }
