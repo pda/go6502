@@ -6,8 +6,11 @@ type Slave struct {
 	// Done is true after a write() completed a byte transfer.
 	Done bool
 
-	// Mosi is the most recently transferred byte.
+	// Mosi is the byte most recently transferred from master to slave.
 	Mosi byte
+
+	// Miso is the byte most recently transferred from slave to master.
+	Miso byte
 
 	PinMap
 
@@ -76,6 +79,7 @@ func (s *Slave) Write(data byte) bool {
 		if s.index == 0 {
 			s.index = 7
 			s.Mosi = s.mosiBuffer
+			s.Miso = s.misoBuffer
 			s.Done = true
 			s.mosiBuffer = 0x00
 		} else {

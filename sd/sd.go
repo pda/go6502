@@ -57,13 +57,13 @@ func (sd *SdCard) Write(data byte) {
 	if sd.spi.Write(data) {
 		if sd.spi.Done {
 			mosi := sd.spi.Mosi
-			miso := sd.state.shiftMiso()
-
-			sd.state.consumeByte(mosi)
-			sd.spi.QueueMisoBits(miso)
-
 			fmt.Printf("SD MOSI $%02X %08b <-> $%02X %08b MISO\n",
-				mosi, mosi, miso, miso)
+				mosi, mosi, sd.spi.Miso, sd.spi.Miso)
+
+			// consume the byte read, queue miso bytes internally
+			sd.state.consumeByte(mosi)
+			// dequeues one miso byte, or a default byte if queue empty.
+			sd.spi.QueueMisoBits(sd.state.shiftMiso())
 		}
 	}
 }
