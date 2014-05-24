@@ -2,9 +2,28 @@ package sd
 
 import "fmt"
 
+// states
+const (
+	sCmd = iota // expect command
+	sArg        // expect argument
+	sChk        // expect checksum
+)
+
+const (
+	r1_ready = 0x00
+	r1_idle  = 0x01
+)
+
 // sdState is the state of SD protocol (layer above SPI protocol).
 type sdState struct {
+	state     uint8
+	acmd      bool // next command is an application-specific command
+	cmd       uint8
+	arg       uint32
+	argByte   uint8
 	misoQueue []byte // data waiting to be sent from card.
+	prevCmd   uint8
+	prevAcmd  uint8
 }
 
 func newSdState() (s *sdState) {
@@ -14,11 +33,49 @@ func newSdState() (s *sdState) {
 }
 
 func (s *sdState) consumeByte(b byte) {
-	switch b {
-	case 0x40:
-		fmt.Printf("SD: Got 0x40; queueing response bytes.\n")
-		s.queueMisoBytes(0xAA, 0xAB, 0xAC, 0xAD)
+	switch s.state {
+	case sCmd:
+		if b>>6 == 1 {
+			s.cmd = b & (0xFF >> 2)
+			s.state = sArg
+			s.argByte = 0
+		}
+	case sArg:
+		s.arg |= uint32(b) << ((3 - s.argByte) * 8)
+		if s.argByte == 3 {
+			s.state = sChk
+		} else {
+			s.argByte++
+		}
+	case sChk:
+		if s.acmd {
+			s.handleAcmd()
+		} else {
+			s.handleCmd()
+		}
+
+	default:
+		panic("Unhandled state")
 	}
+}
+
+func (s *sdState) handleCmd() {
+	fmt.Printf("SD CMD%d arg: 0x%08X\n", s.cmd, s.arg)
+	switch s.cmd {
+	default:
+		panic(fmt.Sprintf("Unhandled CMD%d", s.cmd))
+	}
+	s.prevCmd = s.cmd
+}
+
+func (s *sdState) handleAcmd() {
+	fmt.Printf("SD ACMD%d arg: 0x%08X\n", s.cmd, s.arg)
+	switch s.cmd {
+	default:
+		panic(fmt.Sprintf("Unhandled ACMD%d", s.cmd))
+	}
+	s.prevAcmd = s.cmd
+	s.acmd = false
 }
 
 func (s *sdState) queueMisoBytes(bytes ...byte) {
