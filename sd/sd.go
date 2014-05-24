@@ -60,7 +60,7 @@ func (sd *SdCard) Write(data byte) {
 			miso := sd.state.shiftMiso()
 
 			sd.state.consumeByte(mosi)
-			sd.spi.QueueMiso(miso)
+			sd.spi.QueueMisoBits(miso)
 
 			fmt.Printf("SD MOSI $%02X %08b <-> $%02X %08b MISO\n",
 				mosi, mosi, miso, miso)

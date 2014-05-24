@@ -86,9 +86,9 @@ func (s *Slave) Write(data byte) bool {
 	return true
 }
 
-// QueueMiso loads a byte into the MISO buffer, to be sent during the next
+// QueueMisoBits loads a byte into the MISO buffer, to be sent during the next
 // eight clock cycles.
-func (s *Slave) QueueMiso(b byte) {
+func (s *Slave) QueueMisoBits(b byte) {
 	if s.index != 7 {
 		panic("Cannot queue MISO; byte send in progress.")
 	}
