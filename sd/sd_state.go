@@ -62,6 +62,15 @@ func (s *sdState) consumeByte(b byte) {
 func (s *sdState) handleCmd() {
 	fmt.Printf("SD CMD%d arg: 0x%08X\n", s.cmd, s.arg)
 	switch s.cmd {
+	case 0: // GO_IDLE_STATE
+		fmt.Println("SD CMD0 response: r1_idle")
+		s.queueMisoBytes(0xFF, 0xFF, r1_idle) // busy then idle
+		s.state = sCmd
+	case 55: // APP_CMD
+		fmt.Println("SD CMD55 response: r1_idle")
+		s.queueMisoBytes(r1_idle) // busy then idle
+		s.acmd = true
+		s.state = sCmd
 	default:
 		panic(fmt.Sprintf("Unhandled CMD%d", s.cmd))
 	}
@@ -71,6 +80,17 @@ func (s *sdState) handleCmd() {
 func (s *sdState) handleAcmd() {
 	fmt.Printf("SD ACMD%d arg: 0x%08X\n", s.cmd, s.arg)
 	switch s.cmd {
+	case 41: // SD_SEND_OP_COND
+		if s.prevAcmd == 41 {
+			// on second attempt, busy, busy, then ready.
+			fmt.Println("SD ACMD41 response: r1_ready")
+			s.queueMisoBytes(0xFF, 0xFF, r1_ready)
+		} else {
+			// on first attempt, busy, busy, then idle (not yet ready).
+			fmt.Println("SD ACMD41 response: r1_idle")
+			s.queueMisoBytes(0xFF, 0xFF, r1_idle)
+		}
+		s.state = sCmd
 	default:
 		panic(fmt.Sprintf("Unhandled ACMD%d", s.cmd))
 	}
