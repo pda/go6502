@@ -67,6 +67,13 @@ func (s *sdState) handleCmd() {
 		fmt.Println("SD CMD0 response: r1_idle")
 		s.queueMisoBytes(0xFF, 0xFF, r1_idle) // busy then idle
 		s.state = sCmd
+	case 17: // READ_SINGLE_BLOCK
+		fmt.Println("SD CMD17 response: r1_ready, data start block, data")
+		s.queueMisoBytes(0xFF, 0xFF, r1_ready)   // busy then ready
+		s.queueMisoBytes(0xFF, 0xFF, 0xFF, 0xFF) // time before data block
+		s.queueMisoBytes(0xFE)                   // data start block
+		s.queueMisoBytes(s.dataUpTo(512)...)
+		s.state = sCmd
 	case 55: // APP_CMD
 		fmt.Println("SD CMD55 response: r1_idle")
 		s.queueMisoBytes(r1_idle) // busy then idle
