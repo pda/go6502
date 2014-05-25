@@ -10,8 +10,6 @@ import (
 )
 
 type SdCard struct {
-	data  []byte
-	size  int
 	state *sdState
 	spi   *spi.Slave
 }
@@ -39,8 +37,7 @@ func (sd *SdCard) LoadFile(path string) (err error) {
 	if err != nil {
 		return
 	}
-	sd.size = len(data)
-	sd.data = data
+	sd.state.data = data
 	return
 }
 

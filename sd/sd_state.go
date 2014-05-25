@@ -24,6 +24,7 @@ type sdState struct {
 	misoQueue []byte // data waiting to be sent from card.
 	prevCmd   uint8
 	prevAcmd  uint8
+	data      []byte
 }
 
 func newSdState() (s *sdState) {
