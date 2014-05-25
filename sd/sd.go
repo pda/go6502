@@ -4,7 +4,6 @@
 package sd
 
 import (
-	"fmt"
 	"io/ioutil"
 
 	"github.com/pda/go6502/spi"
@@ -57,8 +56,8 @@ func (sd *SdCard) Write(data byte) {
 	if sd.spi.Write(data) {
 		if sd.spi.Done {
 			mosi := sd.spi.Mosi
-			fmt.Printf("SD MOSI $%02X %08b <-> $%02X %08b MISO\n",
-				mosi, mosi, sd.spi.Miso, sd.spi.Miso)
+			//fmt.Printf("SD MOSI $%02X %08b <-> $%02X %08b MISO\n",
+			//	mosi, mosi, sd.spi.Miso, sd.spi.Miso)
 
 			// consume the byte read, queue miso bytes internally
 			sd.state.consumeByte(mosi)
