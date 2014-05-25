@@ -112,3 +112,11 @@ func (s *sdState) shiftMiso() (b byte) {
 	}
 	return
 }
+
+func (s *sdState) dataUpTo(size int) []byte {
+	if size < len(s.data) {
+		return s.data[0:size]
+	} else {
+		return s.data
+	}
+}
