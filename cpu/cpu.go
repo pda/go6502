@@ -292,6 +292,8 @@ func (c *Cpu) execute(in Instruction) {
 		c.TAX(in)
 	case tay:
 		c.TAY(in)
+	case tsx:
+		c.TSX(in)
 	case txa:
 		c.TXA(in)
 	case txs:
@@ -615,6 +617,12 @@ func (c *Cpu) TAX(in Instruction) {
 func (c *Cpu) TAY(in Instruction) {
 	c.Y = c.AC
 	c.updateStatus(c.Y)
+}
+
+// TSX: Transfer stack pointer to index register X.
+func (c *Cpu) TSX(in Instruction) {
+	c.X = c.SP
+	c.updateStatus(c.X)
 }
 
 // TXA: Transfer index register X to accumulator.
