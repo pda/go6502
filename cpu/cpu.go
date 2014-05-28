@@ -116,7 +116,7 @@ func (c *Cpu) stackHead(offset int8) uint16 {
 func (c *Cpu) resolveOperand(in Instruction) uint8 {
 	switch in.addressing {
 	case immediate:
-		return in.op8
+		return in.Op8
 	default:
 		return c.Bus.Read(c.memoryAddress(in))
 	}
@@ -125,11 +125,11 @@ func (c *Cpu) resolveOperand(in Instruction) uint8 {
 func (c *Cpu) memoryAddress(in Instruction) uint16 {
 	switch in.addressing {
 	case absolute:
-		return in.op16
+		return in.Op16
 	case absoluteX:
-		return in.op16 + uint16(c.X)
+		return in.Op16 + uint16(c.X)
 	case absoluteY:
-		return in.op16 + uint16(c.Y)
+		return in.Op16 + uint16(c.Y)
 
 	// Indexed Indirect (X)
 	// Operand is the zero-page location of a little-endian 16-bit base address.
@@ -137,7 +137,7 @@ func (c *Cpu) memoryAddress(in Instruction) uint16 {
 	// The resulting address loaded from (base+X) becomes the effective operand.
 	// (base + X) must be in zero-page.
 	case indirectX:
-		location := uint16(in.op8 + c.X)
+		location := uint16(in.Op8 + c.X)
 		if location == 0xFF {
 			panic("Indexed indirect high-byte not on zero page.")
 		}
@@ -148,14 +148,14 @@ func (c *Cpu) memoryAddress(in Instruction) uint16 {
 	// The address is loaded, and then the Y register is added to it.
 	// The resulting loaded_address + Y becomes the effective operand.
 	case indirectY:
-		return c.Bus.Read16(uint16(in.op8)) + uint16(c.Y)
+		return c.Bus.Read16(uint16(in.Op8)) + uint16(c.Y)
 
 	case zeropage:
-		return uint16(in.op8)
+		return uint16(in.Op8)
 	case zeropageX:
-		return uint16(in.op8 + c.X)
+		return uint16(in.Op8 + c.X)
 	case zeropageY:
-		return uint16(in.op8 + c.Y)
+		return uint16(in.Op8 + c.Y)
 	default:
 		panic("unhandled addressing")
 	}
@@ -196,7 +196,7 @@ func (c *Cpu) statusString() string {
 }
 
 func (c *Cpu) branch(in Instruction) {
-	relative := int8(in.op8) // signed
+	relative := int8(in.Op8) // signed
 	if relative >= 0 {
 		c.PC += uint16(relative)
 	} else {
@@ -478,7 +478,7 @@ func (c *Cpu) JMP(in Instruction) {
 func (c *Cpu) JSR(in Instruction) {
 	c.Bus.Write16(c.stackHead(-1), c.PC-1)
 	c.SP -= 2
-	c.PC = in.op16
+	c.PC = in.Op16
 }
 
 // LDA: Load accumulator from memory.

@@ -11,16 +11,20 @@ import (
 // This is determined by (ot.Bytes - 1) / 8
 type Instruction struct {
 	OpType
-	op8  uint8
-	op16 uint16
+
+	// The single-byte operand, for 2-byte instructions.
+	Op8 uint8
+
+	// The 16-bit operand, for 3-byte instructions.
+	Op16 uint16
 }
 
 func (in Instruction) String() (s string) {
 	switch in.Bytes {
 	case 3:
-		s = fmt.Sprintf("%v $%04X", in.OpType, in.op16)
+		s = fmt.Sprintf("%v $%04X", in.OpType, in.Op16)
 	case 2:
-		s = fmt.Sprintf("%v $%02X", in.OpType, in.op8)
+		s = fmt.Sprintf("%v $%02X", in.OpType, in.Op8)
 	case 1:
 		s = in.OpType.String()
 	}
@@ -35,9 +39,9 @@ func ReadInstruction(PC uint16, bus *bus.Bus) Instruction {
 	switch in.Bytes {
 	case 1: // no operand
 	case 2:
-		in.op8 = bus.Read(PC + 1)
+		in.Op8 = bus.Read(PC + 1)
 	case 3:
-		in.op16 = bus.Read16(PC + 1)
+		in.Op16 = bus.Read16(PC + 1)
 	default:
 		panic(fmt.Sprintf("unhandled instruction length: %d", in.Bytes))
 	}
