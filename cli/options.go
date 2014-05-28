@@ -13,13 +13,14 @@ import (
 
 // Options stores the value of command line options after they're parsed.
 type Options struct {
-	Debug         bool
-	DebugCmds     commandList
-	SdCard        string
-	Speedometer   bool
-	ViaDumpAscii  bool
-	ViaDumpBinary bool
-	ViaSsd1306    bool
+	Debug           bool
+	DebugCmds       commandList
+	DebugSymbolFile string
+	SdCard          string
+	Speedometer     bool
+	ViaDumpAscii    bool
+	ViaDumpBinary   bool
+	ViaSsd1306      bool
 }
 
 // ParseFlags uses the flag stdlib package to parse CLI options.
@@ -29,6 +30,7 @@ func ParseFlags() *Options {
 	// Debug
 	flag.BoolVar(&opt.Debug, "debug", false, "Run debugger")
 	flag.Var(&opt.DebugCmds, "debug-commands", "Debugger commands to run, semicolon separated.")
+	flag.StringVar(&opt.DebugSymbolFile, "debug-symbol-file", "", "ld65 v2.13.3 debug file to load.")
 
 	// SD card
 	flag.StringVar(&opt.SdCard, "sd-card", "", "Load file as SD card on VIA port A[4..7]")

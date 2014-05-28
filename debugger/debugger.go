@@ -43,7 +43,7 @@ package debugger
  * TODO:
  * -  `step n` e.g. `step 100` to step 100 instructions.
  * -  Read and write CLI history file.
- * -  Ability to label addresses, persist+load.
+ * -  Resolve addresses to symbols for JMP, branch etc.
  * -  Tab completion.
  * -  Command argument validation.
  */
@@ -72,6 +72,8 @@ const (
 )
 
 type Debugger struct {
+	symbolsLoaded     bool
+	symbols           debugSymbols
 	inputQueue        []string
 	cpu               *cpu.Cpu
 	liner             *liner.State
@@ -98,14 +100,26 @@ type cmd struct {
 // Be sure to defer a call to Debugger.Shutdown() afterwards, or your terminal
 // will be left in a broken state.
 func NewDebugger(cpu *cpu.Cpu) *Debugger {
-	d := &Debugger{liner: liner.NewLiner(), cpu: cpu}
-	return d
+	return &Debugger{
+		liner: liner.NewLiner(),
+		cpu:   cpu,
+	}
 }
 
 // Shutdown the debugger session, including resetting the terminal to its previous
 // state.
 func (d *Debugger) Shutdown() {
 	d.liner.Close()
+}
+
+// Load a debug symbols file, as produced by ld65 v2.13.3 (cc65 linker).
+func (d *Debugger) LoadSymbols(path string) (err error) {
+	symbols, err := readDebugSymbols(path)
+	if err == nil {
+		d.symbols = symbols
+		d.symbolsLoaded = true
+	}
+	return
 }
 
 // Queue a list of commands to be executed at the next prompt(s).
@@ -359,7 +373,11 @@ func (d *Debugger) readInput() (string, error) {
 }
 
 func (d *Debugger) prompt() string {
-	return fmt.Sprintf("$%04X> ", d.cpu.PC)
+	var symbols string
+	if d.symbolsLoaded {
+		symbols = strings.Join(d.symbols.symbolsFor(d.cpu.PC), ",")
+	}
+	return fmt.Sprintf("$%04X %s> ", d.cpu.PC, symbols)
 }
 
 func (d *Debugger) parseUint(s string, bits int) (uint64, error) {
