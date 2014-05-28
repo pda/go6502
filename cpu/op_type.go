@@ -195,6 +195,10 @@ func (ot OpType) Name() (s string) {
 	return instructionNames[ot.id]
 }
 
+func (ot OpType) IsAbsolute() bool {
+	return ot.addressing == absolute
+}
+
 var optypes = map[uint8]OpType{
 	0x69: OpType{0x69, adc, immediate, 2, 2},
 	0x65: OpType{0x65, adc, zeropage, 2, 3},

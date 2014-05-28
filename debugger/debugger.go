@@ -164,7 +164,17 @@ func (d *Debugger) BeforeExecute(in cpu.Instruction) {
 	}
 
 	fmt.Println(d.cpu)
-	fmt.Println("Next:", in)
+
+	var symbols []string
+	if d.symbolsLoaded && in.IsAbsolute() {
+		symbols = d.symbols.symbolsFor(in.Op16)
+	}
+
+	if len(symbols) > 0 {
+		fmt.Printf("Next: %v (%s)\n", in, strings.Join(symbols, ","))
+	} else {
+		fmt.Println("Next:", in)
+	}
 
 	for !d.commandLoop(in) {
 		// next
