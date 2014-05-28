@@ -14,7 +14,7 @@
 		Next: LDX immediate $FF
 		$F320> break-register X $FF
 		Breakpoint set: X = $FF (255)
-		$F320> run
+		$F320> continue
 		Breakpoint for X = $FF (255)
 		CPU PC:0xF322 AC:0x00 X:0xFF Y:0x00 SP:0x00 SR:n-_b----
 		Next: TXS implied
@@ -62,12 +62,12 @@ const (
 	debugCmdBreakAddress
 	debugCmdBreakInstruction
 	debugCmdBreakRegister
+	debugCmdContinue
 	debugCmdExit
 	debugCmdHelp
 	debugCmdInvalid
 	debugCmdRead
 	debugCmdRead16
-	debugCmdRun
 	debugCmdStep
 )
 
@@ -178,6 +178,9 @@ func (d *Debugger) commandLoop(in cpu.Instruction) (release bool) {
 		d.breakInstruction = strings.ToUpper(cmd.arguments[0])
 	case debugCmdBreakRegister:
 		d.commandBreakRegister(cmd)
+	case debugCmdContinue:
+		d.run = true
+		release = true
 	case debugCmdExit:
 		d.cpu.ExitChan <- 0
 	case debugCmdHelp:
@@ -188,9 +191,6 @@ func (d *Debugger) commandLoop(in cpu.Instruction) (release bool) {
 		d.commandRead(cmd)
 	case debugCmdRead16:
 		d.commandRead16(cmd)
-	case debugCmdRun:
-		d.run = true
-		release = true
 	case debugCmdStep:
 		release = true
 	case debugCmdInvalid:
@@ -232,11 +232,11 @@ func (d *Debugger) commandHelp(cmd *cmd) {
 	fmt.Println("break-address <addr> (alias: ba) e.g. ba 0x1000")
 	fmt.Println("break-instruction <mnemonic> (alias: bi) e.g. bi NOP")
 	fmt.Println("break-register <x|y|a> <value> (alias: br) e.g. br x 128")
+	fmt.Println("continue (alias: c) Run continuously until breakpoint.")
 	fmt.Println("exit (alias: quit, q) Shut down the emulator.")
 	fmt.Println("help (alias: h, ?) This help.")
 	fmt.Println("read <address> - Read and display 8-bit integer at address.")
 	fmt.Println("read16 <address> - Read and display 16-bit integer at address.")
-	fmt.Println("run (alias: r) Run continuously until breakpoint.")
 	fmt.Println("step (alias: s) Run only the current instruction.")
 	fmt.Println("(blank) Repeat the previous command.")
 	fmt.Println("")
@@ -323,6 +323,8 @@ func (d *Debugger) getCommand() (*cmd, error) {
 		id = debugCmdBreakInstruction
 	case "break-register", "break-reg", "br":
 		id = debugCmdBreakRegister
+	case "continue", "c":
+		id = debugCmdContinue
 	case "exit", "quit", "q":
 		id = debugCmdExit
 	case "help", "h", "?":
@@ -331,8 +333,6 @@ func (d *Debugger) getCommand() (*cmd, error) {
 		id = debugCmdRead
 	case "read16":
 		id = debugCmdRead16
-	case "run", "r":
-		id = debugCmdRun
 	case "step", "st", "s":
 		id = debugCmdStep
 	default:

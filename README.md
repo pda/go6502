@@ -83,11 +83,11 @@ pda6502 debuger
 break-address <addr> (alias: ba) e.g. ba 0x1000
 break-instruction <mnemonic> (alias: bi) e.g. bi NOP
 break-register <x|y|a> <value> (alias: br) e.g. br x 128
+continue (alias: c) Run continuously until breakpoint.
 exit (alias: quit, q) Shut down the emulator.
 help (alias: h, ?) This help.
 read <address> - Read and display 8-bit integer at address.
 read16 <address> - Read and display 16-bit integer at address.
-run (alias: r) Run continuously until breakpoint.
 step (alias: s) Run only the current instruction.
 (blank) Repeat the previous command.
 
@@ -98,11 +98,11 @@ CPU pc:0xE001 ac:0x00 x:0x00 y:0x00 sp:0xFF sr:--------
 Instruction[LDX op:A2 addr:5 bytes:2 cycles:2] op8:0xFF op16:0x0000
 $E001> break-instruction NOP
 $E001> break-address $E003
-$E001> run
+$E001> continue
 Breakpoint for PC address = $E003
 CPU pc:0xE003 ac:0x00 x:0xFF y:0x00 sp:0xFF sr:n-------
 Instruction[TXS op:9A addr:6 bytes:1 cycles:2] op8:0x00 op16:0x0000
-$E003> run
+$E003> continue
 Breakpoint for instruction NOP
 CPU pc:0xE0FC ac:0xFF x:0x00 y:0x00 sp:0xFF sr:-----izc
 Instruction[NOP op:EA addr:6 bytes:1 cycles:2] op8:0x00 op16:0x0000
