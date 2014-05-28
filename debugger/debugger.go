@@ -66,6 +66,7 @@ const (
 	debugCmdExit
 	debugCmdHelp
 	debugCmdInvalid
+	debugCmdNext
 	debugCmdRead
 	debugCmdRead16
 	debugCmdStep
@@ -209,6 +210,9 @@ func (d *Debugger) commandLoop(in cpu.Instruction) (release bool) {
 		d.cpu.ExitChan <- 0
 	case debugCmdHelp:
 		d.commandHelp(cmd)
+	case debugCmdNext:
+		d.commandNext(in)
+		release = true
 	case debugCmdNone:
 		// pass
 	case debugCmdRead:
@@ -224,6 +228,16 @@ func (d *Debugger) commandLoop(in cpu.Instruction) (release bool) {
 	}
 
 	return
+}
+
+// Set a breakpoint for the address after the current instruction, then
+// continue execution. Steps over JSR, JMP etc. Probably doesn't do good
+// things for branch instructions.
+func (d *Debugger) commandNext(in cpu.Instruction) {
+	addr := uint16(d.cpu.PC + uint16(in.Bytes))
+	d.breakAddress = true
+	d.breakAddressValue = addr
+	d.run = true
 }
 
 func (d *Debugger) commandRead(cmd *cmd) {
@@ -259,6 +273,7 @@ func (d *Debugger) commandHelp(cmd *cmd) {
 	fmt.Println("continue (alias: c) Run continuously until breakpoint.")
 	fmt.Println("exit (alias: quit, q) Shut down the emulator.")
 	fmt.Println("help (alias: h, ?) This help.")
+	fmt.Println("next (alias: n) Next instruction; step over subroutines.")
 	fmt.Println("read <address> - Read and display 8-bit integer at address.")
 	fmt.Println("read16 <address> - Read and display 16-bit integer at address.")
 	fmt.Println("step (alias: s) Run only the current instruction.")
@@ -353,6 +368,8 @@ func (d *Debugger) getCommand() (*cmd, error) {
 		id = debugCmdExit
 	case "help", "h", "?":
 		id = debugCmdHelp
+	case "next", "n":
+		id = debugCmdNext
 	case "read":
 		id = debugCmdRead
 	case "read16":
