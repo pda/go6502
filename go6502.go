@@ -86,10 +86,7 @@ func mainReturningStatus() int {
 	cpu := &cpu.Cpu{Bus: addressBus, ExitChan: exitChan}
 	defer cpu.Shutdown()
 	if options.Debug {
-		debugger := debugger.NewDebugger(cpu)
-		if len(options.DebugSymbolFile) > 0 {
-			debugger.LoadSymbols(options.DebugSymbolFile)
-		}
+		debugger := debugger.NewDebugger(cpu, options.DebugSymbolFile)
 		debugger.QueueCommands(options.DebugCmds)
 		cpu.AttachMonitor(debugger)
 	} else if options.Speedometer {
