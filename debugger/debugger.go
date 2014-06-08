@@ -239,25 +239,24 @@ func (d *Debugger) commandNext(in cpu.Instruction) {
 }
 
 func (d *Debugger) commandRead(cmd *cmd) {
-	addr64, err := d.parseUint(cmd.arguments[0], 16)
+	addr, err := d.parseUint16(cmd.arguments[0])
 	if err != nil {
 		panic(err)
 	}
-	addr := uint16(addr64)
 	v := d.cpu.Bus.Read(addr)
 	fmt.Printf("$%04X => $%02X 0b%08b %d %q\n", addr, v, v, v, v)
 }
 
 func (d *Debugger) commandRead16(cmd *cmd) {
-	addr64, err := d.parseUint(cmd.arguments[0], 16)
+	addr, err := d.parseUint16(cmd.arguments[0])
 	if err != nil {
 		panic(err)
 	}
-	addrLo := uint16(addr64)
-	addrHi := addrLo + 1
-	vLo := d.cpu.Bus.Read(addrLo)
-	vHi := d.cpu.Bus.Read(addrHi)
-	v := (uint16(vHi) << 8) | uint16(vLo)
+	addrLo := addr
+	addrHi := addr + 1
+	vLo := uint16(d.cpu.Bus.Read(addrLo))
+	vHi := uint16(d.cpu.Bus.Read(addrHi))
+	v := vHi<<8 | vLo
 	fmt.Printf("$%04X,%04X => $%04X 0b%016b %d\n", addrLo, addrHi, v, v, v)
 }
 
@@ -282,11 +281,10 @@ func (d *Debugger) commandHelp(cmd *cmd) {
 }
 
 func (d *Debugger) commandBreakAddress(cmd *cmd) {
-	value64, err := d.parseUint(cmd.arguments[0], 16)
+	addr, err := d.parseUint16(cmd.arguments[0])
 	if err != nil {
 		panic(err)
 	}
-	addr := uint16(value64)
 	d.breakAddress = true
 	d.breakAddressValue = addr
 }
@@ -310,11 +308,10 @@ func (d *Debugger) commandBreakRegister(cmd *cmd) {
 		panic(fmt.Errorf("Invalid register for break-register"))
 	}
 
-	value64, err := d.parseUint(valueStr, 8)
+	value, err := d.parseUint8(valueStr)
 	if err != nil {
 		panic(err)
 	}
-	value := byte(value64)
 
 	fmt.Printf("Breakpoint set: %s = $%02X (%d)\n", regStr, value, value)
 
@@ -402,10 +399,17 @@ func (d *Debugger) prompt() string {
 	return fmt.Sprintf("$%04X %s> ", d.cpu.PC, symbols)
 }
 
-func (d *Debugger) parseUint(s string, bits int) (uint64, error) {
-	if s == "." && bits == 16 {
-		return uint64(d.cpu.PC), nil
+func (d *Debugger) parseUint8(s string) (uint8, error) {
+	s = strings.Replace(s, "$", "0x", 1)
+	result, err := strconv.ParseUint(s, 0, 8)
+	return uint8(result), err
+}
+
+func (d *Debugger) parseUint16(s string) (uint16, error) {
+	if s == "." {
+		return d.cpu.PC, nil
 	}
 	s = strings.Replace(s, "$", "0x", 1)
-	return strconv.ParseUint(s, 0, bits)
+	result, err := strconv.ParseUint(s, 0, 16)
+	return uint16(result), err
 }
