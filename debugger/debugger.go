@@ -41,11 +41,12 @@ package debugger
 
 /**
  * TODO:
+ * -  Command argument validation.
+ * -  Handle missing/multiple labels when entering address.
+ * -  Resolve addresses to symbols non-absolute instructions, e.g. branch.
+ * -  Tab completion from commands and debug symbols.
  * -  `step n` e.g. `step 100` to step 100 instructions.
  * -  Read and write CLI history file.
- * -  Resolve addresses to symbols for JMP, branch etc.
- * -  Tab completion.
- * -  Command argument validation.
  */
 
 import (
@@ -287,6 +288,7 @@ func (d *Debugger) commandBreakAddress(cmd *cmd) {
 	}
 	d.breakAddress = true
 	d.breakAddressValue = addr
+	fmt.Printf("break-address set to $%04X\n", addr)
 }
 
 func (d *Debugger) commandBreakRegister(cmd *cmd) {
@@ -409,6 +411,16 @@ func (d *Debugger) parseUint16(s string) (uint16, error) {
 	if s == "." {
 		return d.cpu.PC, nil
 	}
+
+	addresses := d.symbols.addressesFor(s)
+	if len(addresses) == 1 {
+		return addresses[0], nil
+	} else if len(addresses) > 1 {
+		// TODO: show addresses as hex, not dec, in error.
+		// TODO: include addresses as []uint16 in error.
+		return 0, fmt.Errorf("Multiple addresses for %s: %v", s, addresses)
+	}
+
 	s = strings.Replace(s, "$", "0x", 1)
 	result, err := strconv.ParseUint(s, 0, 16)
 	return uint16(result), err

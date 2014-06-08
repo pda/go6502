@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type debugSymbol struct {
@@ -13,6 +14,18 @@ type debugSymbol struct {
 
 type debugSymbols []debugSymbol
 
+// addressesFor returns the addresses labelled with the given name.
+func (symbols debugSymbols) addressesFor(name string) (result []uint16) {
+	result = make([]uint16, 0)
+	for _, s := range symbols {
+		if strings.EqualFold(name, s.name) {
+			result = append(result, s.address)
+		}
+	}
+	return
+}
+
+// symbolsFor returns label name(s) for the given address.
 func (symbols debugSymbols) symbolsFor(addr uint16) (result []string) {
 	result = make([]string, 0)
 	for _, l := range symbols {
