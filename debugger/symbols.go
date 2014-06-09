@@ -16,7 +16,6 @@ type debugSymbols []debugSymbol
 
 // addressesFor returns the addresses labelled with the given name.
 func (symbols debugSymbols) addressesFor(name string) (result []uint16) {
-	result = make([]uint16, 0)
 	for _, s := range symbols {
 		if strings.EqualFold(name, s.name) {
 			result = append(result, s.address)
@@ -27,10 +26,23 @@ func (symbols debugSymbols) addressesFor(name string) (result []uint16) {
 
 // symbolsFor returns label name(s) for the given address.
 func (symbols debugSymbols) symbolsFor(addr uint16) (result []string) {
-	result = make([]string, 0)
 	for _, l := range symbols {
 		if l.address == addr {
 			result = append(result, l.name)
+		}
+	}
+	return
+}
+
+// uniqueLabels is label names which resolve to a single address.
+func (symbols debugSymbols) uniqueLabels() (result []string) {
+	counter := make(map[string]int)
+	for _, l := range symbols {
+		counter[l.name]++
+	}
+	for l, count := range counter {
+		if count == 1 {
+			result = append(result, l)
 		}
 	}
 	return

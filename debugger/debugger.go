@@ -136,9 +136,9 @@ func linerCompleter(symbols debugSymbols) func(string) []string {
 		tail := line[i:]
 		tailLower := strings.ToLower(tail)
 
-		for _, s := range symbols {
-			if strings.HasPrefix(strings.ToLower(s.name), tailLower) {
-				c = append(c, prefix+s.name)
+		for _, l := range symbols.uniqueLabels() {
+			if strings.HasPrefix(strings.ToLower(l), tailLower) {
+				c = append(c, prefix+l)
 			}
 		}
 		return
