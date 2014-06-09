@@ -24,8 +24,8 @@ func (symbols debugSymbols) addressesFor(name string) (result []uint16) {
 	return
 }
 
-// symbolsFor returns label name(s) for the given address.
-func (symbols debugSymbols) symbolsFor(addr uint16) (result []string) {
+// labelsFor returns label name(s) for the given address.
+func (symbols debugSymbols) labelsFor(addr uint16) (result []string) {
 	for _, l := range symbols {
 		if l.address == addr {
 			result = append(result, l.name)

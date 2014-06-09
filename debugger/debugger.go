@@ -196,7 +196,7 @@ func (d *Debugger) BeforeExecute(in cpu.Instruction) {
 
 	var symbols []string
 	if in.IsAbsolute() {
-		symbols = d.symbols.symbolsFor(in.Op16)
+		symbols = d.symbols.labelsFor(in.Op16)
 	}
 
 	if len(symbols) > 0 {
@@ -426,7 +426,7 @@ func (d *Debugger) readInput() (string, error) {
 }
 
 func (d *Debugger) prompt() string {
-	symbols := strings.Join(d.symbols.symbolsFor(d.cpu.PC), ",")
+	symbols := strings.Join(d.symbols.labelsFor(d.cpu.PC), ",")
 	return fmt.Sprintf("$%04X %s> ", d.cpu.PC, symbols)
 }
 
