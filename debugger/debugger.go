@@ -44,7 +44,7 @@ package debugger
  * -  Command argument validation.
  * -  Handle missing/multiple labels when entering address.
  * -  Resolve addresses to symbols non-absolute instructions, e.g. branch.
- * -  Tab completion from commands and debug symbols.
+ * -  Tab completion from commands, not just debug symbols.
  * -  `step n` e.g. `step 100` to step 100 instructions.
  * -  Read and write CLI history file.
  */
@@ -109,10 +109,39 @@ func NewDebugger(cpu *cpu.Cpu, debugFile string) *Debugger {
 			panic(err)
 		}
 	}
+
+	liner := liner.NewLiner()
+	liner.SetCompleter(linerCompleter(symbols))
+
 	return &Debugger{
-		liner:   liner.NewLiner(),
+		liner:   liner,
 		cpu:     cpu,
 		symbols: symbols,
+	}
+}
+
+// linerCompleter returns a tab-completion function for liner.
+func linerCompleter(symbols debugSymbols) func(string) []string {
+	return func(line string) (c []string) {
+		if len(line) == 0 {
+			return
+		}
+
+		// find index of current word being typed.
+		i := len(line)
+		for i > 0 && line[i-1] != ' ' {
+			i--
+		}
+		prefix := line[:i]
+		tail := line[i:]
+		tailLower := strings.ToLower(tail)
+
+		for _, s := range symbols {
+			if strings.HasPrefix(strings.ToLower(s.name), tailLower) {
+				c = append(c, prefix+s.name)
+			}
+		}
+		return
 	}
 }
 
