@@ -118,11 +118,9 @@ func mainReturningStatus() int {
 		exitStatus = 1
 	}
 
-	if exitStatus != 0 {
-		fmt.Println(cpu)
-		fmt.Println("Dumping RAM into core file")
-		ram.Dump("core")
-	}
+	fmt.Println(cpu)
+	fmt.Println("Dumping RAM into core file")
+	ram.Dump("core")
 
 	return exitStatus
 }
