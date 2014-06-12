@@ -14,6 +14,11 @@ const (
 	r1_idle  = 0x01
 )
 
+const (
+	// blockSize isn't strictly constant, but...
+	blockSize = 512
+)
+
 // sdState is the state of SD protocol (layer above SPI protocol).
 type sdState struct {
 	state     uint8
@@ -72,7 +77,7 @@ func (s *sdState) handleCmd() {
 		s.queueMisoBytes(0xFF, 0xFF, r1_ready)   // busy then ready
 		s.queueMisoBytes(0xFF, 0xFF, 0xFF, 0xFF) // time before data block
 		s.queueMisoBytes(0xFE)                   // data start block
-		s.queueMisoBytes(s.dataUpTo(512)...)
+		s.queueMisoBytes(s.readBlock(s.arg)...)
 		s.state = sCmd
 	case 55: // APP_CMD
 		fmt.Println("SD CMD55 response: r1_idle")
@@ -120,10 +125,8 @@ func (s *sdState) shiftMiso() (b byte) {
 	return
 }
 
-func (s *sdState) dataUpTo(size int) []byte {
-	if size < len(s.data) {
-		return s.data[0:size]
-	} else {
-		return s.data
-	}
+func (s *sdState) readBlock(start uint32) []byte {
+	// TODO: bounds checking
+	// TODO: zero-fill remainder of last page in s.data?
+	return s.data[start : start+blockSize]
 }
