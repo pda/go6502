@@ -4,9 +4,10 @@ import "fmt"
 
 // states
 const (
-	sCmd = iota // expect command
-	sArg        // expect argument
-	sChk        // expect checksum
+	sCmd  = iota // expect command
+	sArg         // expect argument
+	sChk         // expect checksum
+	sData        // sending data until misoQueue empty.
 )
 
 const (
@@ -59,9 +60,11 @@ func (s *sdState) consumeByte(b byte) {
 		} else {
 			s.handleCmd()
 		}
+	case sData:
+		// ignore; data it being sent.
 
 	default:
-		panic("Unhandled state")
+		panic(fmt.Errorf("Unhandled state: %d", s.state))
 	}
 }
 
@@ -78,7 +81,7 @@ func (s *sdState) handleCmd() {
 		s.queueMisoBytes(0xFF, 0xFF, 0xFF, 0xFF) // time before data block
 		s.queueMisoBytes(0xFE)                   // data start block
 		s.queueMisoBytes(s.readBlock(s.arg)...)
-		s.state = sCmd
+		s.state = sData
 	case 55: // APP_CMD
 		fmt.Println("SD CMD55 response: r1_idle")
 		s.queueMisoBytes(r1_idle) // busy then idle
@@ -119,6 +122,10 @@ func (s *sdState) shiftMiso() (b byte) {
 	if len(s.misoQueue) > 0 {
 		b = s.misoQueue[0]
 		s.misoQueue = s.misoQueue[1:len(s.misoQueue)]
+		if len(s.misoQueue) == 0 && s.state == sData {
+			// transition from sData to sCmd when all data sent.
+			s.state = sCmd
+		}
 	} else {
 		b = 0x00 // default to low for empty buffer.
 	}
