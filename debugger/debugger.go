@@ -70,6 +70,7 @@ const (
 	debugCmdNext
 	debugCmdRead
 	debugCmdRead16
+	debugCmdRead32
 	debugCmdStep
 )
 
@@ -247,6 +248,8 @@ func (d *Debugger) commandLoop(in cpu.Instruction) (release bool) {
 		d.commandRead(cmd)
 	case debugCmdRead16:
 		d.commandRead16(cmd)
+	case debugCmdRead32:
+		d.commandRead32(cmd)
 	case debugCmdStep:
 		release = true
 	case debugCmdInvalid:
@@ -290,6 +293,23 @@ func (d *Debugger) commandRead16(cmd *cmd) {
 	fmt.Printf("$%04X,%04X => $%04X 0b%016b %d\n", addrLo, addrHi, v, v, v)
 }
 
+func (d *Debugger) commandRead32(cmd *cmd) {
+	addr, err := d.parseUint16(cmd.arguments[0])
+	if err != nil {
+		panic(err)
+	}
+	addr0 := addr
+	addr1 := addr + 1
+	addr2 := addr + 2
+	addr3 := addr + 3
+	v0 := uint32(d.cpu.Bus.Read(addr0))
+	v1 := uint32(d.cpu.Bus.Read(addr1))
+	v2 := uint32(d.cpu.Bus.Read(addr2))
+	v3 := uint32(d.cpu.Bus.Read(addr3))
+	v := v3<<24 | v2<<16 | v1<<8 | v0
+	fmt.Printf("$%04X..%04X => $%08X 0b%032b %d\n", addr0, addr3, v, v, v)
+}
+
 func (d *Debugger) commandHelp(cmd *cmd) {
 	fmt.Println("")
 	fmt.Println("pda6502 debuger")
@@ -303,6 +323,7 @@ func (d *Debugger) commandHelp(cmd *cmd) {
 	fmt.Println("next (alias: n) Next instruction; step over subroutines.")
 	fmt.Println("read <address> - Read and display 8-bit integer at address.")
 	fmt.Println("read16 <address> - Read and display 16-bit integer at address.")
+	fmt.Println("read32 <address> - Read and display 32-bit integer at address.")
 	fmt.Println("step (alias: s) Run only the current instruction.")
 	fmt.Println("(blank) Repeat the previous command.")
 	fmt.Println("")
@@ -400,6 +421,8 @@ func (d *Debugger) getCommand() (*cmd, error) {
 		id = debugCmdRead
 	case "read16":
 		id = debugCmdRead16
+	case "read32":
+		id = debugCmdRead32
 	case "step", "st", "s":
 		id = debugCmdStep
 	default:
