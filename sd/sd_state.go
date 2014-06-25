@@ -45,6 +45,7 @@ func (s *sdState) consumeByte(b byte) {
 		if b>>6 == 1 {
 			s.cmd = b & (0xFF >> 2)
 			s.state = sArg
+			s.arg = 0x00000000
 			s.argByte = 0
 		}
 	case sArg:
