@@ -274,6 +274,8 @@ func (c *Cpu) execute(in Instruction) {
 		c.PLA(in)
 	case rol:
 		c.ROL(in)
+	case ror:
+		c.ROR(in)
 	case rts:
 		c.RTS(in)
 	case sbc:
@@ -543,14 +545,32 @@ func (c *Cpu) ROL(in Instruction) {
 	carry := c.getStatusInt(sCarry)
 	switch in.addressing {
 	case accumulator:
-		c.setStatus(sCarry, (c.AC>>7) == 1)
-		c.AC = (c.AC << 1) | carry
+		c.setStatus(sCarry, c.AC>>7 == 1)
+		c.AC = c.AC<<1 | carry
 		c.updateStatus(c.AC)
 	default:
 		address := c.memoryAddress(in)
 		value := c.Bus.Read(address)
-		c.setStatus(sCarry, (value>>7) == 1)
-		value = (value << 1) | carry
+		c.setStatus(sCarry, value>>7 == 1)
+		value = value<<1 | carry
+		c.Bus.Write(address, value)
+		c.updateStatus(value)
+	}
+}
+
+// ROR: Rotate memory or accumulator left one bit.
+func (c *Cpu) ROR(in Instruction) {
+	carry := c.getStatusInt(sCarry)
+	switch in.addressing {
+	case accumulator:
+		c.setStatus(sCarry, c.AC&1 == 1)
+		c.AC = c.AC>>1 | carry<<7
+		c.updateStatus(c.AC)
+	default:
+		address := c.memoryAddress(in)
+		value := c.Bus.Read(address)
+		c.setStatus(sCarry, value&1 == 1)
+		value = value>>1 | carry<<7
 		c.Bus.Write(address, value)
 		c.updateStatus(value)
 	}
