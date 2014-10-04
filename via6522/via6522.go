@@ -122,6 +122,8 @@ type ParallelPeripheral interface {
 	// Write is passed the updated port state when data is written.
 	// Bits not set in PinMask should be ignored.
 	Write(byte)
+
+	String() string
 }
 
 func NewVia6522(o Options) *Via6522 {
@@ -133,17 +135,23 @@ func NewVia6522(o Options) *Via6522 {
 
 // AttachToPortA attaches a ParallelPeripheral to PA.
 func (via *Via6522) AttachToPortA(p ParallelPeripheral) {
-	via.peripherals[viaPcrOffsetA] = p
+	via.attachAtOffset(p, viaPcrOffsetA)
 }
 
 // AttachToPortA attaches a ParallelPeripheral to PB.
 func (via *Via6522) AttachToPortB(p ParallelPeripheral) {
-	via.peripherals[viaPcrOffsetB] = p
+	via.attachAtOffset(p, viaPcrOffsetB)
+}
+
+func (via *Via6522) attachAtOffset(p ParallelPeripheral, offset uint8) {
+	fmt.Printf("%s attaching %s (pinmask: %08b) at offset %d\n", via, p, p.PinMask(), offset);
+	via.peripherals[offset] = p
 }
 
 // Shutdown tells Via6522 and its devices that the system is shutting down.
 func (via *Via6522) Shutdown() {
 	for _, p := range via.peripherals {
+		fmt.Printf("%s shutting down peripheral: %s\n", via, p.String())
 		p.Shutdown()
 	}
 }

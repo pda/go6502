@@ -51,6 +51,10 @@ const (
 	resetMask = 1 << 3
 )
 
+func (s *Ssd1306) String() string {
+	return "SSD1306"
+}
+
 // PinMask declares the I/O pins the device is connected to.
 func (s *Ssd1306) PinMask() byte {
 	return 0x0F

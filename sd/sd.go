@@ -63,3 +63,7 @@ func (sd *SdCard) Write(data byte) {
 		}
 	}
 }
+
+func (sd *SdCard) String() string {
+	return "SD card"
+}
