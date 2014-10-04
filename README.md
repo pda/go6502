@@ -67,6 +67,34 @@ Get and run go6502:
 * `go6502 --debug`
 
 
+Example usage
+-------------
+
+Various invocations from my shell history; some run from this project, some from pda6502.
+
+```sh
+time go run go6502.go --debug --debug-commands='bi nop;run;q' --via-ssd1306 && open output.png
+make && go6502 --debug --debug-symbol-file=build/debug --debug-commands="bi nop;c;q" --via-ssd1306 --sd-card=sd.bin
+go build -o g6 go6502.go && gtimeout -s INT 0.2 ./g6 --via-ssd1306 --speedometer
+time go run go6502.go --via-ssd1306 --debug
+time go run go6502.go --debug --debug-commands='bi nop;r;q' --via-ssd1306 && open output.png
+make && go6502 --debug --debug-symbol-file=build/debug --via-ssd1306 --sd-card=sd.bin
+time go run go6502.go --via-ssd1306 --debug --debug-commands='bi nop;r;q' && open output.png
+go run go6502.go --debug --debug-symbol-file=$HOME/code/pda6502/build/debug --via-ssd1306 --sd-card=$HOME/code/pda6502/sd.bin
+make && go install github.com/pda/go6502 && gtimeout -s INT 0.1 go6502 --via-ssd1306 --sd-card="sd.bin" ; open ssd1306.png
+go run go6502.go --via-ssd1306 --debug --debug-commands='bi nop;run'
+go build go6502.go && gtimeout -s INT 1 ./go6502 --via-ssd1306 --speedometer
+go build go6502.go && gtimeout -s INT 0.1 ./go6502 --via-ssd1306 --speedometer
+make && go6502 -via-ssd1306 -sd-card=sd4gb.fat32 -debug -debug-symbol-file=build/debug -debug-commands="ba Halt; c; q" && hd -s 0x6000 -n 512 core
+make && go6502 --debug --debug-symbol-file=build/debug --via-ssd1306 --sd-card=sd.bin --debug-commands="bi nop; c; q"
+make && go6502 --debug --debug-symbol-file=build/debug --debug-commands="bi nop;c;q" --via-ssd1306 --sd-card=sd.bin && open ssd1306.png
+go6502 -via-ssd1306 -sd-card=sd4gb.fat32
+go6502 --debug --debug-symbol-file=build/debug --via-ssd1306 --sd-card=sd.bin
+go run go6502.go --via-ssd1306 --debug
+go run go6502.go --debug --debug-commands='bi nop;run;q' --via-ssd1306
+```
+
+
 Debugger / Monitor
 ------------------
 
