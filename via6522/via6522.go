@@ -144,7 +144,7 @@ func (via *Via6522) AttachToPortB(p ParallelPeripheral) {
 }
 
 func (via *Via6522) attachAtOffset(p ParallelPeripheral, offset uint8) {
-	fmt.Printf("%s attaching %s (pinmask: %08b) at offset %d\n", via, p, p.PinMask(), offset);
+	fmt.Printf("%s attaching %s (pinmask: %08b) at offset %d\n", via, p, p.PinMask(), offset)
 	via.peripherals[offset] = p
 }
 
@@ -210,7 +210,7 @@ func (via *Via6522) Read(a uint16) byte {
 		}
 		return via.readMixedInputOutput(via.ira, via.ora, via.ddra)
 	case 0x2:
-		return via.ddra
+		return via.ddrb
 	case 0x3:
 		return via.ddra
 	case 0xC:
