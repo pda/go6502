@@ -76,6 +76,17 @@ func TestPinMaskBlocksWrites(t *testing.T) {
 	}
 }
 
+func TestDdrBlocksWrites(t *testing.T) {
+	nand := &nand{}
+	via := via()
+	via.AttachToPortB(nand)
+	via.Write(ddrb, 0x02)
+	via.Write(iorb, 0xFF)
+	if nand.value&^0x02 != 0 {
+		t.Error(fmt.Errorf("peripheral received 0b%08b despite 0b%08b DDR", nand.value, 0xAA))
+	}
+}
+
 // nand: output to bits 0,1 then read NAND result on bit 7.
 
 type nand struct {

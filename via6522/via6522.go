@@ -249,16 +249,15 @@ func (via *Via6522) String() string {
 
 // Write to register specified by the given 4-bit address (0x00..0x0F).
 func (via *Via6522) Write(a uint16, data byte) {
-	// TODO: mask with DDR here, or later.
 	switch a {
 	default:
 		panic(fmt.Sprintf("write to 0x%X not handled by Via6522", a))
 	case 0x0:
 		via.orb = data
-		via.handleDataWrite(viaPcrOffsetB, data)
+		via.handleDataWrite(viaPcrOffsetB, data&via.ddrb)
 	case 0x1:
 		via.ora = data
-		via.handleDataWrite(viaPcrOffsetA, data)
+		via.handleDataWrite(viaPcrOffsetA, data&via.ddra)
 	case 0x2:
 		via.ddrb = data
 	case 0x3:
