@@ -87,6 +87,44 @@ func TestDdrBlocksWrites(t *testing.T) {
 	}
 }
 
+func TestWriteToMultipleOverlappingPeripherals(t *testing.T) {
+	one := &flipflop{pinmask: 0xF8} // 0b11111000
+	two := &flipflop{pinmask: 0x1F} // 0b00011111
+	via := via()
+	via.AttachToPortA(one)
+	via.AttachToPortA(two)
+	via.Write(ddra, 0xFF) // all output
+	via.Write(iora, 0xAA)
+
+	expectedOne := 0xAA & one.PinMask()
+	expectedTwo := 0xAA & two.PinMask()
+
+	if one.value != expectedOne {
+		t.Error(fmt.Errorf("one: wrote 0b%08b, expected 0b%08b, got 0b%08b", 0xAA, expectedOne, one.value))
+	}
+
+	if two.value != expectedTwo {
+		t.Error(fmt.Errorf("two: wrote 0b%08b, expected 0b%08b, got 0b%08b", 0xAA, expectedTwo, two.value))
+	}
+}
+
+func TestReadFromMultipleOverlappingPeripherals(t *testing.T) {
+	one := &flipflop{pinmask: 0xF8, value: 0xAA} // pinmask: 11111000, value: 10101010
+	two := &flipflop{pinmask: 0x1F, value: 0xF0} // pinmask: 00011111, value: 11110000
+	via := via()
+	via.AttachToPortA(one)
+	via.AttachToPortA(two)
+	via.Write(ddra, 0x00) // all input
+	result := via.Read(iora)
+	expected := byte(0xB8) // 0b10111000
+	if result != expected {
+		t.Error(fmt.Errorf("one: expected 0b%08b, got 0b%08b", expected, result))
+	}
+}
+
+// ---------------------------------------
+// Test ParallelPeripheral implementations
+
 // nand: output to bits 0,1 then read NAND result on bit 7.
 
 type nand struct {
@@ -114,4 +152,30 @@ func (nand *nand) Write(in byte) {
 
 func (nand *nand) String() string {
 	return "NAND gate test peripheral"
+}
+
+// flipflop: simple memory (subject to external DDR, pinmask etc)
+
+type flipflop struct {
+	value   byte
+	pinmask byte
+}
+
+func (ff *flipflop) PinMask() byte {
+	return ff.pinmask
+}
+
+func (ff *flipflop) Read() byte {
+	return ff.value
+}
+
+func (ff *flipflop) Shutdown() {
+}
+
+func (ff *flipflop) Write(in byte) {
+	ff.value = in
+}
+
+func (ff *flipflop) String() string {
+	return "flipflop test peripheral"
 }

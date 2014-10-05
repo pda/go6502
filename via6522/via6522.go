@@ -88,15 +88,16 @@ const (
 type Via6522 struct {
 	// Note: It may be a mistake to consider ORx and IRx separate registers.
 	//       If so... fix it?
-	ora         byte // output register port A
-	orb         byte // output register port B
-	ira         byte // input register port A
-	irb         byte // input register port B
-	ddra        byte // data direction port A
-	ddrb        byte // data direction port B
-	pcr         byte // peripheral control register
-	options     Options
-	peripherals map[uint8]ParallelPeripheral
+	ora           byte // output register port A
+	orb           byte // output register port B
+	ira           byte // input register port A
+	irb           byte // input register port B
+	ddra          byte // data direction port A
+	ddrb          byte // data direction port B
+	pcr           byte // peripheral control register
+	options       Options
+	paPeripherals []ParallelPeripheral
+	pbPeripherals []ParallelPeripheral
 }
 
 type Options struct {
@@ -129,29 +130,32 @@ type ParallelPeripheral interface {
 func NewVia6522(o Options) *Via6522 {
 	via := &Via6522{}
 	via.options = o
-	via.peripherals = make(map[uint8]ParallelPeripheral)
+	via.paPeripherals = make([]ParallelPeripheral, 0)
+	via.pbPeripherals = make([]ParallelPeripheral, 0)
 	return via
 }
 
 // AttachToPortA attaches a ParallelPeripheral to PA.
 func (via *Via6522) AttachToPortA(p ParallelPeripheral) {
-	via.attachAtOffset(p, viaPcrOffsetA)
+	fmt.Printf("%s PORTA attaching %s (pinmask: %08b)\n", via, p, p.PinMask())
+	via.paPeripherals = append(via.paPeripherals, p)
 }
 
 // AttachToPortA attaches a ParallelPeripheral to PB.
 func (via *Via6522) AttachToPortB(p ParallelPeripheral) {
-	via.attachAtOffset(p, viaPcrOffsetB)
-}
-
-func (via *Via6522) attachAtOffset(p ParallelPeripheral, offset uint8) {
-	fmt.Printf("%s attaching %s (pinmask: %08b) at offset %d\n", via, p, p.PinMask(), offset)
-	via.peripherals[offset] = p
+	fmt.Printf("%s PORTB attaching %s (pinmask: %08b)\n", via, p, p.PinMask())
+	via.pbPeripherals = append(via.pbPeripherals, p)
 }
 
 // Shutdown tells Via6522 and its devices that the system is shutting down.
 func (via *Via6522) Shutdown() {
-	for _, p := range via.peripherals {
-		fmt.Printf("%s shutting down peripheral: %s\n", via, p.String())
+	var p ParallelPeripheral
+	for _, p = range via.paPeripherals {
+		fmt.Printf("%s shutting down PORTA peripheral: %s\n", via, p.String())
+		p.Shutdown()
+	}
+	for _, p = range via.pbPeripherals {
+		fmt.Printf("%s shutting down PORTB peripheral: %s\n", via, p.String())
 		p.Shutdown()
 	}
 }
@@ -164,21 +168,6 @@ func (via *Via6522) control1Mode(portOffset uint8) byte {
 // CA2 or CB2 3-bit mode for the given port offset (viaPCR_OFFSET_x)
 func (via *Via6522) control2Mode(portOffset uint8) byte {
 	return (via.pcr >> (portOffset + 1)) & 0x7
-}
-
-func (via *Via6522) handleDataWrite(portOffset uint8, data byte) {
-	mode := via.control2Mode(portOffset)
-	_ = mode
-
-	if via.options.DumpBinary {
-		fmt.Printf("VIA output: %08b (0x%02X)\n", data, data)
-	}
-	if via.options.DumpAscii {
-		printAsciiByte(data)
-	}
-	if p := via.peripherals[portOffset]; p != nil {
-		p.Write(data & p.PinMask())
-	}
 }
 
 // Print a byte as ASCII, using escape sequences where necessary.
@@ -200,13 +189,15 @@ func (via *Via6522) Read(a uint16) byte {
 	default:
 		panic(fmt.Sprintf("read from 0x%X not handled by Via6522", a))
 	case 0x0:
-		if p := via.peripherals[viaPcrOffsetB]; p != nil {
-			via.irb = p.Read()
+		via.irb = 0x00
+		for _, p := range via.pbPeripherals {
+			via.irb |= (p.Read() & p.PinMask())
 		}
 		return via.readMixedInputOutput(via.irb, via.orb, via.ddrb)
 	case 0x1:
-		if p := via.peripherals[viaPcrOffsetA]; p != nil {
-			via.ira = p.Read()
+		via.ira = 0x00
+		for _, p := range via.paPeripherals {
+			via.ira |= (p.Read() & p.PinMask())
 		}
 		return via.readMixedInputOutput(via.ira, via.ora, via.ddra)
 	case 0x2:
@@ -254,15 +245,27 @@ func (via *Via6522) Write(a uint16, data byte) {
 		panic(fmt.Sprintf("write to 0x%X not handled by Via6522", a))
 	case 0x0:
 		via.orb = data
-		via.handleDataWrite(viaPcrOffsetB, data&via.ddrb)
+		via.handleDataWrite(data&via.ddrb, via.pbPeripherals)
 	case 0x1:
 		via.ora = data
-		via.handleDataWrite(viaPcrOffsetA, data&via.ddra)
+		via.handleDataWrite(data&via.ddra, via.paPeripherals)
 	case 0x2:
 		via.ddrb = data
 	case 0x3:
 		via.ddra = data
 	case 0xC:
 		via.pcr = data
+	}
+}
+
+func (via *Via6522) handleDataWrite(data byte, peripherals []ParallelPeripheral) {
+	if via.options.DumpBinary {
+		fmt.Printf("VIA output: %08b (0x%02X)\n", data, data)
+	}
+	if via.options.DumpAscii {
+		printAsciiByte(data)
+	}
+	for _, p := range peripherals {
+		p.Write(data & p.PinMask())
 	}
 }
