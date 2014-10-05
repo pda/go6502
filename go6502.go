@@ -52,7 +52,7 @@ func mainReturningStatus() int {
 
 	if options.ViaSsd1306 {
 		ssd1306 := ssd1306.NewSsd1306()
-		via.AttachToPortB(ssd1306)
+		via.AttachToPortA(ssd1306)
 	}
 
 	if len(options.SdCard) > 0 {
