@@ -28,6 +28,7 @@ type Slave struct {
 
 func NewSlave(pm PinMap) *Slave {
 	return &Slave{
+		PinMap:   pm,
 		index:    7,
 		maskSclk: 1 << pm.Sclk,
 		maskMosi: 1 << pm.Mosi,
