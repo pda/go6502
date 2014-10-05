@@ -65,6 +65,17 @@ func assertPortBWriteThenRead(t *testing.T, via *Via6522, write, expect byte) {
 	}
 }
 
+func TestPinMaskBlocksWrites(t *testing.T) {
+	nand := &nand{}
+	via := via()
+	via.AttachToPortB(nand)
+	via.Write(ddrb, 0xFF) // all output
+	via.Write(iorb, 0xFF) // write all bits
+	if nand.value != nand.PinMask() {
+		t.Error(fmt.Errorf("peripheral received 0b%08b despite 0b%08b pinmask", nand.value, nand.PinMask()))
+	}
+}
+
 // nand: output to bits 0,1 then read NAND result on bit 7.
 
 type nand struct {
@@ -76,18 +87,18 @@ func (nand *nand) PinMask() byte {
 }
 
 func (nand *nand) Read() byte {
-	return nand.value
+	if (nand.value & 0x3) == 0x3 {
+		return 0
+	} else {
+		return (1 << 7)
+	}
 }
 
 func (nand *nand) Shutdown() {
 }
 
 func (nand *nand) Write(in byte) {
-	if (in & 0x3) == 0x3 {
-		nand.value = 0
-	} else {
-		nand.value = (1 << 7)
-	}
+	nand.value = in
 }
 
 func (nand *nand) String() string {

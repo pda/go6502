@@ -177,7 +177,7 @@ func (via *Via6522) handleDataWrite(portOffset uint8, data byte) {
 		printAsciiByte(data)
 	}
 	if p := via.peripherals[portOffset]; p != nil {
-		p.Write(data)
+		p.Write(data & p.PinMask())
 	}
 }
 
