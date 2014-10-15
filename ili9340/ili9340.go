@@ -129,9 +129,9 @@ func (d *Display) ramWrite(b byte) {
 }
 
 func (d *Display) pixelWrite(p16 uint16) {
-	r := fiveBitToEightBit(uint8((p16 & 0xF800) >> 11))
-	g := sixBitToEightBit(uint8((p16 & 0x07E0) >> 5))
-	b := fiveBitToEightBit(uint8((p16 & 0x001F)))
+	r := uint8((p16 & 0xF800) >> 8) // map high 5-bit to 8-bit color
+	g := uint8((p16 & 0x07E0) >> 3) // map mid 6-bit to 8-bit color
+	b := uint8((p16 & 0x001F) << 3) // map low 5-bit to 8-bit color
 
 	d.img.SetRGBA(int(d.nextX), int(d.nextY), color.RGBA{r, g, b, 0xFF})
 
@@ -140,20 +140,4 @@ func (d *Display) pixelWrite(p16 uint16) {
 	if d.nextX == 0 {
 		d.nextY = (d.nextY + 1) % height
 	}
-}
-
-func fiveBitToEightBit(in uint8) uint8 {
-	x := uint32(in) << 24 // expanded precision
-	x = x / (1 << 5)      // divide by 5-bit color space
-	x = x * (1 << 8)      // multiply by 8-bit color space
-	x = x >> 24           // undo expanded precision
-	return uint8(x)
-}
-
-func sixBitToEightBit(in uint8) uint8 {
-	x := uint32(in) << 24 // expanded precision
-	x = x / (1 << 6)      // divide by 6-bit color space
-	x = x * (1 << 8)      // multiply by 8-bit color space
-	x = x >> 24           // undo expanded precision
-	return uint8(x)
 }
