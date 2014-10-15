@@ -16,6 +16,7 @@ type Options struct {
 	Debug           bool
 	DebugCmds       commandList
 	DebugSymbolFile string
+	Ili9340         bool
 	SdCard          string
 	Speedometer     bool
 	ViaDumpAscii    bool
@@ -27,21 +28,14 @@ type Options struct {
 func ParseFlags() *Options {
 	opt := &Options{}
 
-	// Debug
 	flag.BoolVar(&opt.Debug, "debug", false, "Run debugger")
 	flag.Var(&opt.DebugCmds, "debug-commands", "Debugger commands to run, semicolon separated.")
 	flag.StringVar(&opt.DebugSymbolFile, "debug-symbol-file", "", "ld65 v2.13.3 debug file to load.")
-
-	// SD card
-	flag.StringVar(&opt.SdCard, "sd-card", "", "Load file as SD card on VIA port A[4..7]")
-
-	// Speedometer
+	flag.StringVar(&opt.SdCard, "sd-card", "", "Load file as SD card on 6522 port A[4..7]")
 	flag.BoolVar(&opt.Speedometer, "speedometer", false, "Measure effective clock speed")
-
-	// VIA
-	flag.BoolVar(&opt.ViaDumpBinary, "via-dump-binary", false, "VIA6522 dumps binary output")
-	flag.BoolVar(&opt.ViaDumpAscii, "via-dump-ascii", false, "VIA6522 dumps ASCII output")
-	flag.BoolVar(&opt.ViaSsd1306, "via-ssd1306", false, "SSD1306 OLED display on VIA6522 port A[0..3]")
+	flag.BoolVar(&opt.ViaDumpBinary, "via-dump-binary", false, "6522 dumps binary output")
+	flag.BoolVar(&opt.ViaDumpAscii, "via-dump-ascii", false, "6522 dumps ASCII output")
+	flag.BoolVar(&opt.ViaSsd1306, "via-ssd1306", false, "SSD1306 OLED display on 6522")
 
 	flag.Parse()
 	return opt
