@@ -36,6 +36,7 @@ func ParseFlags() *Options {
 	flag.BoolVar(&opt.ViaDumpBinary, "via-dump-binary", false, "6522 dumps binary output")
 	flag.BoolVar(&opt.ViaDumpAscii, "via-dump-ascii", false, "6522 dumps ASCII output")
 	flag.BoolVar(&opt.ViaSsd1306, "via-ssd1306", false, "SSD1306 OLED display on 6522")
+	flag.BoolVar(&opt.Ili9340, "ili9340", false, "ILI9340 TFT display on 6522")
 
 	flag.Parse()
 	return opt

@@ -16,6 +16,7 @@ import (
 	"github.com/pda/go6502/cli"
 	"github.com/pda/go6502/cpu"
 	"github.com/pda/go6502/debugger"
+	"github.com/pda/go6502/ili9340"
 	"github.com/pda/go6502/memory"
 	"github.com/pda/go6502/sd"
 	"github.com/pda/go6502/speedometer"
@@ -49,6 +50,19 @@ func mainReturningStatus() int {
 		DumpAscii:  options.ViaDumpAscii,
 		DumpBinary: options.ViaDumpBinary,
 	})
+
+	if options.Ili9340 {
+		ili9340, err := ili9340.NewDisplay(spi.PinMap{
+			Sclk: 0,
+			Mosi: 6,
+			Miso: 7,
+			Ss:   5,
+		})
+		if err != nil {
+			panic(err)
+		}
+		via.AttachToPortB(ili9340)
+	}
 
 	if options.ViaSsd1306 {
 		ssd1306 := ssd1306.NewSsd1306()
