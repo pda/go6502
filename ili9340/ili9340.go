@@ -21,10 +21,14 @@ const (
 const (
 	stateUnknown = iota
 	stateRamWrite
+	stateColumnAddressSet
+	statePageAddressSet
 )
 
 const (
-	cmdRamWrite = 0x2C
+	cmdRamWrite         = 0x2C
+	cmdColumnAddressSet = 0x2A
+	cmdPageAddressSet   = 0x2B
 )
 
 const (
@@ -34,14 +38,14 @@ const (
 )
 
 type Display struct {
-	spi       *spi.Slave
-	dataMode  bool
-	state     uint
-	img       *image.RGBA
-	nextX     uint16
-	nextY     uint16
-	pixel     uint16 // accumulator for current pixel
-	pixelByte uint8  // next byte offset into the pixel (0 or 1)
+	spi        *spi.Slave
+	dataMode   bool
+	state      uint
+	paramIndex uint8
+	paramData  uint32 // accumulator for current parameter
+	img        *image.RGBA
+	nextX      uint16
+	nextY      uint16
 }
 
 func NewDisplay(pm spi.PinMap) (display *Display, err error) {
@@ -100,9 +104,14 @@ func (d *Display) acceptByte(b byte) {
 }
 
 func (d *Display) acceptCommand(b byte) {
+	d.paramIndex = 0
 	switch b {
 	case cmdRamWrite:
 		d.state = stateRamWrite
+	case cmdColumnAddressSet:
+		d.state = stateColumnAddressSet
+	case cmdPageAddressSet:
+		d.state = statePageAddressSet
 	default:
 		if d.state != stateUnknown {
 			d.state = stateUnknown
@@ -111,20 +120,20 @@ func (d *Display) acceptCommand(b byte) {
 }
 
 func (d *Display) acceptData(b byte) {
+	if d.paramIndex == 0 {
+		d.paramData = 0
+	}
+	d.paramData |= (uint32(b) << ((3 - d.paramIndex) * 8))
+	d.paramIndex++
+
 	switch d.state {
 	case stateRamWrite:
-		d.ramWrite(b)
-	}
-}
-
-func (d *Display) ramWrite(b byte) {
-	if d.pixelByte == 0 {
-		d.pixel |= uint16(b) << 8
-		d.pixelByte++
-	} else {
-		d.pixel |= uint16(b)
-		d.pixelByte--
-		d.pixelWrite(d.pixel)
+		if d.paramIndex == 2 {
+			d.pixelWrite(uint16(d.paramData >> 16))
+			d.paramIndex = 0
+		}
+	case stateColumnAddressSet:
+		//d.acceptColumnAddressByte(b)
 	}
 }
 
