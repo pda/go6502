@@ -45,17 +45,23 @@ type Display struct {
 	paramIndex uint8
 	paramData  uint32 // accumulator for current parameter
 	img        *image.RGBA
-	window     *image.RGBA
 	nextX      uint16
 	nextY      uint16
+	startCol   uint16
+	endCol     uint16
+	startRow   uint16
+	endRow     uint16
 }
 
 func NewDisplay(pm spi.PinMap) (display *Display, err error) {
 	img := createImage()
 	display = &Display{
-		spi:    spi.NewSlave(pm),
-		img:    img,
-		window: img.SubImage(img.Bounds()).(*image.RGBA),
+		spi:      spi.NewSlave(pm),
+		img:      img,
+		startCol: 0,
+		endCol:   width - 1,
+		startRow: 0,
+		endRow:   height - 1,
 	}
 	return
 }
@@ -117,6 +123,8 @@ func (d *Display) acceptCommand(b byte) {
 	d.paramIndex = 0
 	switch b {
 	case cmdRamWrite:
+		d.nextX = d.startCol
+		d.nextY = d.startRow
 		d.state = stateRamWrite
 	case cmdColumnAddressSet:
 		d.state = stateColumnAddressSet
@@ -157,34 +165,34 @@ func (d *Display) pixelWrite(p16 uint16) {
 	r := uint8((p16 & 0xF800) >> 8) // map high 5-bit to 8-bit color
 	g := uint8((p16 & 0x07E0) >> 3) // map mid 6-bit to 8-bit color
 	b := uint8((p16 & 0x001F) << 3) // map low 5-bit to 8-bit color
+	c := color.RGBA{r, g, b, 0xFF}
 
-	d.window.SetRGBA(int(d.nextX), int(d.nextY), color.RGBA{r, g, b, 0xFF})
+	d.img.SetRGBA(int(d.nextX), int(d.nextY), c)
 
-	// move to next pixel
-	d.nextX = (d.nextX + 1) % width
-	if d.nextX == 0 {
-		d.nextY = (d.nextY + 1) % height
+	if d.nextX == d.endCol {
+		d.nextX = d.startCol
+		if d.nextY == d.endRow {
+			d.nextY = d.startRow
+		} else {
+			d.nextY++
+		}
+	} else {
+		d.nextX++
 	}
 }
 
 func (d *Display) acceptColumnAddressByte(b byte) {
 	if d.paramIndex == 4 {
-		x0 := int(d.paramData >> 16)
-		x1 := int(d.paramData & 0xFFFF)
-		d.window = d.img.SubImage(image.Rect(x0, d.window.Bounds().Min.Y, x1, d.window.Bounds().Max.Y)).(*image.RGBA)
-		reportAddressWindow(d)
+		d.startCol = uint16(d.paramData >> 16)
+		d.endCol = uint16(d.paramData & 0xFFFF)
+		fmt.Printf("ILI9340 column address range %d:%d\n", d.startCol, d.endCol)
 	}
 }
 
 func (d *Display) acceptPageAddressByte(b byte) {
 	if d.paramIndex == 4 {
-		y0 := int(d.paramData >> 16)
-		y1 := int(d.paramData & 0xFFFF)
-		d.window = d.img.SubImage(image.Rect(d.window.Bounds().Min.X, y0, d.window.Bounds().Max.X, y1)).(*image.RGBA)
-		reportAddressWindow(d)
+		d.startRow = uint16(d.paramData >> 16)
+		d.endRow = uint16(d.paramData & 0xFFFF)
+		fmt.Printf("ILI9340 row address range %d:%d\n", d.startRow, d.endRow)
 	}
-}
-
-func reportAddressWindow(d *Display) {
-	fmt.Printf("ILI9340: address window: %v\n", d.window.Bounds())
 }
