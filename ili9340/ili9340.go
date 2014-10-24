@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/draw"
 	"image/png"
 	"os"
 
@@ -44,15 +45,24 @@ type Display struct {
 	paramIndex uint8
 	paramData  uint32 // accumulator for current parameter
 	img        *image.RGBA
+	window     *image.RGBA
 	nextX      uint16
 	nextY      uint16
 }
 
 func NewDisplay(pm spi.PinMap) (display *Display, err error) {
+	img := createImage()
 	display = &Display{
-		spi: spi.NewSlave(pm),
-		img: image.NewRGBA(image.Rect(0, 0, width, height)),
+		spi:    spi.NewSlave(pm),
+		img:    img,
+		window: img.SubImage(img.Bounds()).(*image.RGBA),
 	}
+	return
+}
+
+func createImage() (img *image.RGBA) {
+	img = image.NewRGBA(image.Rect(0, 0, width, height))
+	draw.Draw(img, img.Bounds(), &image.Uniform{color.Black}, image.ZP, draw.Src)
 	return
 }
 
@@ -128,12 +138,16 @@ func (d *Display) acceptData(b byte) {
 
 	switch d.state {
 	case stateRamWrite:
-		if d.paramIndex == 2 {
-			d.pixelWrite(uint16(d.paramData >> 16))
-			d.paramIndex = 0
-		}
+		d.acceptRamWrite(b)
 	case stateColumnAddressSet:
-		//d.acceptColumnAddressByte(b)
+		d.acceptColumnAddressByte(b)
+	}
+}
+
+func (d *Display) acceptRamWrite(b byte) {
+	if d.paramIndex == 2 {
+		d.pixelWrite(uint16(d.paramData >> 16))
+		d.paramIndex = 0
 	}
 }
 
@@ -142,11 +156,21 @@ func (d *Display) pixelWrite(p16 uint16) {
 	g := uint8((p16 & 0x07E0) >> 3) // map mid 6-bit to 8-bit color
 	b := uint8((p16 & 0x001F) << 3) // map low 5-bit to 8-bit color
 
-	d.img.SetRGBA(int(d.nextX), int(d.nextY), color.RGBA{r, g, b, 0xFF})
+	d.window.SetRGBA(int(d.nextX), int(d.nextY), color.RGBA{r, g, b, 0xFF})
 
 	// move to next pixel
 	d.nextX = (d.nextX + 1) % width
 	if d.nextX == 0 {
 		d.nextY = (d.nextY + 1) % height
+	}
+}
+
+func (d *Display) acceptColumnAddressByte(b byte) {
+	if d.paramIndex == 4 {
+		data := d.paramData
+		x0 := int(data >> 16)
+		x1 := int(data & 0xFF)
+		fmt.Printf("ILI9340: column address: x0:%d x1:%d\n", x0, x1)
+		d.window = d.img.SubImage(image.Rect(x0, 0, x1, 240)).(*image.RGBA)
 	}
 }
