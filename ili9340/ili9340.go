@@ -141,6 +141,8 @@ func (d *Display) acceptData(b byte) {
 		d.acceptRamWrite(b)
 	case stateColumnAddressSet:
 		d.acceptColumnAddressByte(b)
+	case statePageAddressSet:
+		d.acceptPageAddressByte(b)
 	}
 }
 
@@ -167,10 +169,22 @@ func (d *Display) pixelWrite(p16 uint16) {
 
 func (d *Display) acceptColumnAddressByte(b byte) {
 	if d.paramIndex == 4 {
-		data := d.paramData
-		x0 := int(data >> 16)
-		x1 := int(data & 0xFF)
-		fmt.Printf("ILI9340: column address: x0:%d x1:%d\n", x0, x1)
-		d.window = d.img.SubImage(image.Rect(x0, 0, x1, 240)).(*image.RGBA)
+		x0 := int(d.paramData >> 16)
+		x1 := int(d.paramData & 0xFFFF)
+		d.window = d.img.SubImage(image.Rect(x0, d.window.Bounds().Min.Y, x1, d.window.Bounds().Max.Y)).(*image.RGBA)
+		reportAddressWindow(d)
 	}
+}
+
+func (d *Display) acceptPageAddressByte(b byte) {
+	if d.paramIndex == 4 {
+		y0 := int(d.paramData >> 16)
+		y1 := int(d.paramData & 0xFFFF)
+		d.window = d.img.SubImage(image.Rect(d.window.Bounds().Min.X, y0, d.window.Bounds().Max.X, y1)).(*image.RGBA)
+		reportAddressWindow(d)
+	}
+}
+
+func reportAddressWindow(d *Display) {
+	fmt.Printf("ILI9340: address window: %v\n", d.window.Bounds())
 }
