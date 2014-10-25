@@ -218,6 +218,8 @@ func (c *Cpu) execute(in Instruction) {
 		c.BCS(in)
 	case beq:
 		c.BEQ(in)
+	case bit:
+		c.BIT(in)
 	case bmi:
 		c.BMI(in)
 	case bne:
@@ -359,6 +361,14 @@ func (c *Cpu) BEQ(in Instruction) {
 	if c.getStatus(sZero) {
 		c.branch(in)
 	}
+}
+
+// BIT: Bit Test.
+func (c *Cpu) BIT(in Instruction) {
+	value := c.resolveOperand(in)
+	c.setStatus(sZero, value&c.AC == 0)
+	c.setStatus(sOverflow, value&(1<<6) != 0)
+	c.setStatus(sNegative, value&(1<<7) != 0)
 }
 
 // BMI: Branch if negative.
