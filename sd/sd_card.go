@@ -1,4 +1,5 @@
 //go:generate stringer -type state
+//go:generate stringer -type response
 
 package sd
 
@@ -14,9 +15,11 @@ const (
 	sData                  // sending data until misoQueue empty.
 )
 
+type response uint8
+
 const (
-	r1_ready = 0x00
-	r1_idle  = 0x01
+	r1_ready response = 0x00
+	r1_idle  response = 0x01
 )
 
 const (
@@ -83,18 +86,18 @@ func (sd *sdCard) handleCmd() {
 	switch sd.cmd {
 	case 0: // GO_IDLE_STATE
 		fmt.Println("SD CMD0 response: r1_idle")
-		sd.queueMisoBytes(0xFF, 0xFF, r1_idle) // busy then idle
+		sd.queueMisoBytes(0xFF, 0xFF, byte(r1_idle)) // busy then idle
 		sd.enter(sCommand)
 	case 17: // READ_SINGLE_BLOCK
 		fmt.Println("SD CMD17 response: r1_ready, data start block, data")
-		sd.queueMisoBytes(0xFF, 0xFF, r1_ready)   // busy then ready
-		sd.queueMisoBytes(0xFF, 0xFF, 0xFF, 0xFF) // time before data block
-		sd.queueMisoBytes(0xFE)                   // data start block
+		sd.queueMisoBytes(0xFF, 0xFF, byte(r1_ready)) // busy then ready
+		sd.queueMisoBytes(0xFF, 0xFF, 0xFF, 0xFF)     // time before data block
+		sd.queueMisoBytes(0xFE)                       // data start block
 		sd.queueMisoBytes(sd.readBlock(sd.arg)...)
 		sd.enter(sData)
 	case 55: // APP_CMD
 		fmt.Println("SD CMD55 response: r1_idle")
-		sd.queueMisoBytes(r1_idle) // busy then idle
+		sd.queueMisoBytes(byte(r1_idle)) // busy then idle
 		sd.acmd = true
 		sd.enter(sCommand)
 	default:
@@ -110,11 +113,11 @@ func (sd *sdCard) handleAcmd() {
 		if sd.prevAcmd == 41 {
 			// on second attempt, busy, busy, then ready.
 			fmt.Println("SD ACMD41 response: r1_ready")
-			sd.queueMisoBytes(0xFF, 0xFF, r1_ready)
+			sd.queueMisoBytes(0xFF, 0xFF, byte(r1_ready))
 		} else {
 			// on first attempt, busy, busy, then idle (not yet ready).
 			fmt.Println("SD ACMD41 response: r1_idle")
-			sd.queueMisoBytes(0xFF, 0xFF, r1_idle)
+			sd.queueMisoBytes(0xFF, 0xFF, byte(r1_idle))
 		}
 		sd.enter(sCommand)
 	default:
