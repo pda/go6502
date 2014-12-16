@@ -7,19 +7,19 @@ import (
 )
 
 type SdCardPeripheral struct {
-	state *sdState
-	spi   *spi.Slave
+	card *sdCard
+	spi  *spi.Slave
 }
 
 // SdFromFile creates a new SdCardPeripheral based on the contents of a file.
 func NewSdCardPeripheral(pm spi.PinMap) (sd *SdCardPeripheral, err error) {
 	sd = &SdCardPeripheral{
-		state: newSdState(),
-		spi:   spi.NewSlave(pm),
+		card: newSdCard(),
+		spi:  spi.NewSlave(pm),
 	}
 
 	// two busy bytes, then ready.
-	sd.state.queueMisoBytes(0x00, 0x00, 0xFF)
+	sd.card.queueMisoBytes(0x00, 0x00, 0xFF)
 
 	return
 }
@@ -30,7 +30,7 @@ func (sd *SdCardPeripheral) LoadFile(path string) (err error) {
 	if err != nil {
 		return
 	}
-	sd.state.data = data
+	sd.card.data = data
 	return
 }
 
@@ -56,9 +56,9 @@ func (sd *SdCardPeripheral) Write(data byte) {
 			//	mosi, mosi, sd.spi.Miso, sd.spi.Miso)
 
 			// consume the byte read, queue miso bytes internally
-			sd.state.consumeByte(mosi)
+			sd.card.consumeByte(mosi)
 			// dequeues one miso byte, or a default byte if queue empty.
-			sd.spi.QueueMisoBits(sd.state.shiftMiso())
+			sd.spi.QueueMisoBits(sd.card.shiftMiso())
 		}
 	}
 }
