@@ -76,7 +76,7 @@ func mainReturningStatus() int {
 	}
 
 	if len(options.SdCard) > 0 {
-		sd, err := sd.NewSdCard(spi.PinMap{
+		sd, err := sd.NewSdCardPeripheral(spi.PinMap{
 			Sclk: 0,
 			Mosi: 6,
 			Miso: 7,
