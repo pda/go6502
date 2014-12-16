@@ -2,6 +2,7 @@ package debugger
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -13,6 +14,10 @@ type debugSymbol struct {
 }
 
 type debugSymbols []debugSymbol
+
+func (d debugSymbol) String() string {
+	return fmt.Sprintf("{%s => $%04X}", d.name, d.address)
+}
 
 // addressesFor returns the addresses labelled with the given name.
 func (symbols debugSymbols) addressesFor(name string) (result []uint16) {
@@ -58,8 +63,13 @@ func readDebugSymbols(debugFile string) (symbols debugSymbols, err error) {
 	t := &tokenizer{state: sBegin}
 
 	handleLine := func() {
-		if t.line.data["type"] == "label" {
-			addr, err := strconv.ParseUint(t.line.data["value"], 0, 16)
+		// old format: "label", new format: "lab"
+		if t.line.data["type"][0:3] == "lab" {
+			val, ok := t.line.data["val"] // new format
+			if !ok {
+				val = t.line.data["value"] // old format
+			}
+			addr, err := strconv.ParseUint(val, 0, 16)
 			if err != nil {
 				panic(err)
 			}
@@ -75,7 +85,7 @@ func readDebugSymbols(debugFile string) (symbols debugSymbols, err error) {
 		case sBegin:
 			if s.Text() == "sym" {
 				t.line = debugLine{prefix: "sym", data: make(map[string]string)}
-				t.enter(sName)
+				t.enter(sTab)
 			} else {
 				t.enter(sReject)
 			}
@@ -83,11 +93,22 @@ func readDebugSymbols(debugFile string) (symbols debugSymbols, err error) {
 			if bytes[0] == '\n' {
 				t.enter(sBegin)
 			}
-		case sName:
-			if bytes[0] != '\t' {
+		case sTab:
+			if bytes[0] == '\t' {
+				t.enter(sNameOrMap)
+			} else {
+				panic("Expected TAB after line type")
+			}
+		case sNameOrMap:
+			if bytes[0] == '"' {
+				// name (old debug format)
 				text := s.Text()
 				t.line.name = text[1 : len(text)-1] // strip quotes
 				t.enter(sMap)
+			} else {
+				// map key (new debug format)
+				t.line.key = s.Text()
+				t.enter(sMapEquals)
 			}
 		case sMap:
 			if bytes[0] == ',' {
@@ -107,7 +128,12 @@ func readDebugSymbols(debugFile string) (symbols debugSymbols, err error) {
 			}
 		case sMapValue:
 			t.enter(sMap)
-			t.line.data[t.line.key] = s.Text()
+			if t.line.key == "name" {
+				text := s.Text()
+				t.line.name = text[1 : len(text)-1] // strip quotes
+			} else {
+				t.line.data[t.line.key] = s.Text()
+			}
 		}
 	}
 	if err = s.Err(); err != nil {
@@ -119,10 +145,11 @@ func readDebugSymbols(debugFile string) (symbols debugSymbols, err error) {
 
 // Tokenizer states.
 const (
-	sBegin  = iota // initial state
-	sReject        // line is being rejected
-	sName          // expecting name
-	sMap           // expecting ,key=value,key=value
+	sBegin     = iota // initial state
+	sReject           // line is being rejected
+	sTab              // expect tab
+	sNameOrMap        // expecting name in old format, map in new format.
+	sMap              // expecting ,key=value,key=value
 	sMapKey
 	sMapEquals
 	sMapValue
@@ -141,7 +168,6 @@ type tokenizer struct {
 }
 
 func (t *tokenizer) enter(state int) {
-	//fmt.Printf("cc65 debug tokenizer: %d => %d\n", t.state, state)
 	t.state = state
 }
 

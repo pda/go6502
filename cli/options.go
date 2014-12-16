@@ -30,7 +30,7 @@ func ParseFlags() *Options {
 
 	flag.BoolVar(&opt.Debug, "debug", false, "Run debugger")
 	flag.Var(&opt.DebugCmds, "debug-commands", "Debugger commands to run, semicolon separated.")
-	flag.StringVar(&opt.DebugSymbolFile, "debug-symbol-file", "", "ld65 v2.13.3 debug file to load.")
+	flag.StringVar(&opt.DebugSymbolFile, "debug-symbol-file", "", "ld65 debug file to load.")
 	flag.StringVar(&opt.SdCard, "sd-card", "", "Load file as SD card on 6522 port A[4..7]")
 	flag.BoolVar(&opt.Speedometer, "speedometer", false, "Measure effective clock speed")
 	flag.BoolVar(&opt.ViaDumpBinary, "via-dump-binary", false, "6522 dumps binary output")
