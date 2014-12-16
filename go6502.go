@@ -77,10 +77,10 @@ func mainReturningStatus() int {
 
 	if len(options.SdCard) > 0 {
 		sd, err := sd.NewSdCard(spi.PinMap{
-			Sclk: 4,
-			Mosi: 5,
-			Miso: 6,
-			Ss:   7,
+			Sclk: 0,
+			Mosi: 6,
+			Miso: 7,
+			Ss:   4,
 		})
 		if err != nil {
 			panic(err)
@@ -89,7 +89,7 @@ func mainReturningStatus() int {
 		if err != nil {
 			panic(err)
 		}
-		via.AttachToPortA(sd)
+		via.AttachToPortB(sd)
 	}
 
 	via.Reset()
