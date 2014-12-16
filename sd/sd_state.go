@@ -1,13 +1,17 @@
+//go:generate stringer -type sdStateCode
+
 package sd
 
 import "fmt"
 
+type sdStateCode uint8
+
 // states
 const (
-	sCmd  = iota // expect command
-	sArg         // expect argument
-	sChk         // expect checksum
-	sData        // sending data until misoQueue empty.
+	sCommand  sdStateCode = iota // expect command
+	sArgument                    // expect argument
+	sChecksum                    // expect checksum
+	sData                        // sending data until misoQueue empty.
 )
 
 const (
@@ -22,7 +26,7 @@ const (
 
 // sdState is the state of SD protocol (layer above SPI protocol).
 type sdState struct {
-	state     uint8
+	state     sdStateCode
 	acmd      bool // next command is an application-specific command
 	cmd       uint8
 	arg       uint32
@@ -39,23 +43,28 @@ func newSdState() (s *sdState) {
 	}
 }
 
+func (s *sdState) enter(state sdStateCode) {
+	fmt.Printf("SD state %s -> %s\n", s.state, state)
+	s.state = state
+}
+
 func (s *sdState) consumeByte(b byte) {
 	switch s.state {
-	case sCmd:
+	case sCommand:
 		if b>>6 == 1 {
 			s.cmd = b & (0xFF >> 2)
-			s.state = sArg
+			s.enter(sArgument)
 			s.arg = 0x00000000
 			s.argByte = 0
 		}
-	case sArg:
+	case sArgument:
 		s.arg |= uint32(b) << ((3 - s.argByte) * 8)
 		if s.argByte == 3 {
-			s.state = sChk
+			s.enter(sChecksum)
 		} else {
 			s.argByte++
 		}
-	case sChk:
+	case sChecksum:
 		if s.acmd {
 			s.handleAcmd()
 		} else {
@@ -75,19 +84,19 @@ func (s *sdState) handleCmd() {
 	case 0: // GO_IDLE_STATE
 		fmt.Println("SD CMD0 response: r1_idle")
 		s.queueMisoBytes(0xFF, 0xFF, r1_idle) // busy then idle
-		s.state = sCmd
+		s.enter(sCommand)
 	case 17: // READ_SINGLE_BLOCK
 		fmt.Println("SD CMD17 response: r1_ready, data start block, data")
 		s.queueMisoBytes(0xFF, 0xFF, r1_ready)   // busy then ready
 		s.queueMisoBytes(0xFF, 0xFF, 0xFF, 0xFF) // time before data block
 		s.queueMisoBytes(0xFE)                   // data start block
 		s.queueMisoBytes(s.readBlock(s.arg)...)
-		s.state = sData
+		s.enter(sData)
 	case 55: // APP_CMD
 		fmt.Println("SD CMD55 response: r1_idle")
 		s.queueMisoBytes(r1_idle) // busy then idle
 		s.acmd = true
-		s.state = sCmd
+		s.enter(sCommand)
 	default:
 		panic(fmt.Sprintf("Unhandled CMD%d", s.cmd))
 	}
@@ -107,7 +116,7 @@ func (s *sdState) handleAcmd() {
 			fmt.Println("SD ACMD41 response: r1_idle")
 			s.queueMisoBytes(0xFF, 0xFF, r1_idle)
 		}
-		s.state = sCmd
+		s.enter(sCommand)
 	default:
 		panic(fmt.Sprintf("Unhandled ACMD%d", s.cmd))
 	}
@@ -124,8 +133,8 @@ func (s *sdState) shiftMiso() (b byte) {
 		b = s.misoQueue[0]
 		s.misoQueue = s.misoQueue[1:len(s.misoQueue)]
 		if len(s.misoQueue) == 0 && s.state == sData {
-			// transition from sData to sCmd when all data sent.
-			s.state = sCmd
+			// transition from sData to sCommand when all data sent.
+			s.enter(sCommand)
 		}
 	} else {
 		b = 0x00 // default to low for empty buffer.
