@@ -26,7 +26,8 @@ import (
 )
 
 const (
-	kernalPath = "rom/kernal.rom"
+	kernalPath  = "rom/kernal.rom"
+	charRomPath = "rom/char.rom"
 )
 
 func main() {
@@ -40,6 +41,11 @@ func mainReturningStatus() int {
 	// Create addressable devices.
 
 	kernal, err := memory.RomFromFile(kernalPath)
+	if err != nil {
+		panic(err)
+	}
+
+	charRom, err := memory.RomFromFile(charRomPath)
 	if err != nil {
 		panic(err)
 	}
@@ -92,8 +98,9 @@ func mainReturningStatus() int {
 
 	addressBus, _ := bus.CreateBus()
 	addressBus.Attach(ram, "ram", 0x0000)
-	addressBus.Attach(via, "VIA", 0xC000)
-	addressBus.Attach(kernal, "kernal", 0xE000)
+	addressBus.Attach(via, "VIA", 0x9000)
+	addressBus.Attach(charRom, "char", 0xB000)
+	addressBus.Attach(kernal, "kernal", 0xF000)
 
 	exitChan := make(chan int, 0)
 
