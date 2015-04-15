@@ -18,6 +18,9 @@ const (
 	zeropage
 	zeropageX
 	zeropageY
+
+	// 65C02 only
+	zpindirect
 )
 
 var addressingNames = [...]string{
@@ -35,6 +38,7 @@ var addressingNames = [...]string{
 	"zeropage",
 	"zeropageX",
 	"zeropageY",
+	"(zeropage)",
 }
 
 // adc..tya represent the 6502 instruction set mnemonics. Each mnemonic maps to
@@ -97,6 +101,17 @@ const (
 	txa
 	txs
 	tya
+
+	// 65{S}C02-only
+	bra
+	phx
+	phy
+	plx
+	ply
+	stz
+	trb
+	tsb
+
 	_end
 )
 
@@ -158,6 +173,17 @@ var instructionNames = [...]string{
 	"TXA",
 	"TXS",
 	"TYA",
+
+	// 65{S}C02-only
+	"BRA",
+	"PHX",
+	"PHY",
+	"PLX",
+	"PLY",
+	"STZ",
+	"TRB",
+	"TSB",
+
 	"_END",
 }
 
@@ -351,5 +377,39 @@ var optypes = map[uint8]OpType{
 	0x8A: OpType{0x8A, txa, implied, 1, 2},
 	0x9A: OpType{0x9A, txs, implied, 1, 2},
 	0x98: OpType{0x98, tya, implied, 1, 2},
+
+	// 65C02 only
+
+	// Additional addressing modes
+	0x12: OpType{0x12, ora, zpindirect, 2, 5},
+	0x32: OpType{0x32, and, zpindirect, 2, 5},
+	0x52: OpType{0x52, eor, zpindirect, 2, 5},
+	0x72: OpType{0x72, adc, zpindirect, 2, 5},
+	0x92: OpType{0x92, sta, zpindirect, 2, 5},
+	0xB2: OpType{0xB2, lda, zpindirect, 2, 5},
+	0xD2: OpType{0xD2, cmp, zpindirect, 2, 5},
+	0xF2: OpType{0xF2, sbc, zpindirect, 2, 5},
+	0x89: OpType{0x89, bit, immediate, 2, 2},
+	0x34: OpType{0x34, bit, zeropageX, 2, 4},
+	0x3C: OpType{0x3C, bit, absoluteX, 3, 4},
+	0x3A: OpType{0x3A, dec, implied, 1, 2},
+	0x1A: OpType{0x1A, inc, implied, 1, 2},
+	0x7C: OpType{0x7C, jmp, absoluteX, 3, 6},
+
+	// New instructions
+	0x80: OpType{0x80, bra, relative, 2, 3},
+	0xDA: OpType{0xDA, phx, implied, 1, 3},
+	0x5A: OpType{0x5A, phy, implied, 1, 3},
+	0xFA: OpType{0xFA, plx, implied, 1, 4},
+	0x7A: OpType{0x7A, ply, implied, 1, 4},
+	0x64: OpType{0x64, stz, zeropage, 2, 3},
+	0x74: OpType{0x74, stz, zeropageX, 2, 4},
+	0x9C: OpType{0x9C, stz, absolute, 3, 4},
+	0x9E: OpType{0x9E, stz, absoluteX, 3, 5},
+	0x14: OpType{0x14, trb, zeropage, 2, 5},
+	0x1C: OpType{0x1C, trb, absolute, 3, 6},
+	0x04: OpType{0x04, tsb, zeropage, 2, 5},
+	0x0C: OpType{0x0C, tsb, absolute, 3, 5},
+
 	0xFF: OpType{0xFF, _end, implied, 1, 1},
 }

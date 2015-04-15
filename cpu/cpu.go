@@ -156,8 +156,16 @@ func (c *Cpu) memoryAddress(in Instruction) uint16 {
 		return uint16(in.Op8 + c.X)
 	case zeropageY:
 		return uint16(in.Op8 + c.Y)
+
+	// 65C02-only modes
+	case zpindirect:
+		return c.Bus.Read16(uint16(in.Op8))
+	case indirect:
+		return c.Bus.Read16(uint16(in.Op16))
+
 	default:
-		panic("unhandled addressing")
+		panic(fmt.Sprintf("unhandled addressing mode: %v",
+			addressingNames[in.addressing]))
 	}
 }
 
@@ -304,6 +312,24 @@ func (c *Cpu) execute(in Instruction) {
 		c.TXS(in)
 	case tya:
 		c.TYA(in)
+
+	// 65C02 only
+	case phx:
+		c.PHX(in)
+	case phy:
+		c.PHY(in)
+	case plx:
+		c.PLX(in)
+	case ply:
+		c.PLY(in)
+	case stz:
+		c.STZ(in)
+	case bra:
+		c.BRA(in)
+	case trb:
+		c.TRB(in)
+	case tsb:
+		c.TSB(in)
 	case _end:
 		c._END(in)
 	default:
@@ -371,6 +397,22 @@ func (c *Cpu) BIT(in Instruction) {
 	c.setStatus(sNegative, value&(1<<7) != 0)
 }
 
+// TRB: Test and Reset bits
+func (c *Cpu) TRB(in Instruction) {
+	value := c.resolveOperand(in)
+	c.setStatus(sZero, value&c.AC == 0)
+	// note: the bits which are *set* in AC are *cleared* in value
+	c.Bus.Write(c.memoryAddress(in), value&(c.AC^0xFF))
+}
+
+// TSB: Test and Set bits
+func (c *Cpu) TSB(in Instruction) {
+	value := c.resolveOperand(in)
+	c.setStatus(sZero, value&c.AC == 0)
+	// note: the bits which are *set* in AC are *set* in value
+	c.Bus.Write(c.memoryAddress(in), value|c.AC)
+}
+
 // BMI: Branch if negative.
 func (c *Cpu) BMI(in Instruction) {
 	if c.getStatus(sNegative) {
@@ -390,6 +432,11 @@ func (c *Cpu) BPL(in Instruction) {
 	if !c.getStatus(sNegative) {
 		c.branch(in)
 	}
+}
+
+// BRA: Unconditional branch
+func (c *Cpu) BRA(in Instruction) {
+	c.branch(in)
 }
 
 // BRK: software interrupt
@@ -436,10 +483,17 @@ func (c *Cpu) CPY(in Instruction) {
 
 // DEC: Decrement.
 func (c *Cpu) DEC(in Instruction) {
-	address := c.memoryAddress(in)
-	value := c.Bus.Read(address) - 1
-	c.Bus.Write(address, value)
-	c.updateStatus(value)
+	switch in.addressing {
+	case implied:
+		// 65C02 only: decrement accumulator
+		c.AC--
+		c.updateStatus(c.AC)
+	default:
+		address := c.memoryAddress(in)
+		value := c.Bus.Read(address) - 1
+		c.Bus.Write(address, value)
+		c.updateStatus(value)
+	}
 }
 
 // DEX: Decrement index register X.
@@ -463,10 +517,17 @@ func (c *Cpu) EOR(in Instruction) {
 
 // INC: Increment.
 func (c *Cpu) INC(in Instruction) {
-	address := c.memoryAddress(in)
-	value := c.Bus.Read(address) + 1
-	c.Bus.Write(address, value)
-	c.updateStatus(value)
+	switch in.addressing {
+	case implied:
+		// 65C02 only: increment accumulator
+		c.AC++
+		c.updateStatus(c.AC)
+	default:
+		address := c.memoryAddress(in)
+		value := c.Bus.Read(address) + 1
+		c.Bus.Write(address, value)
+		c.updateStatus(value)
+	}
 }
 
 // INX: Increment index register X.
@@ -548,6 +609,30 @@ func (c *Cpu) PHA(in Instruction) {
 func (c *Cpu) PLA(in Instruction) {
 	c.SP++
 	c.AC = c.Bus.Read(0x0100 + uint16(c.SP))
+}
+
+// PHX: Push X onto stack.
+func (c *Cpu) PHX(in Instruction) {
+	c.Bus.Write(0x0100+uint16(c.SP), c.X)
+	c.SP--
+}
+
+// PLX: Pull X from stack.
+func (c *Cpu) PLX(in Instruction) {
+	c.SP++
+	c.X = c.Bus.Read(0x0100 + uint16(c.SP))
+}
+
+// PHY: Push Y onto stack.
+func (c *Cpu) PHY(in Instruction) {
+	c.Bus.Write(0x0100+uint16(c.SP), c.Y)
+	c.SP--
+}
+
+// PLY: Pull Y from stack.
+func (c *Cpu) PLY(in Instruction) {
+	c.SP++
+	c.Y = c.Bus.Read(0x0100 + uint16(c.SP))
 }
 
 // ROL: Rotate memory or accumulator left one bit.
@@ -635,6 +720,11 @@ func (c *Cpu) STX(in Instruction) {
 // STY: Store index register Y to memory.
 func (c *Cpu) STY(in Instruction) {
 	c.Bus.Write(c.memoryAddress(in), c.Y)
+}
+
+// STZ: Store zero to memory.
+func (c *Cpu) STZ(in Instruction) {
+	c.Bus.Write(c.memoryAddress(in), 0)
 }
 
 // TAX: Transfer accumulator to index register X.
