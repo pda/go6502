@@ -278,6 +278,10 @@ func (c *Cpu) execute(in Instruction) {
 		c.NOP(in)
 	case ora:
 		c.ORA(in)
+	case php:
+		c.PHP(in)
+	case plp:
+		c.PLP(in)
 	case pha:
 		c.PHA(in)
 	case pla:
@@ -597,6 +601,18 @@ func (c *Cpu) NOP(in Instruction) {
 func (c *Cpu) ORA(in Instruction) {
 	c.AC |= c.resolveOperand(in)
 	c.updateStatus(c.AC)
+}
+
+// PHP: Push status onto stack.
+func (c *Cpu) PHP(in Instruction) {
+	c.Bus.Write(0x0100+uint16(c.SP), c.SR)
+	c.SP--
+}
+
+// PLP: Pull status from stack.
+func (c *Cpu) PLP(in Instruction) {
+	c.SP++
+	c.SR = c.Bus.Read(0x0100 + uint16(c.SP))
 }
 
 // PHA: Push accumulator onto stack.
