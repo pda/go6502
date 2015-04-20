@@ -234,6 +234,10 @@ func (c *Cpu) execute(in Instruction) {
 		c.BNE(in)
 	case bpl:
 		c.BPL(in)
+	case bvs:
+		c.BVS(in)
+	case bvc:
+		c.BVC(in)
 	case brk:
 		c.BRK(in)
 	case clc:
@@ -382,6 +386,20 @@ func (c *Cpu) BCC(in Instruction) {
 // BCS: Branch if carry set.
 func (c *Cpu) BCS(in Instruction) {
 	if c.getStatus(sCarry) {
+		c.branch(in)
+	}
+}
+
+// BVC: Branch if overflow clear.
+func (c *Cpu) BVC(in Instruction) {
+	if !c.getStatus(sOverflow) {
+		c.branch(in)
+	}
+}
+
+// BVS: Branch if overflow set.
+func (c *Cpu) BVS(in Instruction) {
+	if c.getStatus(sOverflow) {
 		c.branch(in)
 	}
 }
