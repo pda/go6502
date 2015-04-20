@@ -334,7 +334,7 @@ var optypes = map[uint8]OpType{
 	0x48: OpType{0x48, pha, implied, 1, 3},
 	0x08: OpType{0x08, php, implied, 1, 3},
 	0x68: OpType{0x68, pla, implied, 1, 4},
-	0x28: OpType{0x28, php, implied, 1, 4},
+	0x28: OpType{0x28, plp, implied, 1, 4},
 	0x2A: OpType{0x2A, rol, accumulator, 1, 2},
 	0x26: OpType{0x26, rol, zeropage, 2, 5},
 	0x36: OpType{0x36, rol, zeropageX, 2, 6},
