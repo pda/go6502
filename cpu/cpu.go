@@ -298,6 +298,8 @@ func (c *Cpu) execute(in Instruction) {
 		c.RTS(in)
 	case sbc:
 		c.SBC(in)
+	case sed:
+		c.SED(in)
 	case sec:
 		c.SEC(in)
 	case sei:
@@ -737,6 +739,11 @@ func (c *Cpu) SBC(in Instruction) {
 // SEC: Set carry flag.
 func (c *Cpu) SEC(in Instruction) {
 	c.setStatus(sCarry, true)
+}
+
+// SED: Set decimal mode flag.
+func (c *Cpu) SED(in Instruction) {
+	c.setStatus(sDecimal, true)
 }
 
 // SEI: Set interrupt-disable flag.
