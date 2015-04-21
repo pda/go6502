@@ -21,6 +21,7 @@ const (
 
 	// 65C02 only
 	zpindirect
+	indirectX16
 )
 
 var addressingNames = [...]string{
@@ -39,6 +40,7 @@ var addressingNames = [...]string{
 	"zeropageX",
 	"zeropageY",
 	"(zeropage)",
+	"(absolute,X)",
 }
 
 // adc..tya represent the 6502 instruction set mnemonics. Each mnemonic maps to
@@ -394,7 +396,7 @@ var optypes = map[uint8]OpType{
 	0x3C: OpType{0x3C, bit, absoluteX, 3, 4},
 	0x3A: OpType{0x3A, dec, implied, 1, 2},
 	0x1A: OpType{0x1A, inc, implied, 1, 2},
-	0x7C: OpType{0x7C, jmp, absoluteX, 3, 6},
+	0x7C: OpType{0x7C, jmp, indirectX16, 3, 6},
 
 	// New instructions
 	0x80: OpType{0x80, bra, relative, 2, 3},

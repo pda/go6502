@@ -163,6 +163,10 @@ func (c *Cpu) memoryAddress(in Instruction) uint16 {
 	case indirect:
 		return c.Bus.Read16(uint16(in.Op16))
 
+	// This is like indirectX but uses a full 16-bit absolute address.
+	case indirectX16:
+		return c.Bus.Read16(in.Op16 + uint16(c.X))
+
 	default:
 		panic(fmt.Sprintf("unhandled addressing mode: %v",
 			addressingNames[in.addressing]))
