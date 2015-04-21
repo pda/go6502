@@ -481,7 +481,7 @@ func (c *Cpu) CLD(in Instruction) {
 
 // CLI: Clear interrupt-disable flag.
 func (c *Cpu) CLI(in Instruction) {
-	c.setStatus(sInterrupt, true)
+	c.setStatus(sInterrupt, false)
 }
 
 // CMP: Compare accumulator with memory.
@@ -748,7 +748,7 @@ func (c *Cpu) SED(in Instruction) {
 
 // SEI: Set interrupt-disable flag.
 func (c *Cpu) SEI(in Instruction) {
-	c.setStatus(sInterrupt, false)
+	c.setStatus(sInterrupt, true)
 }
 
 // STA: Store accumulator to memory.
