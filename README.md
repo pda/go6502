@@ -48,15 +48,6 @@ working correctly before writing it to an actual EEPROM.
 Running it
 ----------
 
-Set up Go:
-
-* `brew install go` / `aptitude install golang` / whatever.
-* Spend a few days making sense of, fighting against, and eventually
-  tollerating the golang directory structure as described at
-  http://golang.org/doc/code.html
-* Set your `$GOPATH` the way Go wants you to, e.g. `$HOME/code/go`.
-* Put Go's bin dir in your path, e.g. `$HOME/code/go/bin`
-
 Get and run go6502:
 
 * Drop an 8 KB `kernal.rom` into `$PWD/rom/`, where ever that may be.
