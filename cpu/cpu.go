@@ -156,8 +156,20 @@ func (c *Cpu) memoryAddress(in Instruction) uint16 {
 		return uint16(in.Op8 + c.X)
 	case zeropageY:
 		return uint16(in.Op8 + c.Y)
+
+	// 65C02-only modes
+	case zpindirect:
+		return c.Bus.Read16(uint16(in.Op8))
+	case indirect:
+		return c.Bus.Read16(uint16(in.Op16))
+
+	// This is like indirectX but uses a full 16-bit absolute address.
+	case indirectX16:
+		return c.Bus.Read16(in.Op16 + uint16(c.X))
+
 	default:
-		panic("unhandled addressing")
+		panic(fmt.Sprintf("unhandled addressing mode: %v",
+			addressingNames[in.addressing]))
 	}
 }
 
@@ -226,6 +238,10 @@ func (c *Cpu) execute(in Instruction) {
 		c.BNE(in)
 	case bpl:
 		c.BPL(in)
+	case bvs:
+		c.BVS(in)
+	case bvc:
+		c.BVC(in)
 	case brk:
 		c.BRK(in)
 	case clc:
@@ -270,6 +286,10 @@ func (c *Cpu) execute(in Instruction) {
 		c.NOP(in)
 	case ora:
 		c.ORA(in)
+	case php:
+		c.PHP(in)
+	case plp:
+		c.PLP(in)
 	case pha:
 		c.PHA(in)
 	case pla:
@@ -282,6 +302,8 @@ func (c *Cpu) execute(in Instruction) {
 		c.RTS(in)
 	case sbc:
 		c.SBC(in)
+	case sed:
+		c.SED(in)
 	case sec:
 		c.SEC(in)
 	case sei:
@@ -304,6 +326,24 @@ func (c *Cpu) execute(in Instruction) {
 		c.TXS(in)
 	case tya:
 		c.TYA(in)
+
+	// 65C02 only
+	case phx:
+		c.PHX(in)
+	case phy:
+		c.PHY(in)
+	case plx:
+		c.PLX(in)
+	case ply:
+		c.PLY(in)
+	case stz:
+		c.STZ(in)
+	case bra:
+		c.BRA(in)
+	case trb:
+		c.TRB(in)
+	case tsb:
+		c.TSB(in)
 	case _end:
 		c._END(in)
 	default:
@@ -356,6 +396,20 @@ func (c *Cpu) BCS(in Instruction) {
 	}
 }
 
+// BVC: Branch if overflow clear.
+func (c *Cpu) BVC(in Instruction) {
+	if !c.getStatus(sOverflow) {
+		c.branch(in)
+	}
+}
+
+// BVS: Branch if overflow set.
+func (c *Cpu) BVS(in Instruction) {
+	if c.getStatus(sOverflow) {
+		c.branch(in)
+	}
+}
+
 // BEQ: Branch if equal (z=1).
 func (c *Cpu) BEQ(in Instruction) {
 	if c.getStatus(sZero) {
@@ -369,6 +423,22 @@ func (c *Cpu) BIT(in Instruction) {
 	c.setStatus(sZero, value&c.AC == 0)
 	c.setStatus(sOverflow, value&(1<<6) != 0)
 	c.setStatus(sNegative, value&(1<<7) != 0)
+}
+
+// TRB: Test and Reset bits
+func (c *Cpu) TRB(in Instruction) {
+	value := c.resolveOperand(in)
+	c.setStatus(sZero, value&c.AC == 0)
+	// note: the bits which are *set* in AC are *cleared* in value
+	c.Bus.Write(c.memoryAddress(in), value&(c.AC^0xFF))
+}
+
+// TSB: Test and Set bits
+func (c *Cpu) TSB(in Instruction) {
+	value := c.resolveOperand(in)
+	c.setStatus(sZero, value&c.AC == 0)
+	// note: the bits which are *set* in AC are *set* in value
+	c.Bus.Write(c.memoryAddress(in), value|c.AC)
 }
 
 // BMI: Branch if negative.
@@ -392,6 +462,11 @@ func (c *Cpu) BPL(in Instruction) {
 	}
 }
 
+// BRA: Unconditional branch
+func (c *Cpu) BRA(in Instruction) {
+	c.branch(in)
+}
+
 // BRK: software interrupt
 func (c *Cpu) BRK(in Instruction) {
 	// temporarily used to dump status
@@ -410,7 +485,7 @@ func (c *Cpu) CLD(in Instruction) {
 
 // CLI: Clear interrupt-disable flag.
 func (c *Cpu) CLI(in Instruction) {
-	c.setStatus(sInterrupt, true)
+	c.setStatus(sInterrupt, false)
 }
 
 // CMP: Compare accumulator with memory.
@@ -436,10 +511,17 @@ func (c *Cpu) CPY(in Instruction) {
 
 // DEC: Decrement.
 func (c *Cpu) DEC(in Instruction) {
-	address := c.memoryAddress(in)
-	value := c.Bus.Read(address) - 1
-	c.Bus.Write(address, value)
-	c.updateStatus(value)
+	switch in.addressing {
+	case implied:
+		// 65C02 only: decrement accumulator
+		c.AC--
+		c.updateStatus(c.AC)
+	default:
+		address := c.memoryAddress(in)
+		value := c.Bus.Read(address) - 1
+		c.Bus.Write(address, value)
+		c.updateStatus(value)
+	}
 }
 
 // DEX: Decrement index register X.
@@ -463,10 +545,17 @@ func (c *Cpu) EOR(in Instruction) {
 
 // INC: Increment.
 func (c *Cpu) INC(in Instruction) {
-	address := c.memoryAddress(in)
-	value := c.Bus.Read(address) + 1
-	c.Bus.Write(address, value)
-	c.updateStatus(value)
+	switch in.addressing {
+	case implied:
+		// 65C02 only: increment accumulator
+		c.AC++
+		c.updateStatus(c.AC)
+	default:
+		address := c.memoryAddress(in)
+		value := c.Bus.Read(address) + 1
+		c.Bus.Write(address, value)
+		c.updateStatus(value)
+	}
 }
 
 // INX: Increment index register X.
@@ -538,6 +627,18 @@ func (c *Cpu) ORA(in Instruction) {
 	c.updateStatus(c.AC)
 }
 
+// PHP: Push status onto stack.
+func (c *Cpu) PHP(in Instruction) {
+	c.Bus.Write(0x0100+uint16(c.SP), c.SR)
+	c.SP--
+}
+
+// PLP: Pull status from stack.
+func (c *Cpu) PLP(in Instruction) {
+	c.SP++
+	c.SR = c.Bus.Read(0x0100 + uint16(c.SP))
+}
+
 // PHA: Push accumulator onto stack.
 func (c *Cpu) PHA(in Instruction) {
 	c.Bus.Write(0x0100+uint16(c.SP), c.AC)
@@ -548,6 +649,33 @@ func (c *Cpu) PHA(in Instruction) {
 func (c *Cpu) PLA(in Instruction) {
 	c.SP++
 	c.AC = c.Bus.Read(0x0100 + uint16(c.SP))
+	c.updateStatus(c.AC)
+}
+
+// PHX: Push X onto stack.
+func (c *Cpu) PHX(in Instruction) {
+	c.Bus.Write(0x0100+uint16(c.SP), c.X)
+	c.SP--
+}
+
+// PLX: Pull X from stack.
+func (c *Cpu) PLX(in Instruction) {
+	c.SP++
+	c.X = c.Bus.Read(0x0100 + uint16(c.SP))
+	c.updateStatus(c.X)
+}
+
+// PHY: Push Y onto stack.
+func (c *Cpu) PHY(in Instruction) {
+	c.Bus.Write(0x0100+uint16(c.SP), c.Y)
+	c.SP--
+}
+
+// PLY: Pull Y from stack.
+func (c *Cpu) PLY(in Instruction) {
+	c.SP++
+	c.Y = c.Bus.Read(0x0100 + uint16(c.SP))
+	c.updateStatus(c.Y)
 }
 
 // ROL: Rotate memory or accumulator left one bit.
@@ -617,9 +745,14 @@ func (c *Cpu) SEC(in Instruction) {
 	c.setStatus(sCarry, true)
 }
 
+// SED: Set decimal mode flag.
+func (c *Cpu) SED(in Instruction) {
+	c.setStatus(sDecimal, true)
+}
+
 // SEI: Set interrupt-disable flag.
 func (c *Cpu) SEI(in Instruction) {
-	c.setStatus(sInterrupt, false)
+	c.setStatus(sInterrupt, true)
 }
 
 // STA: Store accumulator to memory.
@@ -635,6 +768,11 @@ func (c *Cpu) STX(in Instruction) {
 // STY: Store index register Y to memory.
 func (c *Cpu) STY(in Instruction) {
 	c.Bus.Write(c.memoryAddress(in), c.Y)
+}
+
+// STZ: Store zero to memory.
+func (c *Cpu) STZ(in Instruction) {
+	c.Bus.Write(c.memoryAddress(in), 0)
 }
 
 // TAX: Transfer accumulator to index register X.
